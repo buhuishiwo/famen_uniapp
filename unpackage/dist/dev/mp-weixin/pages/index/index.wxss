@@ -1,0 +1,709 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** index.wxss **/
+page {
+    height: 100vh;
+    background-color: #f5f5f5;
+}
+/* —————— 滚动内容区 —————— */
+.scroll-content {
+    height: 89vh;
+    padding: 20rpx;
+    padding-top: 30rpx;
+    /* padding-bottom: 200rpx; */
+    box-sizing: border-box;
+}
+.form-section {
+    background-color: #fff;
+    border-radius: 16rpx;
+    padding: 30rpx;
+    margin-bottom: 20rpx;
+}
+.section-title {
+    font-size: 32rpx;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 30rpx;
+    padding-bottom: 20rpx;
+    border-bottom: 2rpx solid #f0f0f0;
+}
+.form-item {
+    margin-bottom: 30rpx;
+}
+.label {
+    display: block;
+    font-size: 28rpx;
+    color: #666;
+    margin-bottom: 16rpx;
+}
+.picker-text,
+.input {
+    width: 100%;
+    padding: 24rpx;
+    background-color: #f9f9f9;
+    border-radius: 8rpx;
+    font-size: 28rpx;
+    color: #333;
+    /* box-sizing: border-box; */
+}
+.price-preview {
+    margin-top: 40rpx;
+    padding: 30rpx;
+    background: linear-gradient(135deg, #a8a8ea 0%, #0070c0 100%);
+    border-radius: 12rpx;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.price-label {
+    font-size: 28rpx;
+    color: #fff;
+}
+.price-value {
+    font-size: 40rpx;
+    font-weight: bold;
+    color: #fff;
+}
+/* —————— 按钮组 —————— */
+.button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 20rpx;
+    margin-bottom: 20rpx;
+}
+.btn {
+    height: 88rpx;
+    line-height: 88rpx;
+    border-radius: 44rpx;
+    font-size: 32rpx;
+	width: 680rpx;
+}
+.btn-primary {
+    background: linear-gradient(135deg, #a8a8ea 0%, #0070c0 100%);
+    color: #fff;
+}
+.btn-success {
+    background: linear-gradient(135deg, #a8a8ea 0%, #0070c0 100%);
+    color: #fff;
+}
+.quote-list {
+    background-color: #fff;
+    border-radius: 16rpx;
+    padding: 30rpx;
+    margin-bottom: 20rpx;
+    box-sizing: border-box;
+}
+.quote-item {
+    padding: 24rpx;
+    margin-bottom: 20rpx;
+    background-color: #f9f9f9;
+    border-radius: 12rpx;
+    position: relative;
+    box-sizing: border-box;
+}
+.quote-item:last-child {
+    margin-bottom: 0;
+}
+.item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16rpx;
+    padding-right: 90rpx;
+}
+.item-name {
+    font-size: 30rpx;
+    font-weight: bold;
+    color: #333;
+}
+.item-price {
+    font-size: 32rpx;
+    font-weight: bold;
+    color: #764ba2;
+}
+.item-detail {
+    font-size: 26rpx;
+    color: #666;
+    margin-bottom: 8rpx;
+}
+.delete-btn {
+    position: absolute;
+    top: 20rpx;
+    right: 20rpx;
+    padding: 8rpx 20rpx;
+    background-color: #ff4d4f;
+    color: #fff;
+    font-size: 24rpx;
+    border-radius: 20rpx;
+}
+.total-price {
+    margin-top: 30rpx;
+    padding-top: 30rpx;
+    padding-bottom: 20rpx;
+    border-top: 2rpx solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.total-label {
+    font-size: 30rpx;
+    color: #666;
+}
+.total-value {
+    font-size: 40rpx;
+    font-weight: bold;
+    color: #764ba2;
+}
+.empty-tip {
+    text-align: center;
+    color: #999;
+    font-size: 28rpx;
+    padding-top: 100rpx;
+}
+

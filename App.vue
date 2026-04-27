@@ -1,0 +1,32 @@
+<script>
+// app.js
+
+export default {
+                    data() {
+                        return {}
+                    },
+                    globalData: {}
+                };
+</script>
+<style>
+/**app.wxss**/
+page {
+    background-color: #f5f5f5;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
+view,
+text,
+button {
+    box-sizing: border-box;
+}
+.container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 200rpx 0;
+    box-sizing: border-box;
+}
+</style>

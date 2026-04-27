@@ -1,0 +1,19 @@
+{
+  "pages": [
+    "pages/product-category/product-category",
+    "pages/index/index",
+    "pages/quotation/quotation"
+  ],
+  "subPackages": [],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationStyle": "custom"
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "你的位置信息将用于小程序位置接口的效果展示"
+    }
+  },
+  "plugins": {},
+  "usingComponents": {}
+}
