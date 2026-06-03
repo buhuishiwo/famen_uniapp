@@ -470,273 +470,327 @@
 
 
 
-/**quotation.wxss**/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* 根页面样式 */
 page {
-	height: 100vh;
-	display: flex;
-	flex-direction: column;
-	background-color: #f5f5f5;
-	font-family: Arial, sans-serif;
+    background-color: #f1f5f9;
+    height: 100vh;
+}
+.page-root {
+    background-color: #f1f5f9;
+    min-height: 100vh;
 }
 .scrollarea {
-	flex: 1;
-	height: 100%;
-	box-sizing: border-box;
+    height: calc(100vh - 88rpx);
 }
 .container {
-	padding: 20rpx;
-	box-sizing: border-box;
+    padding: 24rpx;
+    box-sizing: border-box;
 }
-/* 公司信息头部 */
+/* 高端企业头部卡片 */
 .company-header {
-	background-color: #fff;
-	border-radius: 16rpx;
-	padding: 30rpx;
-	/* margin-bottom: 20rpx; */
-	border: 1rpx solid #e0e0e0;
+    background-color: #ffffff;
+    border-radius: 20rpx;
+    padding: 36rpx;
+    margin-bottom: 24rpx;
+    box-shadow: 0 4rpx 20rpx rgba(13, 21, 38, 0.04);
+    border: 1rpx solid #e2e8f0;
 }
 .company-logo {
-	text-align: center;
-	margin-bottom: 20rpx;
+    margin-bottom: 24rpx;
 }
 .logo-text {
-	font-size: 48rpx;
-	font-weight: bold;
-	color: #333;
-	display: block;
+    font-size: 40rpx;
+    font-weight: 800;
+    color: #0d1526;
+    letter-spacing: 2rpx;
+    display: block;
+}
+.logo-en {
+    font-size: 18rpx;
+    color: #94a3b8;
+    font-weight: 600;
+    letter-spacing: 4rpx;
+    margin-top: 4rpx;
+    display: block;
 }
 .company-info {
-	text-align: left;
-	line-height: 1.6;
+    border-top: 1rpx solid #f1f5f9;
+    padding-top: 20rpx;
 }
 .info-item {
-	font-size: 24rpx;
-	color: #666;
-	display: block;
-	margin-bottom: 8rpx;
+    font-size: 24rpx;
+    color: #475569;
+    display: block;
+    margin-bottom: 12rpx;
+    line-height: 1.4;
 }
 .info-item:last-child {
-	margin-bottom: 0;
+    margin-bottom: 0;
 }
-/* 报价单标题 */
+/* 工业级横幅标题 */
+.quotation-title-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 20rpx 0 30rpx;
+}
+.title-line {
+    width: 120rpx;
+    height: 2rpx;
+    background: linear-gradient(to right, transparent, #c8aa6e);
+}
+.title-line:last-child {
+    background: linear-gradient(to left, transparent, #c8aa6e);
+}
 .quotation-title {
-	text-align: center;
-	font-size: 44rpx;
-	font-weight: bold;
-	color: #333;
-	margin: 10rpx 0;
+    font-size: 38rpx;
+    font-weight: 800;
+    color: #0d1526;
+    letter-spacing: 12rpx;
+    padding: 0 30rpx;
 }
-/* 客户信息 */
-.customer-info {
-	background-color: #fff;
-	border-radius: 16rpx;
-	padding: 20rpx 30rpx;
-	margin-bottom: 20rpx;
-	border: 1rpx solid #e0e0e0;
-	width: 680rpx;
+/* 模块标准块级卡片布局 */
+.card {
+    display: block;
+    width: 100%;
+    background-color: #ffffff;
+    border-radius: 20rpx;
+    padding: 28rpx 30rpx;
+    margin-bottom: 24rpx;
+    border: 1rpx solid #e2e8f0;
+    box-shadow: 0 4rpx 16rpx rgba(13, 21, 38, 0.03);
+    box-sizing: border-box;
 }
-/* 通用信息行样式 */
+.card-inner-title {
+    font-size: 28rpx;
+    font-weight: 700;
+    color: #0d1526;
+    margin-bottom: 20rpx;
+    display: block;
+    position: relative;
+    padding-left: 16rpx;
+}
+.card-inner-title::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 6rpx;
+    width: 6rpx;
+    height: 26rpx;
+    background-color: #c8aa6e;
+    border-radius: 4rpx;
+}
+/* 通用名值对对齐排版 */
 .info-row {
-	display: flex;
-	align-items: center;
-	margin-bottom: 16rpx;
-	flex-wrap: wrap;
-}
-.info-row:last-child {
-	margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
 }
 .info-label {
-	font-size: 28rpx;
-	color: #333;
-	font-weight: bold;
-	margin-right: 10rpx;
-	min-width: 120rpx;
+    font-size: 26rpx;
+    color: #475569;
+    font-weight: 700;
+    width: 130rpx;
+    flex-shrink: 0;
 }
 .info-value {
-	font-size: 28rpx;
-	color: #666;
-	flex: 1;
+    font-size: 28rpx;
+    color: #0d1526;
+    font-weight: 600;
 }
-/* 输入框样式 */
+.date-highlight {
+    color: #0d1526;
+}
+/* 深度优化：输入控件底层框架 */
 .info-input {
-	font-size: 28rpx;
-	color: #666;
-	flex: 1;
-	padding: 10rpx 15rpx;
-	border: 1rpx solid #e0e0e0;
-	border-radius: 8rpx;
-	background-color: #f9f9f9;
-	/* box-sizing: border-box; */
+    flex: 1;
+    width: 100%;
+    
+    height: 84rpx;
+    line-height: 84rpx;
+
+    font-size: 28rpx;
+    color: #0d1526;
+
+    padding: 0 24rpx;
+
+    border: 1rpx solid #cbd5e1;
+    border-radius: 12rpx;
+
+    background-color: #f8fafc;
+
+    box-sizing: border-box;
 }
-/* 短输入框样式 */
-.info-input.short-input {
-	flex: none;
-	width: 458rpx;
-	/* margin-right: 10rpx; */
+.placeholder-style {
+    color: #94a3b8;
+    font-size: 26rpx;
+    line-height: 84rpx;
 }
-.info-input.max-short-input {
-	flex: none;
-	width: 416rpx;
-	/* margin-right: 20rpx; */
+/* 核心修复：多行备注流体容器隔离区 */
+.textarea-box {
+    display: block;
+    width: 100%;
+    border: 1rpx solid #cbd5e1;
+    border-radius: 12rpx;
+    background-color: #f8fafc;
+    padding: 20rpx 24rpx;
+    box-sizing: border-box;
 }
-/* 多行文本框样式 */
 .note-input {
-	font-size: 26rpx;
-	color: #666;
-	width: 100%;
-	padding: 15rpx;
-	border: 1rpx solid #e0e0e0;
-	border-radius: 8rpx;
-	background-color: #f9f9f9;
-	box-sizing: border-box;
-	min-height: 120rpx;
-	line-height: 1.6;
-	resize: vertical;
+    display: block;
+    font-size: 26rpx;
+    color: #0d1526;
+    width: 100% !important; /* 深度覆写，拒绝单列挤压 */
+    min-height: 160rpx;
+    line-height: 1.6;
+    box-sizing: border-box;
 }
-/* 报价表内容 */
-.quotation-table {
-	background-color: #fff;
-	border-radius: 16rpx;
-	overflow: hidden;
-	margin-bottom: 20rpx;
-	border: 1rpx solid #e0e0e0;
+/* 组内元素横置细分线 */
+.divider-line {
+    height: 1rpx;
+    background-color: #f1f5f9;
+    margin: 24rpx 0;
+    width: 100%;
+}
+/* 工业数据网格卡片 */
+.table-card {
+    background-color: #ffffff;
+    border-radius: 20rpx;
+    overflow: hidden;
+    margin-bottom: 24rpx;
+    border: 1rpx solid #e2e8f0;
+    box-shadow: 0 4rpx 16rpx rgba(13, 21, 38, 0.03);
+}
+.table-scroll {
+    width: 100%;
+}
+.table-wrap {
+    min-width: 890rpx; /* 给予字段足够的横向平铺空间 */
 }
 .table-header {
-	display: flex;
-	background: linear-gradient(135deg, #a8a8ea 0%, #0070c0 100%);
-	padding: 20rpx 10rpx;
+    display: flex;
+    background: linear-gradient(135deg, #0d1526 0%, #1e293b 100%);
+    padding: 24rpx 0;
 }
 .header-cell {
-	font-size: 24rpx;
-	color: #fff;
-	text-align: center;
-	font-weight: bold;
-	padding: 10rpx 8rpx;
-	border-right: 1rpx solid #fff;
+    font-size: 24rpx;
+    color: #ffffff;
+    text-align: center;
+    font-weight: 700;
+    flex-shrink: 0;
+    border-right: 1rpx solid rgba(255, 255, 255, 0.1);
+    box-sizing: border-box;
 }
 .header-cell:last-child {
-	border-right: none;
+    border-right: none;
 }
-/* 表格列样式 */
-.cell-product {
-	width: 140rpx;
+/* 数据矩阵网格核心尺寸 */
+.cell-product { width: 140rpx;
 }
-.cell-model {
-	width: 80rpx;
+.cell-model { width: 180rpx;
 }
-.cell-material {
-	width: 80rpx;
+.cell-material { width: 90rpx;
 }
-.cell-seal {
-	width: 80rpx;
+.cell-seal { width: 90rpx;
 }
-.cell-quantity {
-	width: 80rpx;
+.cell-quantity { width: 70rpx;
 }
-.cell-price {
-	width: 100rpx;
+.cell-price { width: 100rpx;
 }
-.cell-branding {
-	width: 80rpx;
-	color: #ff6600;
+.cell-branding { width: 100rpx; color: #c8aa6e;
 }
-.cell-total {
-	width: 100rpx;
-	color: #ff0000;
+.cell-total { width: 120rpx;
 }
 .table-body {
-	max-height: 800rpx;
-	overflow-y: auto;
-	box-sizing: border-box;
+    width: 100%;
 }
 .table-row {
-	display: flex;
-	padding: 20rpx 10rpx;
-	border-bottom: 1rpx solid #e0e0e0;
+    display: flex;
+    padding: 22rpx 0;
+    border-bottom: 1rpx solid #e2e8f0;
+    background-color: #ffffff;
+    align-items: center;
 }
 .table-row:last-child {
-	border-bottom: none;
+    border-bottom: none;
+}
+.row-odd {
+    background-color: #f8fafc; /* 交替斑马纹隔行变色 */
 }
 .table-cell {
-	font-size: 24rpx;
-	color: #333;
-	text-align: center;
-	padding: 10rpx 8rpx;
-	border-right: 1rpx solid #e0e0e0;
-	display: flex;
-	align-items: center;
-	justify-content: center;
+    font-size: 24rpx;
+    color: #334155;
+    text-align: center;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    border-right: 1rpx solid #f1f5f9;
 }
 .table-cell:last-child {
-	border-right: none;
+    border-right: none;
 }
-/* 备注信息 */
-.quotation-note {
-	background-color: #fff;
-	border-radius: 16rpx;
-	padding: 30rpx;
-	margin-bottom: 20rpx;
-	border: 1rpx solid #e0e0e0;
-	width: 680rpx;
+.text-total-price {
+    color: #dc2626;
+    font-weight: 700;
 }
-.note-title {
-	font-size: 30rpx;
-	font-weight: bold;
-	color: #333;
-	margin-bottom: 20rpx;
-	display: block;
-}
-.note-content {
-	font-size: 26rpx;
-	color: #666;
-	line-height: 1.6;
-	display: block;
-	text-align: justify;
-}
-/* 付款方式和包装方式 */
-.payment-packaging {
-	background-color: #fff;
-	border-radius: 16rpx;
-	padding: 20rpx 30rpx;
-	margin-bottom: 20rpx;
-	border: 1rpx solid #e0e0e0;
-	width: 680rpx;
-}
-/* 报价人信息 */
-.quoter-info {
-	width: 680rpx;
-	background-color: #fff;
-	border-radius: 16rpx;
-	padding: 20rpx 30rpx;
-	margin-bottom: 20rpx;
-	border: 1rpx solid #e0e0e0;
-}
-/* 操作按钮 */
+/* 按钮操作系统组 */
 .button-group {
-	display: flex;
-	flex-direction: column;
-	gap: 20rpx;
-	margin-bottom: 40rpx;
+    display: flex;
+    flex-direction: column;
+    gap: 20rpx;
+    margin: 16rpx 0 50rpx;
+    width: 100%;
 }
 .btn {
-	width: 100%;
-	height: 88rpx;
-	line-height: 88rpx;
-	border-radius: 44rpx;
-	font-size: 32rpx;
-	border: none;
+    width: 100% !important;
+    height: 92rpx;
+    line-height: 92rpx;
+    border-radius: 46rpx;
+    font-size: 30rpx;
+    font-weight: 700;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
 }
 .btn-primary {
-	background: linear-gradient(135deg, #a8a8ea 0%, #0070c0 100%);
-	color: #fff;
-	width: 680rpx;
+    background: linear-gradient(135deg, #0d1526 0%, #1e293b 100%);
+    color: #ffffff;
+    box-shadow: 0 8rpx 24rpx rgba(13, 21, 38, 0.2);
 }
 .btn-secondary {
-	background: linear-gradient(135deg, #a8a8ea 0%, #0070c0 100%);
-	color: #fff;
+    background-color: #ffffff;
+    color: #0d1526;
+    border: 2rpx solid #cbd5e1;
 }
 .btn-back {
-	background: linear-gradient(135deg, #a8a8ea 0%, #0070c0 100%);
-	color: #fff;
+    background-color: #e2e8f0;
+    color: #475569;
 }
 

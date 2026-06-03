@@ -7,6 +7,8 @@
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"author": "",
-	"dependencies": {},
+	"dependencies": {
+		"xlsx": "^0.18.5"
+	},
 	"license": "ISC"
 }

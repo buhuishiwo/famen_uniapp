@@ -2,7 +2,8 @@
   "pages": [
     "pages/product-category/product-category",
     "pages/index/index",
-    "pages/quotation/quotation"
+    "pages/quotation/quotation",
+    "pages/upload-price/upload-price"
   ],
   "subPackages": [],
   "window": {

@@ -546,164 +546,890 @@
 
 
 
-/** index.wxss **/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ============================
+   设计语言：工业精工 · 深蓝钢铁
+   主色：深海蓝 #0d1526
+   强调：冷金 #c8aa6e
+   卡片：#f4f6fa
+   文字：#1a2236 / #5a6478
+============================ */
 page {
     height: 100vh;
-    background-color: #f5f5f5;
+    background-color: #eef1f6;
+    font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
 }
-/* —————— 滚动内容区 —————— */
+
+/* ---- 滚动区 ---- */
 .scroll-content {
     height: 89vh;
-    padding: 20rpx;
-    padding-top: 30rpx;
-    /* padding-bottom: 200rpx; */
+    padding: 0 24rpx 40rpx;
     box-sizing: border-box;
 }
+
+/* ---- 顶部页眉 ---- */
+.page-header {
+    padding: 36rpx 8rpx 28rpx;
+}
+.header-badge {
+    display: flex;
+    align-items: center;
+    gap: 10rpx;
+    margin-bottom: 12rpx;
+}
+.badge-dot {
+    width: 12rpx;
+    height: 12rpx;
+    border-radius: 50%;
+    background-color: #c8aa6e;
+    display: block;
+}
+.badge-text {
+    font-size: 22rpx;
+    font-weight: 600;
+    color: #c8aa6e;
+    letter-spacing: 4rpx;
+    text-transform: uppercase;
+}
+.page-title {
+    display: block;
+    font-size: 46rpx;
+    font-weight: 700;
+    color: #1a2236;
+    letter-spacing: -0.5rpx;
+    margin-bottom: 8rpx;
+}
+.page-subtitle {
+    display: block;
+    font-size: 24rpx;
+    color: #8a97aa;
+    letter-spacing: 1rpx;
+}
+
+/* ---- 表单卡片 ---- */
 .form-section {
-    background-color: #fff;
-    border-radius: 16rpx;
-    padding: 30rpx;
+    background: #ffffff;
+    border-radius: 20rpx;
+    padding: 32rpx 28rpx 12rpx;
     margin-bottom: 20rpx;
+    box-shadow: 0 2rpx 16rpx rgba(13, 21, 38, 0.06);
 }
-.section-title {
-    font-size: 32rpx;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 30rpx;
+.form-section-label {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
+    margin-bottom: 24rpx;
     padding-bottom: 20rpx;
-    border-bottom: 2rpx solid #f0f0f0;
+    border-bottom: 1rpx solid #edf0f5;
 }
+.section-icon {
+    font-size: 28rpx;
+    color: #0d5ea8;
+}
+.section-name {
+    font-size: 26rpx;
+    font-weight: 700;
+    color: #1a2236;
+    letter-spacing: 2rpx;
+}
+
+/* ---- 表单行 ---- */
 .form-item {
-    margin-bottom: 30rpx;
+    padding: 8rpx 0 18rpx;
+}
+.form-divider {
+    height: 1rpx;
+    background: #f0f3f8;
+    margin: 0 -4rpx 18rpx;
 }
 .label {
     display: block;
-    font-size: 28rpx;
-    color: #666;
-    margin-bottom: 16rpx;
+    font-size: 22rpx;
+    font-weight: 600;
+    color: #8a97aa;
+    letter-spacing: 2rpx;
+    margin-bottom: 12rpx;
+    text-transform: uppercase;
 }
-.picker-text,
-.input {
-    width: 100%;
-    padding: 24rpx;
-    background-color: #f9f9f9;
-    border-radius: 8rpx;
-    font-size: 28rpx;
-    color: #333;
-    /* box-sizing: border-box; */
-}
-.price-preview {
-    margin-top: 40rpx;
-    padding: 30rpx;
-    background: linear-gradient(135deg, #a8a8ea 0%, #0070c0 100%);
-    border-radius: 12rpx;
+
+/* ---- Picker ---- */
+.picker-box {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding: 22rpx 24rpx;
+    background: #f4f7fb;
+    border-radius: 12rpx;
+    border: 1.5rpx solid #e8ecf4;
+    transition: border-color 0.2s;
 }
-.price-label {
+.picker-box.filled {
+    border-color: #1a6ec7;
+    background: #f0f6ff;
+}
+.picker-text {
     font-size: 28rpx;
-    color: #fff;
+    color: #1a2236;
+    flex: 1;
 }
-.price-value {
-    font-size: 40rpx;
-    font-weight: bold;
-    color: #fff;
+.picker-box:not(.filled) .picker-text {
+    color: #b0bac8;
 }
-/* —————— 按钮组 —————— */
-.button-group {
+.picker-arrow {
+    font-size: 36rpx;
+    color: #b0bac8;
+    font-weight: 300;
+    margin-left: 12rpx;
+}
+.picker-box.filled .picker-arrow {
+    color: #1a6ec7;
+}
+
+/* ---- 数量输入 ---- */
+.qty-wrapper {
+    width: 100%;
+    background: #f4f7fb;
+    border-radius: 12rpx;
+    border: 1.5rpx solid #e8ecf4;
+    padding: 22rpx 24rpx;
+    box-sizing: border-box;
+}
+.qty-input {
+    width: 100%;
+    font-size: 28rpx;
+    color: #1a2236;
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    line-height: 1.4;
+}
+.qty-placeholder {
+    color: #b0bac8;
+}
+
+/* ---- 磨商标 Toggle ---- */
+.toggle-group {
+    display: flex;
+    gap: 20rpx;
+}
+.toggle-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12rpx;
+    padding: 20rpx 0;
+    background: #f4f7fb;
+    border-radius: 12rpx;
+    border: 1.5rpx solid #e8ecf4;
+    font-size: 28rpx;
+    color: #5a6478;
+    font-weight: 500;
+}
+.toggle-item.active {
+    background: #0d1526;
+    border-color: #0d1526;
+    color: #ffffff;
+}
+.toggle-dot { font-size: 20rpx; color: #c8aa6e;
+}
+.toggle-dot-off { font-size: 20rpx; color: #b0bac8;
+}
+.toggle-item.active .toggle-dot-off { color: rgba(255,255,255,0.4);
+}
+
+/* ---- 价格预览卡 ---- */
+.price-card {
+    margin: 24rpx -4rpx 12rpx;
+    background: #0d1526;
+    border-radius: 16rpx;
+    padding: 28rpx 32rpx;
+    overflow: hidden;
+    position: relative;
+}
+.price-card::before {
+    content: '';
+    position: absolute;
+    top: -30rpx;
+    right: -30rpx;
+    width: 160rpx;
+    height: 160rpx;
+    border-radius: 50%;
+    background: rgba(200, 170, 110, 0.08);
+    pointer-events: none;
+}
+.price-row {
+    display: flex;
+    align-items: center;
+}
+.price-col {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 20rpx;
+    gap: 8rpx;
+}
+.price-divider-v {
+    width: 1rpx;
+    height: 60rpx;
+    background: rgba(255,255,255,0.12);
+    margin: 0 24rpx;
+}
+.price-tag {
+    font-size: 20rpx;
+    font-weight: 600;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 3rpx;
+}
+.price-amount {
+    font-size: 22rpx;
+    color: rgba(255,255,255,0.7);
+}
+.price-num {
+    font-size: 38rpx;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -1rpx;
+}
+.total-highlight .price-num {
+    color: #c8aa6e;
+}
+
+/* ---- 操作按钮 ---- */
+.action-area {
+    display: flex;
+    flex-direction: column;
+    gap: 16rpx;
     margin-bottom: 20rpx;
 }
 .btn {
-    height: 88rpx;
-    line-height: 88rpx;
-    border-radius: 44rpx;
-    font-size: 32rpx;
-	width: 680rpx;
-}
-.btn-primary {
-    background: linear-gradient(135deg, #a8a8ea 0%, #0070c0 100%);
-    color: #fff;
-}
-.btn-success {
-    background: linear-gradient(135deg, #a8a8ea 0%, #0070c0 100%);
-    color: #fff;
-}
-.quote-list {
-    background-color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12rpx;
+    height: 96rpx;
     border-radius: 16rpx;
-    padding: 30rpx;
-    margin-bottom: 20rpx;
-    box-sizing: border-box;
+    font-size: 30rpx;
+    font-weight: 600;
+    letter-spacing: 2rpx;
+    border: none;
+    width: 100%;
 }
+.btn-icon { font-size: 28rpx;
+}
+.btn-add {
+    background: #0d1526;
+    color: #ffffff;
+    box-shadow: 0 6rpx 24rpx rgba(13, 21, 38, 0.22);
+}
+.btn-generate {
+    background: #ffffff;
+    color: #0d1526;
+    border: 1.5rpx solid #d8dde8;
+    box-shadow: 0 2rpx 8rpx rgba(13, 21, 38, 0.06);
+}
+
+/* ---- 报价列表 ---- */
+.quote-list {
+    background: #ffffff;
+    border-radius: 20rpx;
+    padding: 30rpx 28rpx;
+    margin-bottom: 20rpx;
+    box-shadow: 0 2rpx 16rpx rgba(13, 21, 38, 0.06);
+}
+.list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24rpx;
+    padding-bottom: 20rpx;
+    border-bottom: 1rpx solid #edf0f5;
+}
+.list-title {
+    font-size: 28rpx;
+    font-weight: 700;
+    color: #1a2236;
+    letter-spacing: 1rpx;
+}
+.list-count-badge {
+    padding: 6rpx 20rpx;
+    background: #f0f6ff;
+    border-radius: 20rpx;
+    border: 1rpx solid #c5d8f5;
+}
+.list-count {
+    font-size: 22rpx;
+    font-weight: 600;
+    color: #1a6ec7;
+}
+
+/* ---- 报价项目 ---- */
 .quote-item {
     padding: 24rpx;
-    margin-bottom: 20rpx;
-    background-color: #f9f9f9;
-    border-radius: 12rpx;
-    position: relative;
-    box-sizing: border-box;
-}
-.quote-item:last-child {
-    margin-bottom: 0;
-}
-.item-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     margin-bottom: 16rpx;
-    padding-right: 90rpx;
+    background: #f8fafc;
+    border-radius: 14rpx;
+    border: 1rpx solid #edf1f8;
 }
-.item-name {
-    font-size: 30rpx;
-    font-weight: bold;
-    color: #333;
+.quote-item-header {
+    display: flex;
+    align-items: center;
+    gap: 16rpx;
+    margin-bottom: 18rpx;
 }
-.item-price {
-    font-size: 32rpx;
-    font-weight: bold;
-    color: #764ba2;
+.item-index-badge {
+    width: 44rpx;
+    height: 44rpx;
+    border-radius: 10rpx;
+    background: #0d1526;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
-.item-detail {
+.item-index-badge text {
+    font-size: 22rpx;
+    font-weight: 700;
+    color: #c8aa6e;
+}
+.item-valve-name {
+    flex: 1;
     font-size: 26rpx;
-    color: #666;
-    margin-bottom: 8rpx;
+    font-weight: 600;
+    color: #1a2236;
+    line-height: 1.4;
 }
 .delete-btn {
-    position: absolute;
-    top: 20rpx;
-    right: 20rpx;
-    padding: 8rpx 20rpx;
-    background-color: #ff4d4f;
-    color: #fff;
-    font-size: 24rpx;
-    border-radius: 20rpx;
-}
-.total-price {
-    margin-top: 30rpx;
-    padding-top: 30rpx;
-    padding-bottom: 20rpx;
-    border-top: 2rpx solid #f0f0f0;
+    width: 52rpx;
+    height: 52rpx;
+    border-radius: 50%;
+    background: #fff0f0;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
-.total-label {
+.delete-btn text {
+    font-size: 22rpx;
+    color: #e05252;
+    font-weight: 600;
+}
+
+/* 材质标签 */
+.item-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10rpx;
+    margin-bottom: 20rpx;
+}
+.tag {
+    padding: 6rpx 18rpx;
+    background: #edf1f8;
+    border-radius: 6rpx;
+    font-size: 22rpx;
+    color: #5a6478;
+    font-weight: 500;
+    letter-spacing: 1rpx;
+}
+.tag-type {
+    background: #fff8ec;
+    color: #a07830;
+    border: 1rpx solid #e8d09a;
+}
+
+/* 底部价格行 */
+.item-price-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding-top: 16rpx;
+    border-top: 1rpx solid #edf1f8;
+}
+.item-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4rpx;
+}
+.meta-item {
+    font-size: 22rpx;
+    color: #8a97aa;
+}
+.item-price-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4rpx;
+}
+.unit-price {
+    font-size: 22rpx;
+    color: #8a97aa;
+}
+.total-item-price {
+    font-size: 34rpx;
+    font-weight: 700;
+    color: #1a2236;
+    letter-spacing: -0.5rpx;
+}
+
+/* ---- 合计栏 ---- */
+.quote-total-bar {
+    margin-top: 24rpx;
+    padding: 28rpx 32rpx;
+    background: #0d1526;
+    border-radius: 14rpx;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.total-bar-label {
+    font-size: 24rpx;
+    font-weight: 600;
+    color: rgba(255,255,255,0.55);
+    letter-spacing: 3rpx;
+}
+.total-bar-value {
+    font-size: 44rpx;
+    font-weight: 700;
+    color: #c8aa6e;
+    letter-spacing: -1rpx;
+}
+
+/* ---- 空状态 ---- */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 80rpx 0 40rpx;
+    gap: 16rpx;
+}
+.empty-icon { font-size: 72rpx;
+}
+.empty-text {
     font-size: 30rpx;
-    color: #666;
+    font-weight: 600;
+    color: #8a97aa;
 }
-.total-value {
-    font-size: 40rpx;
-    font-weight: bold;
-    color: #764ba2;
-}
-.empty-tip {
+.empty-sub {
+    font-size: 24rpx;
+    color: #b0bac8;
     text-align: center;
-    color: #999;
-    font-size: 28rpx;
-    padding-top: 100rpx;
+    line-height: 1.6;
+}
+
+/* ---- 底部安全区 ---- */
+.bottom-safe { height: 60rpx;
 }
 

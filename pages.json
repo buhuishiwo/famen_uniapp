@@ -23,6 +23,14 @@
 					"navigation-bar": "/components/navigation-bar/navigation-bar"
 				}
 			}
+		},
+		{
+			"path": "pages/upload-price/upload-price",
+			"style": {
+				"usingComponents": {
+					"navigation-bar": "/components/navigation-bar/navigation-bar"
+				}
+			}
 		}
 	],
 	"style": "v2",
