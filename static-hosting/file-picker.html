@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>选择文件</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0d1526 0%, #1e293b 100%);
+            min-height: 100vh;
+            color: #fff;
+            /* 为固定顶栏留出空间 */
+            padding-top: calc(50px + env(safe-area-inset-top));
+        }
+
+        /* 固定顶栏 */
+        .nav-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: linear-gradient(135deg, #0d1526 0%, #1e293b 100%);
+            padding-top: env(safe-area-inset-top);
+            display: flex;
+            align-items: center;
+            height: calc(50px + env(safe-area-inset-top));
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .nav-back {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 16px;
+            color: #c8aa6e;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            background: none;
+            border: none;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        .nav-back:active {
+            opacity: 0.6;
+        }
+        .nav-back-arrow {
+            font-size: 20px;
+            line-height: 1;
+        }
+        .nav-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 17px;
+            font-weight: 600;
+            color: #fff;
+            white-space: nowrap;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 20px 24px;
+        }
+        .title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+        .subtitle { font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 32px; }
+
+        .upload-zone {
+            background: rgba(255,255,255,0.05);
+            border: 2px dashed rgba(200, 170, 110, 0.4);
+            border-radius: 16px;
+            padding: 48px 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+        .upload-zone:active {
+            background: rgba(200, 170, 110, 0.1);
+            border-color: rgba(200, 170, 110, 0.8);
+        }
+        .upload-icon { font-size: 64px; margin-bottom: 16px; }
+        .upload-text { font-size: 16px; font-weight: 600; color: #c8aa6e; margin-bottom: 8px; }
+        .upload-hint { font-size: 12px; color: rgba(255,255,255,0.4); }
+        #fileInput { display: none; }
+
+        .file-card {
+            display: none;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(200, 170, 110, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .file-card.show { display: block; }
+        .file-card .file-name { font-size: 16px; font-weight: 600; word-break: break-all; margin-bottom: 8px; }
+        .file-card .file-meta { font-size: 13px; color: rgba(255,255,255,0.5); }
+
+        .progress-bar {
+            display: none;
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            margin-top: 12px;
+            overflow: hidden;
+        }
+        .progress-bar.show { display: block; }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #c8aa6e, #d4b87a);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.2s;
+        }
+
+        .status { font-size: 13px; color: rgba(255,255,255,0.4); margin-top: 12px; min-height: 20px; }
+        .status.error { color: #f87171; }
+        .status.success { color: #4ade80; }
+
+        .btn {
+            width: 100%;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 24px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn:active { transform: scale(0.97); opacity: 0.9; }
+        .btn-primary {
+            background: linear-gradient(135deg, #c8aa6e 0%, #d4b87a 100%);
+            color: #0d1526;
+            display: none;
+        }
+        .btn-primary.show { display: block; }
+        .btn-primary:disabled { opacity: 0.5; }
+    </style>
+</head>
+<body>
+    <!-- 固定顶栏 - 替代小程序导航栏 -->
+    <div class="nav-bar">
+        <button class="nav-back" id="navBack">
+            <span class="nav-back-arrow">←</span>
+            <span>返回</span>
+        </button>
+        <span class="nav-title">选择本地文件</span>
+    </div>
+
+    <div class="container">
+        <div class="title">📊 选择Excel文件</div>
+        <div class="subtitle">从手机本地存储中选择文件</div>
+
+        <div class="upload-zone" id="uploadZone">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">点击选择文件</div>
+            <div class="upload-hint">支持 .xlsx / .xls / .csv，最大 10MB</div>
+        </div>
+
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+
+        <div class="file-card" id="fileCard">
+            <div class="file-name" id="fileName"></div>
+            <div class="file-meta"><span id="fileSize"></span></div>
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <div class="status" id="status"></div>
+
+        <button class="btn btn-primary" id="btnConfirm">
+            ✅ 确认选择此文件
+        </button>
+    </div>
+
+    <!-- JSSDK 必须同步加载，否则 wx.miniProgram 桥接未就绪 -->
+    <script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
+    <script>
+        (function() {
+            var selectedFile = null;
+            var MAX_SIZE = 10 * 1024 * 1024;
+
+            var $ = function(id) { return document.getElementById(id); };
+            var fileInput = $('fileInput');
+            var fileCard = $('fileCard');
+            var fileName = $('fileName');
+            var fileSize = $('fileSize');
+            var status = $('status');
+            var btnConfirm = $('btnConfirm');
+            var progressBar = $('progressBar');
+            var progressFill = $('progressFill');
+            var zoneText = document.querySelector('.upload-text');
+
+            var ALLOWED_EXT = { '.xlsx': 1, '.xls': 1, '.csv': 1 };
+
+            function goBack() {
+                // 方案1: wx.miniProgram.navigateBack（主方案）
+                if (typeof wx !== 'undefined' && wx.miniProgram && wx.miniProgram.navigateBack) {
+                    wx.miniProgram.navigateBack({ delta: 1 });
+                    return;
+                }
+                // 方案2: 通过 postMessage 告诉小程序执行返回
+                if (typeof wx !== 'undefined' && wx.miniProgram && wx.miniProgram.postMessage) {
+                    wx.miniProgram.postMessage({ data: { type: 'go-back' } });
+                    // 改变 hash 触发消息递送
+                    window.location.hash = '#back-' + Date.now();
+                    return;
+                }
+                // 方案3: history 兜底（H5 环境）
+                history.back();
+            }
+
+            // 顶栏返回按钮
+            $('navBack').addEventListener('click', goBack);
+            // 确认按钮
+            $('btnConfirm').addEventListener('click', confirmFile);
+            // 上传区域点击
+            $('uploadZone').addEventListener('click', function() {
+                fileInput.click();
+            });
+
+            function arrayBufferToBase64(buffer) {
+                var bytes = new Uint8Array(buffer);
+                var len = bytes.byteLength;
+                var binary = '';
+                var CHUNK_SIZE = 8192;
+                for (var i = 0; i < len; i += CHUNK_SIZE) {
+                    var end = Math.min(i + CHUNK_SIZE, len);
+                    binary += String.fromCharCode.apply(null, bytes.subarray(i, end));
+                }
+                return btoa(binary);
+            }
+
+            function updateProgress(percent) {
+                progressBar.classList.add('show');
+                progressFill.style.width = percent + '%';
+            }
+
+            function hideProgress() {
+                progressBar.classList.remove('show');
+                progressFill.style.width = '0%';
+            }
+
+            fileInput.addEventListener('change', function(e) {
+                var file = e.target.files[0];
+                if (!file) return;
+
+                var ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+                if (!ALLOWED_EXT[ext]) {
+                    showStatus('不支持的格式，请选择 .xlsx / .xls / .csv 文件', 'error');
+                    return;
+                }
+                if (file.size > MAX_SIZE) {
+                    showStatus('文件超过 10MB 限制', 'error');
+                    return;
+                }
+
+                selectedFile = file;
+                fileName.textContent = file.name;
+                fileSize.textContent = formatSize(file.size);
+                fileCard.classList.add('show');
+                btnConfirm.classList.add('show');
+                hideProgress();
+                zoneText.textContent = '点击重新选择';
+                showStatus('已选择 ' + formatSize(file.size) + '，点击下方按钮确认', 'success');
+            });
+
+            function confirmFile() {
+                if (!selectedFile) return;
+                if (typeof wx === 'undefined' || !wx.miniProgram) {
+                    showStatus('请在微信小程序中使用此功能', 'error');
+                    return;
+                }
+
+                showStatus('正在读取文件...', '');
+                btnConfirm.disabled = true;
+                btnConfirm.textContent = '⏳ 读取中...';
+                updateProgress(10);
+
+                var reader = new FileReader();
+
+                reader.onprogress = function(e) {
+                    if (e.lengthComputable) {
+                        var pct = 10 + Math.round((e.loaded / e.total) * 70);
+                        updateProgress(pct);
+                    }
+                };
+
+                reader.onload = function(e) {
+                    updateProgress(85);
+                    showStatus('正在编码传输...', '');
+                    btnConfirm.textContent = '⏳ 传输中...';
+
+                    setTimeout(function() {
+                        var base64 = arrayBufferToBase64(e.target.result);
+                        updateProgress(95);
+
+                        wx.miniProgram.postMessage({
+                            data: {
+                                type: 'file-selected',
+                                fileData: base64,
+                                fileName: selectedFile.name,
+                                fileSize: selectedFile.size
+                            }
+                        });
+
+                        updateProgress(100);
+                        showStatus('传输完成，即将返回', 'success');
+
+                        setTimeout(function() {
+                            wx.miniProgram.navigateBack({ delta: 1 });
+                        }, 200);
+                    }, 50);
+                };
+
+                reader.onerror = function() {
+                    showStatus('读取失败，请重试', 'error');
+                    btnConfirm.disabled = false;
+                    btnConfirm.textContent = '✅ 确认选择此文件';
+                    hideProgress();
+                };
+
+                reader.readAsArrayBuffer(selectedFile);
+            }
+
+            function showStatus(msg, type) {
+                status.textContent = msg;
+                status.className = 'status ' + (type || '');
+            }
+
+            function formatSize(bytes) {
+                if (bytes < 1024) return bytes + ' B';
+                if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+                return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+            }
+        })();
+    </script>
+</body>
+</html>

@@ -27,9 +27,17 @@
 
                 <view class="card">
                     <view class="info-row">
+                        <text class="info-label">报价员</text>
+                        <picker mode="selector" :range="salespersonOptions" @change="onSalespersonChange">
+                            <view class="picker-input">{{ selectedSalesperson.name || '请选择报价员' }}</view>
+                        </picker>
+                    </view>
+                    <view class="divider-line"></view>
+                    <view class="info-row">
                         <text class="info-label">客户名称</text>
-                        <input class="info-input" placeholder="请输入客户名称" placeholder-class="placeholder-style" @input="onCustomerNameInput"
-                            :value="customerName" />
+                        <picker mode="selector" :range="customerOptions" @change="onCustomerChange">
+                            <view class="picker-input">{{ selectedCustomer.name || '请选择客户' }}</view>
+                        </picker>
                     </view>
                 </view>
 
@@ -61,6 +69,67 @@
                             </view>
                         </view>
                     </scroll-view>
+                </view>
+
+                <!-- 选购产品信息预览 -->
+                <view class="card preview-card">
+                    <text class="card-inner-title">选购产品信息</text>
+                    <view class="preview-list">
+                        <view class="preview-product" v-for="(item, index) in quoteData" :key="index">
+                            <view class="preview-product-header">
+                                <view class="product-index-badge">
+                                    <text class="product-index-num">{{ index + 1 }}</text>
+                                </view>
+                                <text class="product-name">{{ item.productName }}</text>
+                                <view class="product-series-tag" v-if="item.productSeries">
+                                    <text>{{ item.productSeries }}</text>
+                                </view>
+                            </view>
+
+                            <view class="preview-detail-grid">
+                                <view class="detail-cell">
+                                    <text class="detail-label">规格</text>
+                                    <text class="detail-value">DN{{ item.model }}</text>
+                                </view>
+                                <view class="detail-cell">
+                                    <text class="detail-label">产品类型</text>
+                                    <text class="detail-value">{{ item.productType }}</text>
+                                </view>
+                                <view class="detail-cell">
+                                    <text class="detail-label">阀体材质</text>
+                                    <text class="detail-value">{{ item.bodyMaterial }}</text>
+                                </view>
+                                <view class="detail-cell">
+                                    <text class="detail-label">闸板材质</text>
+                                    <text class="detail-value">{{ item.gateMaterial }}</text>
+                                </view>
+                                <view class="detail-cell">
+                                    <text class="detail-label">阀杆材质</text>
+                                    <text class="detail-value">{{ item.stemMaterial }}</text>
+                                </view>
+                                <view class="detail-cell" v-if="item.yokeMaterial">
+                                    <text class="detail-label">支架材质</text>
+                                    <text class="detail-value">{{ item.yokeMaterial }}</text>
+                                </view>
+                            </view>
+
+                            <view class="preview-product-footer">
+                                <view class="footer-left">
+                                    <text class="footer-qty">× {{ item.quantity }} 件</text>
+                                    <text class="footer-branding" v-if="item.hasBranding">磨标 ¥{{ item.brandingFee }}/件</text>
+                                </view>
+                                <view class="footer-right">
+                                    <text class="footer-unit">¥{{ item.unitPrice }}/件</text>
+                                    <text class="footer-total">¥{{ item.totalPrice }}</text>
+                                </view>
+                            </view>
+                        </view>
+                    </view>
+
+                    <view class="preview-summary-bar">
+                        <text class="summary-label">合计金额</text>
+                        <text class="summary-value">¥{{ totalAmount }}</text>
+                    </view>
                 </view>
 
                 <view class="card">
@@ -123,7 +192,7 @@
 
 <script>
 import navigationBar from '@/components/navigation-bar/navigation-bar';
-import { quotationApi } from '@/utils/api.js';
+import { quotationApi, priceApi } from '@/utils/cloud-api.js';
 
 export default {
     components: {
@@ -139,28 +208,45 @@ export default {
             packaging: '木箱包装。可以提供产品使用说明，产品材质报告，产品检测报告。',
             quoter: '童惠业',
             quoterPhone: '13957713583',
-            validity: '15天'
+            validity: '15天',
+            salespersons: [],
+            salespersonOptions: [],
+            selectedSalesperson: {},
+            customers: [],
+            customerOptions: [],
+            selectedCustomer: {}
         };
+    },
+    computed: {
+        totalAmount() {
+            const total = this.quoteData.reduce((sum, item) => sum + parseFloat(item.totalPrice || 0), 0);
+            return total.toFixed(2);
+        }
     },
     onLoad(options) {
         if (options.data) {
             const quoteData = JSON.parse(decodeURIComponent(options.data));
             const formattedData = quoteData.map((item) => ({
-                productType: '气动刀闸阀',
+                productType: item.productType || '常规品',
                 productName: item.productName || item.valveName,
                 model: item.model || item.spec || '',
-                material: 'WCB',
-                seal: 'W',
+                bodyMaterial: item.bodyMaterial || 'WCB',
                 gateMaterial: item.gatePlate,
                 stemMaterial: item.rodMaterial,
+                yokeMaterial: item.yokeMaterial || '',
+                seal: 'W',
                 quantity: item.quantity || 1,
                 unitPrice: String(item.unitPrice || '0'),
                 totalPrice: String(item.totalPrice || '0'),
-                brandingFee: item.brandingFee || 0
+                brandingFee: item.brandingFee || 0,
+                hasBranding: item.hasBranding || false,
+                productSeries: item.productSeries || ''
             }));
             this.quoteData = formattedData;
         }
         this.currentDate = this.formatDate(new Date());
+        this.loadSalespersons();
+        this.loadCustomers();
     },
     onShareAppMessage() {
         return {
@@ -178,6 +264,39 @@ export default {
 
         // 输入框双向绑定函数（统一采用Vue直接赋值模式，拒绝混合setData导致的错误）
         onCustomerNameInput(e) { this.customerName = e.detail.value; },
+
+        async loadSalespersons() {
+            try {
+                const result = await priceApi.getSalespersons();
+                this.salespersons = result.data || [];
+                this.salespersonOptions = this.salespersons.map(item => item.name);
+            } catch (error) {
+                console.error('加载报价员失败:', error);
+            }
+        },
+
+        async loadCustomers() {
+            try {
+                const result = await priceApi.getCustomers();
+                this.customers = result.data || [];
+                this.customerOptions = this.customers.map(item => item.name);
+            } catch (error) {
+                console.error('加载客户失败:', error);
+            }
+        },
+
+        onSalespersonChange(e) {
+            const index = e.detail.value;
+            this.selectedSalesperson = this.salespersons[index] || {};
+            this.quoter = this.selectedSalesperson.name || '';
+            this.quoterPhone = this.selectedSalesperson.phone || '';
+        },
+
+        onCustomerChange(e) {
+            const index = e.detail.value;
+            this.selectedCustomer = this.customers[index] || {};
+            this.customerName = this.selectedCustomer.name || '';
+        },
         onNoteInput(e) { this.note = e.detail.value; },
         onPaymentMethodInput(e) { this.paymentMethod = e.detail.value; },
         onPackagingInput(e) { this.packaging = e.detail.value; },
@@ -193,6 +312,9 @@ export default {
         async saveQuotationToDatabase() {
             const quotationData = {
                 customerName: this.customerName,
+                customerId: this.selectedCustomer.id || null,
+                salespersonName: this.selectedSalesperson.name || '',
+                salespersonId: this.selectedSalesperson.id || null,
                 note: this.note,
                 paymentMethod: this.paymentMethod,
                 packaging: this.packaging,
@@ -335,6 +457,15 @@ export default {
                     ctx.fillText('报 价 单', 375, y + 24);
                     ctx.setTextAlign('left');
                     y += 60 * scale;
+
+                    // 报价员
+                    ctx.setFontSize(15);
+                    ctx.setFillStyle('#475569');
+                    ctx.fillText('报价员：', 30, y);
+                    ctx.setFontSize(15);
+                    ctx.setFillStyle('#0d1526');
+                    ctx.fillText(this.selectedSalesperson.name || '未指定报价员', 110, y);
+                    y += 35 * scale;
 
                     // 客户名称
                     ctx.setFontSize(15);
@@ -673,6 +804,20 @@ page {
     line-height: 84rpx;
 }
 
+.picker-input {
+    flex: 1;
+    width: 100%;
+    height: 84rpx;
+    line-height: 84rpx;
+    font-size: 28rpx;
+    color: #0d1526;
+    padding: 0 24rpx;
+    border: 1rpx solid #cbd5e1;
+    border-radius: 12rpx;
+    background-color: #f8fafc;
+    box-sizing: border-box;
+}
+
 /* 核心修复：多行备注流体容器隔离区 */
 .textarea-box {
     display: block;
@@ -789,6 +934,177 @@ page {
 .text-total-price {
     color: #dc2626;
     font-weight: 700;
+}
+
+/* ---- 选购产品信息预览 ---- */
+.preview-card {
+    padding-bottom: 0;
+}
+
+.preview-list {
+    margin: 0 -30rpx;
+}
+
+.preview-product {
+    padding: 24rpx 30rpx;
+    border-bottom: 1rpx solid #f1f5f9;
+    background-color: #ffffff;
+}
+
+.preview-product:last-child {
+    border-bottom: none;
+}
+
+.preview-product-header {
+    display: flex;
+    align-items: center;
+    gap: 16rpx;
+    margin-bottom: 20rpx;
+}
+
+.product-index-badge {
+    width: 40rpx;
+    height: 40rpx;
+    border-radius: 8rpx;
+    background: linear-gradient(135deg, #0d1526 0%, #1e293b 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.product-index-num {
+    font-size: 22rpx;
+    font-weight: 700;
+    color: #c8aa6e;
+}
+
+.product-name {
+    flex: 1;
+    font-size: 28rpx;
+    font-weight: 700;
+    color: #0d1526;
+    line-height: 1.3;
+}
+
+.product-series-tag {
+    padding: 4rpx 16rpx;
+    background-color: #f0f6ff;
+    border-radius: 6rpx;
+    border: 1rpx solid #c5d8f5;
+    flex-shrink: 0;
+}
+
+.product-series-tag text {
+    font-size: 20rpx;
+    color: #1a6ec7;
+    font-weight: 600;
+}
+
+.preview-detail-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    margin-bottom: 20rpx;
+    background-color: #f8fafc;
+    border-radius: 12rpx;
+    border: 1rpx solid #edf1f8;
+    overflow: hidden;
+}
+
+.detail-cell {
+    width: 33.33%;
+    padding: 16rpx 20rpx;
+    box-sizing: border-box;
+    border-right: 1rpx solid #edf1f8;
+    border-bottom: 1rpx solid #edf1f8;
+}
+
+.detail-cell:nth-child(3n) {
+    border-right: none;
+}
+
+.detail-label {
+    display: block;
+    font-size: 20rpx;
+    color: #94a3b8;
+    font-weight: 500;
+    margin-bottom: 6rpx;
+    letter-spacing: 1rpx;
+}
+
+.detail-value {
+    display: block;
+    font-size: 24rpx;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.preview-product-footer {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+}
+
+.footer-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4rpx;
+}
+
+.footer-qty {
+    font-size: 24rpx;
+    color: #475569;
+    font-weight: 600;
+}
+
+.footer-branding {
+    font-size: 20rpx;
+    color: #c8aa6e;
+    font-weight: 500;
+}
+
+.footer-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4rpx;
+}
+
+.footer-unit {
+    font-size: 22rpx;
+    color: #94a3b8;
+}
+
+.footer-total {
+    font-size: 32rpx;
+    font-weight: 700;
+    color: #dc2626;
+    letter-spacing: -0.5rpx;
+}
+
+.preview-summary-bar {
+    margin: 0 -30rpx;
+    padding: 28rpx 30rpx;
+    background: linear-gradient(135deg, #0d1526 0%, #1e293b 100%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 0 0 20rpx 20rpx;
+}
+
+.summary-label {
+    font-size: 24rpx;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.55);
+    letter-spacing: 3rpx;
+}
+
+.summary-value {
+    font-size: 40rpx;
+    font-weight: 700;
+    color: #c8aa6e;
+    letter-spacing: -1rpx;
 }
 
 /* 按钮操作系统组 */

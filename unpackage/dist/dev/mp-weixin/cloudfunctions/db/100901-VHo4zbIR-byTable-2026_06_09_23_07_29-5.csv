@@ -1,0 +1,2 @@
+﻿"id","username","password","nickname","email","phone","role","status","created_at","updated_at","_openid"
+"2","admin","$2a$06$eBYsyXprAKbLiWX6Gxf7i.gcSF2qLngdbCTzNkGcfTAoLud4U1VmS","系统管理员","","","admin","active","2026-06-09 22:46:17","NULL","admin"

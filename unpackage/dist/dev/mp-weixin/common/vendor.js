@@ -9558,9 +9558,9 @@ internalMixin(Vue);
 
 /***/ }),
 /* 26 */
-/*!*********************************************!*\
-  !*** D:/Code/famen_minip_uni(1)/pages.json ***!
-  \*********************************************/
+/*!**********************************************!*\
+  !*** D:/Code/famen_minip_uni_new/pages.json ***!
+  \**********************************************/
 /*! no static exports found */
 /***/ (function(module, exports) {
 
@@ -9704,9 +9704,9 @@ function normalizeComponent (
 
 /***/ }),
 /* 33 */
-/*!*****************************************************************!*\
-  !*** D:/Code/famen_minip_uni(1)/uni_modules/zp-mixins/index.js ***!
-  \*****************************************************************/
+/*!******************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/index.js ***!
+  \******************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -9752,9 +9752,9 @@ exports.default = _default;
 
 /***/ }),
 /* 34 */
-/*!***********************************************************************************!*\
-  !*** D:/Code/famen_minip_uni(1)/uni_modules/zp-mixins/lifecycle/pageLifetimes.js ***!
-  \***********************************************************************************/
+/*!************************************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/lifecycle/pageLifetimes.js ***!
+  \************************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -9799,9 +9799,9 @@ exports.pageLifetimes = pageLifetimes;
 
 /***/ }),
 /* 35 */
-/*!*************************************************************************!*\
-  !*** D:/Code/famen_minip_uni(1)/uni_modules/zp-mixins/methods/clone.js ***!
-  \*************************************************************************/
+/*!**************************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/clone.js ***!
+  \**************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -9825,9 +9825,9 @@ function clone(target) {
 
 /***/ }),
 /* 36 */
-/*!***************************************************************************!*\
-  !*** D:/Code/famen_minip_uni(1)/uni_modules/zp-mixins/methods/dataset.js ***!
-  \***************************************************************************/
+/*!****************************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/dataset.js ***!
+  \****************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -9863,9 +9863,9 @@ function handleDataset(event) {
 
 /***/ }),
 /* 37 */
-/*!**************************************************************************!*\
-  !*** D:/Code/famen_minip_uni(1)/uni_modules/zp-mixins/methods/escape.js ***!
-  \**************************************************************************/
+/*!***************************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/escape.js ***!
+  \***************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -9915,9 +9915,9 @@ function html2Escape(sHtml) {
 
 /***/ }),
 /* 38 */
-/*!*************************************************************************!*\
-  !*** D:/Code/famen_minip_uni(1)/uni_modules/zp-mixins/methods/event.js ***!
-  \*************************************************************************/
+/*!**************************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/event.js ***!
+  \**************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -9941,9 +9941,9 @@ function parseEventDynamicCode(e, exp) {
 
 /***/ }),
 /* 39 */
-/*!*****************************************************************************!*\
-  !*** D:/Code/famen_minip_uni(1)/uni_modules/zp-mixins/methods/getTabBar.js ***!
-  \*****************************************************************************/
+/*!******************************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/getTabBar.js ***!
+  \******************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -9976,9 +9976,9 @@ function getTabBar() {
 
 /***/ }),
 /* 40 */
-/*!****************************************************************************!*\
-  !*** D:/Code/famen_minip_uni(1)/uni_modules/zp-mixins/methods/relation.js ***!
-  \****************************************************************************/
+/*!*****************************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/relation.js ***!
+  \*****************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -10002,9 +10002,9 @@ function getRelationNodes(name) {
 
 /***/ }),
 /* 41 */
-/*!***********************************************************************************!*\
-  !*** D:/Code/famen_minip_uni(1)/uni_modules/zp-mixins/methods/selectComponent.js ***!
-  \***********************************************************************************/
+/*!************************************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/selectComponent.js ***!
+  \************************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -10220,9 +10220,9 @@ function selectAllComponents(args) {
 
 /***/ }),
 /* 42 */
-/*!***************************************************************************!*\
-  !*** D:/Code/famen_minip_uni(1)/uni_modules/zp-mixins/methods/setData.js ***!
-  \***************************************************************************/
+/*!****************************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/setData.js ***!
+  \****************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -10326,9 +10326,9 @@ function setData(obj) {
 
 /***/ }),
 /* 43 */
-/*!**********************************************************************!*\
-  !*** D:/Code/famen_minip_uni(1)/uni_modules/zp-mixins/utils/_set.js ***!
-  \**********************************************************************/
+/*!***********************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/utils/_set.js ***!
+  \***********************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -10370,9 +10370,9 @@ exports.default = _default;
 
 /***/ }),
 /* 44 */
-/*!**************************************************************************!*\
-  !*** D:/Code/famen_minip_uni(1)/uni_modules/zp-mixins/utils/debounce.js ***!
-  \**************************************************************************/
+/*!***************************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/utils/debounce.js ***!
+  \***************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -10408,15 +10408,7 @@ exports.default = _default;
 /* 48 */,
 /* 49 */,
 /* 50 */,
-/* 51 */,
-/* 52 */,
-/* 53 */,
-/* 54 */,
-/* 55 */,
-/* 56 */,
-/* 57 */,
-/* 58 */,
-/* 59 */
+/* 51 */
 /*!************************************************************************************************!*\
   !*** ./node_modules/@dcloudio/vue-cli-plugin-uni/packages/@babel/runtime/regenerator/index.js ***!
   \************************************************************************************************/
@@ -10425,11 +10417,11 @@ exports.default = _default;
 
 // TODO(Babel 8): Remove this file.
 
-var runtime = __webpack_require__(/*! @babel/runtime/helpers/regeneratorRuntime */ 60)();
+var runtime = __webpack_require__(/*! @babel/runtime/helpers/regeneratorRuntime */ 52)();
 module.exports = runtime;
 
 /***/ }),
-/* 60 */
+/* 52 */
 /*!*******************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/regeneratorRuntime.js ***!
   \*******************************************************************/
@@ -10750,7 +10742,7 @@ function _regeneratorRuntime() {
 module.exports = _regeneratorRuntime, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
 /***/ }),
-/* 61 */
+/* 53 */
 /*!*****************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/asyncToGenerator.js ***!
   \*****************************************************************/
@@ -10790,80 +10782,152 @@ function _asyncToGenerator(fn) {
 module.exports = _asyncToGenerator, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
 /***/ }),
-/* 62 */
-/*!***********************************************!*\
-  !*** D:/Code/famen_minip_uni(1)/utils/api.js ***!
-  \***********************************************/
+/* 54 */
+/*!******************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/utils/cloud-api.js ***!
+  \******************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(uni) {
+/* WEBPACK VAR INJECTION */(function(wx, uni) {
 
+var _interopRequireDefault = __webpack_require__(/*! @babel/runtime/helpers/interopRequireDefault */ 4);
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.quotationApi = exports.priceApi = exports.default = void 0;
-// API配置
-var BASE_URL = 'http://localhost:3000/api';
-
-// 请求封装
-function request(url) {
-  var method = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'GET';
-  var data = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-  return new Promise(function (resolve, reject) {
-    var options = {
-      url: BASE_URL + url,
-      method: method,
-      header: {
-        'Content-Type': 'application/json'
-      },
-      success: function success(res) {
-        if (res.statusCode >= 200 && res.statusCode < 300) {
-          resolve(res.data);
-        } else {
-          reject(new Error(res.data.message || '请求失败'));
+exports.userApi = exports.storage = exports.quotationApi = exports.priceApi = exports.default = void 0;
+var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/regenerator */ 51));
+var _defineProperty2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/defineProperty */ 11));
+var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/asyncToGenerator */ 53));
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { (0, _defineProperty2.default)(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+// 微信云开发 API 封装
+// 替换原来的 HTTP 请求为云函数调用
+// 调用云函数的通用封装
+function callCloudFunction(_x, _x2) {
+  return _callCloudFunction.apply(this, arguments);
+} // 调用云函数并返回完整结果（用于需要message等额外字段的场景）
+function _callCloudFunction() {
+  _callCloudFunction = (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3(name, data) {
+    var result;
+    return _regenerator.default.wrap(function _callee3$(_context3) {
+      while (1) {
+        switch (_context3.prev = _context3.next) {
+          case 0:
+            _context3.prev = 0;
+            _context3.next = 3;
+            return wx.cloud.callFunction({
+              name: name,
+              data: data
+            });
+          case 3:
+            result = _context3.sent;
+            if (!result.result.success) {
+              _context3.next = 8;
+              break;
+            }
+            return _context3.abrupt("return", result.result.data);
+          case 8:
+            throw new Error(result.result.message || '请求失败');
+          case 9:
+            _context3.next = 15;
+            break;
+          case 11:
+            _context3.prev = 11;
+            _context3.t0 = _context3["catch"](0);
+            console.error('云函数调用失败 [' + name + ']:', _context3.t0);
+            throw _context3.t0;
+          case 15:
+          case "end":
+            return _context3.stop();
         }
-      },
-      fail: function fail(err) {
-        reject(err);
       }
-    };
-    if (data && (method === 'POST' || method === 'PUT')) {
-      options.data = data;
-    }
-    uni.request(options);
-  });
+    }, _callee3, null, [[0, 11]]);
+  }));
+  return _callCloudFunction.apply(this, arguments);
 }
-
-// 报价相关API
+function callCloudFunctionRaw(_x3, _x4) {
+  return _callCloudFunctionRaw.apply(this, arguments);
+} // 报价相关API
+function _callCloudFunctionRaw() {
+  _callCloudFunctionRaw = (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee4(name, data) {
+    var result;
+    return _regenerator.default.wrap(function _callee4$(_context4) {
+      while (1) {
+        switch (_context4.prev = _context4.next) {
+          case 0:
+            _context4.prev = 0;
+            _context4.next = 3;
+            return wx.cloud.callFunction({
+              name: name,
+              data: data
+            });
+          case 3:
+            result = _context4.sent;
+            return _context4.abrupt("return", result.result);
+          case 7:
+            _context4.prev = 7;
+            _context4.t0 = _context4["catch"](0);
+            console.error('云函数调用失败 [' + name + ']:', _context4.t0);
+            throw _context4.t0;
+          case 11:
+          case "end":
+            return _context4.stop();
+        }
+      }
+    }, _callee4, null, [[0, 7]]);
+  }));
+  return _callCloudFunctionRaw.apply(this, arguments);
+}
 var quotationApi = {
   // 创建报价单
   create: function create(data) {
-    return request('/quotations', 'POST', data);
+    return callCloudFunction('quotation', {
+      action: 'createQuotation',
+      customerName: data.customerName,
+      note: data.note,
+      paymentMethod: data.paymentMethod,
+      packaging: data.packaging,
+      quoter: data.quoter,
+      quoterPhone: data.quoterPhone,
+      validity: data.validity,
+      items: data.items
+    });
   },
   // 获取报价单列表
   getList: function getList() {
     var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
     var limit = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 10;
     var status = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-    var url = "/quotations?page=".concat(page, "&limit=").concat(limit);
-    if (status) {
-      url += "&status=".concat(status);
-    }
-    return request(url);
+    var params = {
+      action: 'getQuotationList',
+      page: page,
+      limit: limit
+    };
+    if (status) params.status = status;
+    return callCloudFunction('quotation', params);
   },
   // 获取报价单详情
   getDetail: function getDetail(id) {
-    return request("/quotations/".concat(id));
+    return callCloudFunction('quotation', {
+      action: 'getQuotationDetail',
+      id: id
+    });
   },
   // 更新报价单
   update: function update(id, data) {
-    return request("/quotations/".concat(id), 'PUT', data);
+    return callCloudFunction('quotation', _objectSpread({
+      action: 'updateQuotation',
+      id: id
+    }, data));
   },
   // 删除报价单
   delete: function _delete(id) {
-    return request("/quotations/".concat(id), 'DELETE');
+    return callCloudFunction('quotation', {
+      action: 'deleteQuotation',
+      id: id
+    });
   }
 };
 
@@ -10873,45 +10937,220 @@ var priceApi = {
   // 获取价格数据
   getPrices: function getPrices() {
     var series = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
-    var url = '/quotations/prices';
-    if (series) {
-      url += "?series=".concat(encodeURIComponent(series));
-    }
-    return request(url);
+    var params = {
+      action: 'getPrices'
+    };
+    if (series) params.series = series;
+    return callCloudFunction('price', params);
+  },
+  // 获取产品图片（云存储临时链接）
+  getImages: function getImages() {
+    return callCloudFunction('images');
   },
   // 获取所有产品系列
   getSeries: function getSeries() {
-    return request('/quotations/series');
+    return callCloudFunction('price', {
+      action: 'getAllSeries'
+    });
   },
   // 获取所有阀门型号
   getModels: function getModels() {
-    return request('/quotations/models');
+    return callCloudFunction('price', {
+      action: 'getAllModels'
+    });
   },
   // 根据系列名称获取阀门型号
   getModelsBySeries: function getModelsBySeries(seriesName) {
-    return request("/quotations/series/".concat(encodeURIComponent(seriesName), "/models"));
-  },
-  // 导入价格数据（base64）
-  importBase64: function importBase64(fileData, fileName) {
-    return request('/quotations/import/base64', 'POST', {
-      fileData: fileData,
-      fileName: fileName
+    return callCloudFunction('price', {
+      action: 'getModelsBySeries',
+      seriesName: seriesName
     });
   },
-  // 确认导入
-  confirmImport: function confirmImport(data) {
-    return request('/quotations/import/confirm', 'POST', {
-      data: data
+  // 获取报价系数规则
+  getPricingRules: function getPricingRules() {
+    return callCloudFunctionRaw('price', {
+      action: 'getPricingRules'
+    });
+  },
+  // 获取所有材质数据
+  getMaterials: function getMaterials(seriesName) {
+    return callCloudFunctionRaw('price', {
+      action: 'getMaterials',
+      seriesName: seriesName
+    });
+  },
+  // 根据型号ID获取材质
+  getMaterialByModel: function getMaterialByModel(modelId) {
+    return callCloudFunctionRaw('price', {
+      action: 'getMaterialByModel',
+      modelId: modelId
+    });
+  },
+  // 获取材质价差数据
+  getMaterialDiffs: function getMaterialDiffs(seriesName) {
+    return callCloudFunctionRaw('price', {
+      action: 'getMaterialDiffs',
+      seriesName: seriesName
+    });
+  },
+  // 获取单个材质价差
+  getMaterialDiff: function getMaterialDiff(seriesName, partName, baseMaterial, targetMaterial, dn) {
+    return callCloudFunctionRaw('price', {
+      action: 'getMaterialDiff',
+      seriesName: seriesName,
+      partName: partName,
+      baseMaterial: baseMaterial,
+      targetMaterial: targetMaterial,
+      dn: dn
+    });
+  },
+  // 获取所有可用材质列表
+  getAllMaterials: function getAllMaterials() {
+    return callCloudFunctionRaw('price', {
+      action: 'getAllMaterials'
+    });
+  },
+  // 获取模板下载链接
+  getTemplateUrl: function getTemplateUrl() {
+    return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
+      return _regenerator.default.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              return _context.abrupt("return", callCloudFunction('template'));
+            case 1:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee);
+    }))();
+  },
+  // 获取材质库模板下载链接
+  getMaterialLibraryTemplateUrl: function getMaterialLibraryTemplateUrl() {
+    return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
+      return _regenerator.default.wrap(function _callee2$(_context2) {
+        while (1) {
+          switch (_context2.prev = _context2.next) {
+            case 0:
+              return _context2.abrupt("return", callCloudFunction('template', {
+                action: 'materialLibrary'
+              }));
+            case 1:
+            case "end":
+              return _context2.stop();
+          }
+        }
+      }, _callee2);
+    }))();
+  },
+  // 获取营销员列表
+  getSalespersons: function getSalespersons() {
+    return callCloudFunctionRaw('price', {
+      action: 'getSalespersons'
+    });
+  },
+  // 获取客户列表
+  getCustomers: function getCustomers() {
+    var salespersonId = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+    var params = {
+      action: 'getCustomers'
+    };
+    if (salespersonId) params.salespersonId = salespersonId;
+    return callCloudFunctionRaw('price', params);
+  }
+};
+
+// 用户相关API
+exports.priceApi = priceApi;
+var userApi = {
+  // 用户登录
+  login: function login(username, password) {
+    return callCloudFunction('user', {
+      action: 'login',
+      username: username,
+      password: password
+    });
+  },
+  // 用户注册
+  register: function register(username, password, nickname, email, phone) {
+    return callCloudFunction('user', {
+      action: 'register',
+      username: username,
+      password: password,
+      nickname: nickname,
+      email: email,
+      phone: phone
+    });
+  },
+  // 获取用户信息
+  getProfile: function getProfile(id) {
+    return callCloudFunction('user', {
+      action: 'getProfile',
+      id: id
+    });
+  },
+  // 获取所有用户
+  getAllUsers: function getAllUsers() {
+    return callCloudFunction('user', {
+      action: 'getAllUsers'
+    });
+  },
+  // 更新用户信息
+  update: function update(id, data) {
+    return callCloudFunction('user', _objectSpread({
+      action: 'updateUser',
+      id: id
+    }, data));
+  },
+  // 修改密码
+  changePassword: function changePassword(id, oldPassword, newPassword) {
+    return callCloudFunction('user', {
+      action: 'changePassword',
+      id: id,
+      oldPassword: oldPassword,
+      newPassword: newPassword
+    });
+  },
+  // 删除用户
+  delete: function _delete(id) {
+    return callCloudFunction('user', {
+      action: 'deleteUser',
+      id: id
     });
   }
 };
-exports.priceApi = priceApi;
+
+// 本地存储工具
+exports.userApi = userApi;
+var storage = {
+  // 保存用户信息
+  saveUser: function saveUser(user) {
+    uni.setStorageSync('user', JSON.stringify(user));
+  },
+  // 获取用户信息
+  getUser: function getUser() {
+    var user = uni.getStorageSync('user');
+    return user ? JSON.parse(user) : null;
+  },
+  // 删除用户信息
+  removeUser: function removeUser() {
+    uni.removeStorageSync('user');
+  },
+  // 检查是否登录
+  isLoggedIn: function isLoggedIn() {
+    return !!this.getUser();
+  }
+};
+exports.storage = storage;
 var _default = {
   quotation: quotationApi,
-  price: priceApi
+  price: priceApi,
+  user: userApi,
+  storage: storage
 };
 exports.default = _default;
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/wx.js */ 1)["default"], __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))
 
 /***/ })
 ]]);

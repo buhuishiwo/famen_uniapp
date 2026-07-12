@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "openapi": []
+  },
+  "triggers": [],
+  "timeout": 120,
+  "envVariables": {},
+  "runtime": "Nodejs16.13",
+  "installDependency": true
+}

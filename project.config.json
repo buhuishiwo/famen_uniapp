@@ -30,6 +30,7 @@
     "include": []
   },
   "appid": "wxc06cc3bfcb2c6858",
+  "cloudfunctionRoot": "cloudfunctions/",
   "editorSetting": {},
   "libVersion": "3.13.2"
 }

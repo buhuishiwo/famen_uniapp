@@ -1,0 +1,231 @@
+@charset "UTF-8";
+/**
+ * 这里是uni-app内置的常用样式变量
+ *
+ * uni-app 官方扩展插件及插件市场（https://ext.dcloud.net.cn）上很多三方插件均使用了这些样式变量
+ * 如果你是插件开发者，建议你使用scss预处理，并在插件代码中直接使用这些变量（无需 import 这个文件），方便用户通过搭积木的方式开发整体风格一致的App
+ *
+ */
+/**
+ * 如果你是App开发者（插件使用者），你可以通过修改这些变量来定制自己的插件主题，实现自定义主题功能
+ *
+ * 如果你的项目同样使用了scss预处理，你也可以直接在你的 scss 代码中使用如下变量，同时无需 import 这个文件
+ */
+/* 颜色变量 */
+/* 行为相关颜色 */
+/* 文字基本颜色 */
+/* 背景颜色 */
+/* 边框颜色 */
+/* 尺寸变量 */
+/* 文字尺寸 */
+/* 图片尺寸 */
+/* Border Radius */
+/* 水平间距 */
+/* 垂直间距 */
+/* 透明度 */
+/* 文章场景相关 */
+/* 工业深蓝钢铁风格 - 与index页面一致 */
+.page-root {
+  min-height: 100vh;
+  background-color: #eef1f6;
+  font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
+}
+.scroll-wrap {
+  height: calc(100vh - 88rpx);
+}
+.login-container {
+  padding: 40rpx 32rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+/* Logo区域 */
+.logo-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 50rpx;
+  margin-top: 20rpx;
+}
+.logo-icon {
+  width: 140rpx;
+  height: 140rpx;
+  background: linear-gradient(135deg, #1a2236 0%, #0d1526 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 70rpx;
+  box-shadow: 0 10rpx 30rpx rgba(13, 21, 38, 0.3);
+  margin-bottom: 24rpx;
+}
+.logo-title {
+  font-size: 42rpx;
+  font-weight: 700;
+  color: #1a2236;
+  letter-spacing: 2rpx;
+  margin-bottom: 8rpx;
+}
+.logo-subtitle {
+  font-size: 22rpx;
+  color: #8a97aa;
+  letter-spacing: 4rpx;
+}
+/* 表单卡片 */
+.form-card {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 16rpx;
+  box-shadow: 0 4rpx 20rpx rgba(13, 21, 38, 0.08);
+  border: 1rpx solid #edf1f8;
+  overflow: hidden;
+}
+.form-header {
+  display: flex;
+  align-items: center;
+  padding: 32rpx 32rpx 24rpx;
+  border-bottom: 1rpx solid #edf1f8;
+}
+.header-line {
+  width: 8rpx;
+  height: 32rpx;
+  background: linear-gradient(180deg, #c8aa6e 0%, #e8cc88 100%);
+  border-radius: 4rpx;
+  margin-right: 16rpx;
+}
+.header-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1a2236;
+  letter-spacing: 2rpx;
+}
+.form-body {
+  padding: 32rpx;
+}
+/* 输入框组 */
+.input-group {
+  margin-bottom: 28rpx;
+}
+.input-label {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+.label-icon {
+  font-size: 28rpx;
+  margin-right: 10rpx;
+}
+.label-text {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #4a5568;
+}
+.input-wrapper {
+  background: #f8fafc;
+  border: 2rpx solid #e2e8f0;
+  border-radius: 12rpx;
+  padding: 0 24rpx;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  transition: all 0.25s ease;
+}
+.input-wrapper.active {
+  border-color: #c8aa6e;
+  background: #ffffff;
+  box-shadow: 0 0 0 4rpx rgba(200, 170, 110, 0.1);
+}
+.input-field {
+  flex: 1;
+  height: 100%;
+  font-size: 30rpx;
+  color: #1a2236;
+}
+.placeholder {
+  color: #a0aec0;
+}
+.error-text {
+  display: block;
+  color: #e53e3e;
+  font-size: 24rpx;
+  margin-top: 8rpx;
+  padding-left: 4rpx;
+}
+/* 记住登录 */
+.remember-row {
+  margin-bottom: 32rpx;
+}
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+}
+.checkbox {
+  width: 36rpx;
+  height: 36rpx;
+  border: 2rpx solid #cbd5e1;
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12rpx;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+.checkbox.checked {
+  background: #c8aa6e;
+  border-color: #c8aa6e;
+}
+.check-mark {
+  color: #ffffff;
+  font-size: 22rpx;
+  font-weight: bold;
+}
+.checkbox-label {
+  font-size: 26rpx;
+  color: #64748b;
+}
+/* 登录按钮 */
+.login-button {
+  width: 100%;
+  height: 96rpx;
+  background: linear-gradient(135deg, #1a2236 0%, #0d1526 100%);
+  border: none;
+  border-radius: 12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6rpx 20rpx rgba(13, 21, 38, 0.25);
+}
+.login-button.disabled {
+  background: #cbd5e1;
+  box-shadow: none;
+}
+.button-text {
+  color: #ffffff;
+  font-size: 32rpx;
+  font-weight: 600;
+  letter-spacing: 4rpx;
+}
+/* 提示信息 */
+.tips-section {
+  margin-top: 24rpx;
+  text-align: center;
+}
+.tips-text {
+  font-size: 24rpx;
+  color: #a0aec0;
+  background: #f8fafc;
+  padding: 12rpx 24rpx;
+  border-radius: 8rpx;
+  display: inline-block;
+}
+/* 底部信息 */
+.footer-section {
+  margin-top: 50rpx;
+  text-align: center;
+}
+.footer-text {
+  font-size: 24rpx;
+  color: #a0aec0;
+  letter-spacing: 1rpx;
+}

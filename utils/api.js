@@ -1,5 +1,5 @@
 // API配置
-const BASE_URL = 'http://localhost:3000/api';
+const BASE_URL = 'https://wzyaoyao.com/api/v2';
 
 // 请求封装
 function request(url, method = 'GET', data = null) {
@@ -99,7 +99,61 @@ export const priceApi = {
     }
 };
 
+// 用户相关API
+export const userApi = {
+    // 用户登录
+    login(username, password) {
+        return request('/users/login', 'POST', { username, password });
+    },
+
+    // 用户注册
+    register(username, password, nickname, email, phone) {
+        return request('/users/register', 'POST', { username, password, nickname, email, phone });
+    },
+
+    // 获取用户信息
+    getProfile(id) {
+        return request(`/users/profile/${id}`);
+    },
+
+    // 更新用户信息
+    update(id, data) {
+        return request(`/users/${id}`, 'PUT', data);
+    },
+
+    // 修改密码
+    changePassword(id, oldPassword, newPassword) {
+        return request(`/users/${id}/password`, 'PUT', { oldPassword, newPassword });
+    }
+};
+
+// 本地存储工具
+export const storage = {
+    // 保存用户信息
+    saveUser(user) {
+        uni.setStorageSync('user', JSON.stringify(user));
+    },
+
+    // 获取用户信息
+    getUser() {
+        const user = uni.getStorageSync('user');
+        return user ? JSON.parse(user) : null;
+    },
+
+    // 删除用户信息
+    removeUser() {
+        uni.removeStorageSync('user');
+    },
+
+    // 检查是否登录
+    isLoggedIn() {
+        return !!this.getUser();
+    }
+};
+
 export default {
     quotation: quotationApi,
-    price: priceApi
+    price: priceApi,
+    user: userApi,
+    storage
 };

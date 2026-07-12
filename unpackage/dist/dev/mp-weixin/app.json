@@ -3,7 +3,7 @@
     "pages/product-category/product-category",
     "pages/index/index",
     "pages/quotation/quotation",
-    "pages/upload-price/upload-price"
+    "pages/login/login"
   ],
   "subPackages": [],
   "window": {

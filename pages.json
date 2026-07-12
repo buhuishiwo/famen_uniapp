@@ -25,11 +25,10 @@
 			}
 		},
 		{
-			"path": "pages/upload-price/upload-price",
+			"path": "pages/login/login",
 			"style": {
-				"usingComponents": {
-					"navigation-bar": "/components/navigation-bar/navigation-bar"
-				}
+				"navigationBarTitleText": "登录",
+				"navigationStyle": "custom"
 			}
 		}
 	],

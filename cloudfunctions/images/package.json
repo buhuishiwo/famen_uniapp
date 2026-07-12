@@ -1,0 +1,9 @@
+{
+  "name": "images",
+  "version": "1.0.0",
+  "description": "Product images cloud function",
+  "main": "index.js",
+  "dependencies": {
+    "@cloudbase/node-sdk": "latest"
+  }
+}

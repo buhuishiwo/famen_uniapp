@@ -74,58 +74,25 @@
 
             <view class="bottom-safe"></view>
 
-            <!-- 价格库管理入口 -->
-            <view class="manage-section">
-                <view class="manage-card" @tap="onManageClick">
-                    <view class="manage-icon">📊</view>
-                    <view class="manage-content">
-                        <text class="manage-title">价格库管理</text>
-                        <text class="manage-desc">上传Excel更新价格数据</text>
-                    </view>
-                    <text class="manage-arrow">›</text>
-                </view>
-            </view>
-
         </scroll-view>
     </view>
 </template>
 
 <script>
 import navigationBar from '@/components/navigation-bar/navigation-bar';
+import { priceApi } from '@/utils/cloud-api';
 
 export default {
     components: { navigationBar },
     data() {
         return {
             searchKeyword: '',
-            products: [
-                { name: 'QB系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186da26271b.webp' },
-                { name: 'QC系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186d9f109a1.webp' },
-                { name: 'QCA系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186da04e311.webp' },
-                { name: 'QCB系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186da17ea99.webp' },
-                { name: 'QCG系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186da08e694.webp' },
-                { name: 'QD系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186dc060b51.webp' },
-                { name: 'QH系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186dc172172.webp' },
-                { name: 'QJ系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186dc05cd8b.webp' },
-                { name: 'QMB系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186dc33af6f.webp' },
-                { name: 'QMC系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186dc30996a.webp' },
-                { name: 'QMDY系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186de3398d7.webp' },
-                { name: 'QMG系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186de305045.webp' },
-                { name: 'QP系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186de3556f8.webp' },
-                { name: 'QS系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186de50918b.webp' },
-                { name: 'QU系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186de572bef.webp' },
-                { name: 'QUP系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186e0153854.webp' },
-                { name: 'QV系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186e01a528f.webp' },
-                { name: 'QVY系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186e01d2e47.webp' },
-                { name: 'QW系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186e027164e.webp' },
-                { name: 'QWF系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186e02ef6bb.webp' },
-                { name: 'QWL系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186e1c4f4e4.webp' },
-                { name: 'QWLY系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186e1ba340d.webp' },
-                { name: 'QWY系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186e1d85d30.webp' },
-                { name: 'QY系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186e1d27628.webp' },
-                { name: 'QYA系列', image: 'https://picui.ogmua.cn/s1/2026/05/29/6a186e1d4cf8b.webp' }
-            ]
+            loading: true,
+            products: []
         };
+    },
+    onLoad() {
+        this.loadData();
     },
     computed: {
         filteredProducts() {
@@ -136,12 +103,24 @@ export default {
         }
     },
     methods: {
+        async loadData() {
+            this.loading = true;
+            try {
+                const seriesList = await priceApi.getSeries();
+                this.products = seriesList.map(item => ({
+                    name: item.name,
+                    image: item.image || ''
+                }));
+            } catch (e) {
+                console.error('加载产品系列失败:', e);
+                uni.showToast({ title: '加载失败', icon: 'none' });
+            } finally {
+                this.loading = false;
+            }
+        },
         onProductClick(product) {
             uni.setStorageSync('currentProductSeries', product.name);
             uni.navigateTo({ url: '/pages/index/index' });
-        },
-        onManageClick() {
-            uni.navigateTo({ url: '/pages/upload-price/upload-price' });
         }
     }
 };
@@ -407,59 +386,4 @@ export default {
 
 /* ---- 底部安全 ---- */
 .bottom-safe { height: 60rpx; }
-
-/* ---- 价格库管理入口 ---- */
-.manage-section {
-    padding: 0 26rpx 26rpx;
-}
-
-.manage-card {
-    background: linear-gradient(135deg, #0d1526 0%, #1e293b 100%);
-    border-radius: 16rpx;
-    padding: 24rpx;
-    display: flex;
-    align-items: center;
-    gap: 20rpx;
-    box-shadow: 0 4rpx 20rpx rgba(13, 21, 38, 0.25);
-    border: 1rpx solid rgba(255,255,255,0.08);
-}
-
-.manage-card:active {
-    opacity: 0.9;
-}
-
-.manage-icon {
-    width: 64rpx;
-    height: 64rpx;
-    background: rgba(200,170,110,0.15);
-    border-radius: 14rpx;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 32rpx;
-}
-
-.manage-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 6rpx;
-}
-
-.manage-title {
-    font-size: 28rpx;
-    font-weight: 700;
-    color: #ffffff;
-}
-
-.manage-desc {
-    font-size: 22rpx;
-    color: rgba(255,255,255,0.5);
-}
-
-.manage-arrow {
-    font-size: 32rpx;
-    color: rgba(255,255,255,0.4);
-    font-weight: 300;
-}
 </style>
