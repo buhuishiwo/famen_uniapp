@@ -367,7 +367,7 @@ export default {
                         console.log('[index] priceData[' + i + ']: valve=' +
                             this.priceData[i].valveName + ' size=' + this.priceData[i].size +
                             ' minOrderQty=' + this.priceData[i].minOrderQty +
-                            ' manualPrice=' + this.priceData[i].manualPrice);
+                            ' price=' + this.priceData[i].price);
                     }
                 }
                 const materialsRes = await priceApi.getMaterials(seriesName);
@@ -716,22 +716,7 @@ export default {
             }
         },
         getPriceByType(priceItem, type) {
-            // 策略1：用阀门名称中的中文关键词判断
-            const name = (priceItem.valveName || '');
-            if (name.includes('气动') || name.includes('双作用气缸')) return priceItem.pneumaticPrice || 0;
-            if (name.includes('电装') || name.includes('电动')) return priceItem.electricPrice || 0;
-            if (name.includes('伞齿轮')) return priceItem.gearPrice || 0;
-            if (name.includes('手动')) return priceItem.manualPrice || 0;
-
-            // 策略2：用 type_code 中的数字编码判断（57=伞齿轮, 67=气动, 97=电装）
-            const t = (type || '').toLowerCase();
-            if (t.includes('gear') || t.includes('57')) return priceItem.gearPrice || 0;
-            if (t.includes('pneumatic') || t.includes('67')) return priceItem.pneumaticPrice || 0;
-            if (t.includes('electric') || t.includes('97')) return priceItem.electricPrice || 0;
-            if (t.includes('manual') || t.includes('noelectric')) return priceItem.manualPrice || 0;
-
-            // 策略3：兜底 — 返回第一个非零的价格字段
-            return priceItem.gearPrice || priceItem.pneumaticPrice || priceItem.electricPrice || priceItem.manualPrice || 0;
+            return priceItem.price || 0;
         },
         calculatePrice() {
             const { selectedValve, selectedSpec, selectedGatePlate, selectedRodMaterial, selectedYokeMaterial, quantity, selectedProductType } = this;

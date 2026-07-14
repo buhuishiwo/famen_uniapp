@@ -41,7 +41,7 @@
       </a-table>
     </a-card>
 
-    <a-modal :title="modalTitle" :open="showModal" @cancel="showModal = false" :maskClosable="false">
+    <DraggableModal :title="modalTitle" :open="showModal" @cancel="showModal = false" :maskClosable="false">
       <a-form :model="form" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
         <a-form-item label="所属系列" required>
           <a-select v-model:value="form.seriesName" placeholder="请选择系列">
@@ -54,7 +54,7 @@
           <a-input v-model:value="form.name" placeholder="请输入型号名称" />
         </a-form-item>
         <a-form-item label="类型编码">
-          <a-input v-model:value="form.typeCode" placeholder="请输入类型编码" />
+          <a-input v-model:value="form.typeCode" placeholder="自动生成" :disabled="true" />
         </a-form-item>
       </a-form>
       <template #footer>
@@ -65,15 +65,16 @@
           <a-button type="primary" @click="handleOk(true)" v-if="!editId">添加并继续</a-button>
         </a-space>
       </template>
-    </a-modal>
+    </DraggableModal>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { PlusOutlined } from '@ant-design/icons-vue';
 import { modelApi, seriesApi } from '../../api';
 import { message, Modal } from 'ant-design-vue';
+import DraggableModal from '../../components/DraggableModal.vue';
 
 const { confirm } = Modal;
 
@@ -98,6 +99,10 @@ const skeletonData = computed(() => {
 });
 
 const modalTitle = ref('新增型号');
+
+watch(() => form.value.name, (newName) => {
+  form.value.typeCode = newName ? newName.replace(/-/g, '') : '';
+});
 
 onMounted(() => {
   loadSeries();
@@ -141,7 +146,7 @@ function edit(record) {
   form.value = { 
     seriesName: record.seriesName, 
     name: record.name, 
-    typeCode: record.type 
+    typeCode: record.name ? record.name.replace(/-/g, '') : '' 
   };
   modalTitle.value = '编辑型号';
   showModal.value = true;

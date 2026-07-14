@@ -181,12 +181,8 @@ async function createPrice(event) {
     _openid: 'admin',
     model_id: model[0].id,
     size: data.size,
-    manual_price: data.manualPrice || 0,
-    pneumatic_price: data.pneumaticPrice || 0,
-    electric_price: data.electricPrice || 0,
-    gear_price: data.gearPrice || 0,
+    price: data.price || 0,
     branding_fee: data.brandingFee || 0,
-    min_order_qty: data.minOrderQty || 50,
     status: data.status || 'enabled',
     remark: data.remark || '',
     created_at: new Date(),
@@ -211,12 +207,8 @@ async function updatePrice(event) {
   }
   
   if (data.size !== undefined) updateData.size = data.size;
-  if (data.manualPrice !== undefined) updateData.manual_price = data.manualPrice;
-  if (data.pneumaticPrice !== undefined) updateData.pneumatic_price = data.pneumaticPrice;
-  if (data.electricPrice !== undefined) updateData.electric_price = data.electricPrice;
-  if (data.gearPrice !== undefined) updateData.gear_price = data.gearPrice;
+  if (data.price !== undefined) updateData.price = data.price;
   if (data.brandingFee !== undefined) updateData.branding_fee = data.brandingFee;
-  if (data.minOrderQty !== undefined) updateData.min_order_qty = data.minOrderQty;
   if (data.status !== undefined) updateData.status = data.status;
   if (data.remark !== undefined) updateData.remark = data.remark;
   

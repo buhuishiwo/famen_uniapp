@@ -58,8 +58,8 @@
               <template v-if="column.key === 'size'">
                 DN{{ record.size }}
               </template>
-              <template v-if="column.key === 'manualPrice'">
-                ¥{{ record.manualPrice }}
+              <template v-if="column.key === 'price'">
+                ¥{{ record.price }}
               </template>
               <template v-if="column.key === 'status'">
                 <a-tag :color="record.status === 'enabled' ? 'green' : 'red'">
@@ -118,7 +118,7 @@ const priceColumns = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
   { title: '阀门型号', dataIndex: 'valveName', key: 'valveName' },
   { title: '规格', dataIndex: 'size', key: 'size', width: 100 },
-  { title: '手动价格', dataIndex: 'manualPrice', key: 'manualPrice', width: 120 },
+  { title: '价格', dataIndex: 'price', key: 'price', width: 120 },
   { title: '状态', dataIndex: 'status', key: 'status', width: 100 }
 ];
 

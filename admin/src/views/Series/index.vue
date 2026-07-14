@@ -46,7 +46,7 @@
       </a-table>
     </a-card>
 
-    <a-modal :title="modalTitle" :open="showModal" @cancel="showModal = false" :maskClosable="false">
+    <DraggableModal :title="modalTitle" :open="showModal" @cancel="showModal = false" :maskClosable="false">
       <a-form :model="form" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
         <a-form-item label="系列名称" required>
           <a-input v-model:value="form.name" placeholder="请输入系列名称" />
@@ -73,7 +73,7 @@
           <a-button type="primary" @click="handleOk(true)" v-if="!editId">添加并继续</a-button>
         </a-space>
       </template>
-    </a-modal>
+    </DraggableModal>
   </div>
 </template>
 
@@ -82,6 +82,7 @@ import { ref, computed, onMounted } from 'vue';
 import { PlusOutlined, UploadOutlined } from '@ant-design/icons-vue';
 import { seriesApi, uploadFile, getFileUrl } from '../../api';
 import { message, Modal } from 'ant-design-vue';
+import DraggableModal from '../../components/DraggableModal.vue';
 
 const { confirm } = Modal;
 

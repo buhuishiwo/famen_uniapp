@@ -625,12 +625,9 @@ async function confirmPriceImport(event) {
     function setIfNotNull(target, key, val) {
       if (val !== null && val !== undefined) target[key] = val;
     }
-    setIfNotNull(priceData, 'manual_price', item.manualPrice);
-    setIfNotNull(priceData, 'pneumatic_price', item.pneumaticPrice);
-    setIfNotNull(priceData, 'electric_price', item.electricPrice);
-    setIfNotNull(priceData, 'gear_price', item.gearPrice);
+    const priceVal = item.price || item.manualPrice || item.pneumaticPrice || item.electricPrice || item.gearPrice || 0;
+    setIfNotNull(priceData, 'price', priceVal);
     setIfNotNull(priceData, 'branding_fee', item.brandingFee);
-    setIfNotNull(priceData, 'min_order_qty', item.minOrderQty);
     setIfNotNull(priceData, 'status', item.status);
     setIfNotNull(priceData, 'remark', item.remark);
 
@@ -826,12 +823,9 @@ async function confirmIntegratedImport(event) {
       function setIfNotNull(target, key, val) {
         if (val !== null && val !== undefined) target[key] = val;
       }
-      setIfNotNull(priceData, 'manual_price', item.manualPrice);
-      setIfNotNull(priceData, 'pneumatic_price', item.pneumaticPrice);
-      setIfNotNull(priceData, 'electric_price', item.electricPrice);
-      setIfNotNull(priceData, 'gear_price', item.gearPrice);
+      const priceVal = item.price || item.manualPrice || item.pneumaticPrice || item.electricPrice || item.gearPrice || 0;
+      setIfNotNull(priceData, 'price', priceVal);
       setIfNotNull(priceData, 'branding_fee', item.brandingFee);
-      setIfNotNull(priceData, 'min_order_qty', item.minOrderQty);
       setIfNotNull(priceData, 'status', item.status);
       setIfNotNull(priceData, 'remark', item.remark);
 

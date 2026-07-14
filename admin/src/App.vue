@@ -27,13 +27,13 @@
             <DollarOutlined />
             <span>价格管理</span>
           </a-menu-item>
-          <a-menu-item key="material">
-            <BgColorsOutlined />
-            <span>材质配置</span>
-          </a-menu-item>
           <a-menu-item key="coefficient">
             <PercentageOutlined />
             <span>报价系数</span>
+          </a-menu-item>
+          <a-menu-item key="material">
+            <BgColorsOutlined />
+            <span>材质配置</span>
           </a-menu-item>
           <a-menu-item key="material-diff">
             <SwapOutlined />

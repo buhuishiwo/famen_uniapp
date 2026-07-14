@@ -5,9 +5,14 @@
         <span class="page-title">报价系数管理</span>
       </template>
       <template #extra>
-        <a-button type="primary" @click="showModal = true">
-          <PlusOutlined /> 新增系数规则
-        </a-button>
+        <a-space>
+          <a-button type="primary" @click="showModal = true">
+            <PlusOutlined /> 新增系数规则
+          </a-button>
+          <a-button type="default" @click="showBrandingFeeModal = true">
+            批量设置磨标费
+          </a-button>
+        </a-space>
       </template>
       <template v-if="loading">
         <a-table :columns="columns" :data-source="skeletonData" :pagination="false" rowKey="key" size="middle" :scroll="{ x: 1100 }">
@@ -39,7 +44,7 @@
       </a-table>
     </a-card>
 
-    <a-modal :title="modalTitle" :open="showModal" @cancel="showModal = false" :maskClosable="false" width="620px">
+    <DraggableModal :title="modalTitle" :open="showModal" @cancel="showModal = false" :maskClosable="false" width="620px">
       <a-form :model="form" :label-col="{ span: 7 }" :wrapper-col="{ span: 17 }">
         <a-form-item label="产品系列" required>
           <a-select v-model:value="form.seriesName" placeholder="请选择系列" style="width: 100%">
@@ -111,7 +116,41 @@
           <a-button type="dashed" @click="handleApplyToAll" v-if="!editId">应用到所有系列</a-button>
         </a-space>
       </template>
-    </a-modal>
+    </DraggableModal>
+
+    <DraggableModal title="批量设置磨标费" :open="showBrandingFeeModal" @cancel="showBrandingFeeModal = false" :maskClosable="false" width="520px">
+      <a-form :model="brandingFeeForm" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
+        <a-form-item label="产品系列">
+          <a-select v-model:value="brandingFeeForm.seriesName" placeholder="不填则应用到所有系列" style="width: 100%" @change="onBrandingSeriesChange">
+            <a-select-option v-for="s in seriesList" :key="s.name" :value="s.name">
+              {{ s.name }}
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item label="DN起" required>
+              <a-input-number v-model:value="brandingFeeForm.dnMin" :min="0" :placeholder="'如 50'" style="width: 100%" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="DN止" required>
+              <a-input-number v-model:value="brandingFeeForm.dnMax" :min="0" :placeholder="'如 150'" style="width: 100%" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-form-item label="磨标费" required>
+          <a-input-number v-model:value="brandingFeeForm.brandingFee" :min="0" :step="1" :precision="0" :placeholder="'如 25'" style="width: 100%" />
+        </a-form-item>
+        <a-alert type="warning" :showIcon="true" message="此操作将批量更新指定DN范围的产品磨标费，请谨慎操作！" :closable="false" style="margin-top: 16px;" />
+      </a-form>
+      <template #footer>
+        <a-space>
+          <a-button @click="showBrandingFeeModal = false">取消</a-button>
+          <a-button type="primary" @click="handleBatchSetBrandingFee">确认设置</a-button>
+        </a-space>
+      </template>
+    </DraggableModal>
   </div>
 </template>
 
@@ -120,6 +159,7 @@ import { ref, computed, onMounted } from 'vue';
 import { PlusOutlined } from '@ant-design/icons-vue';
 import { coefficientApi, seriesApi } from '../../api';
 import { message, Modal } from 'ant-design-vue';
+import DraggableModal from '../../components/DraggableModal.vue';
 
 const { confirm } = Modal;
 
@@ -139,6 +179,13 @@ const form = ref({
 });
 const editId = ref(null);
 const loading = ref(true);
+const showBrandingFeeModal = ref(false);
+const brandingFeeForm = ref({
+  seriesName: '',
+  dnMin: 50,
+  dnMax: 150,
+  brandingFee: 0
+});
 
 const columns = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
@@ -296,6 +343,60 @@ async function handleApplyToAll() {
         };
         editId.value = null;
         loadData();
+      } catch (e) {
+        message.error('操作失败');
+      }
+    }
+  });
+}
+
+function onBrandingSeriesChange(value) {
+  brandingFeeForm.value.seriesName = value;
+}
+
+async function handleBatchSetBrandingFee() {
+  if (brandingFeeForm.value.dnMin === undefined || brandingFeeForm.value.dnMin === null) {
+    message.warning('请输入DN起始值');
+    return;
+  }
+  if (brandingFeeForm.value.dnMax === undefined || brandingFeeForm.value.dnMax === null) {
+    message.warning('请输入DN终止值');
+    return;
+  }
+  if (brandingFeeForm.value.brandingFee === undefined || brandingFeeForm.value.brandingFee === null) {
+    message.warning('请输入磨标费');
+    return;
+  }
+  if (brandingFeeForm.value.dnMin > brandingFeeForm.value.dnMax) {
+    message.warning('DN起始值不能大于终止值');
+    return;
+  }
+  
+  const targetSeries = brandingFeeForm.value.seriesName || '所有系列';
+  const dnRange = `DN${brandingFeeForm.value.dnMin} - DN${brandingFeeForm.value.dnMax}`;
+  
+  confirm({
+    title: '确认批量设置磨标费',
+    content: `此操作将把"${targetSeries}"下${dnRange}范围内的产品磨标费设置为 ${brandingFeeForm.value.brandingFee} 元。是否继续？`,
+    okText: '确定',
+    cancelText: '取消',
+    okType: 'danger',
+    async onOk() {
+      try {
+        const result = await coefficientApi.batchSetBrandingFee({
+          seriesName: brandingFeeForm.value.seriesName,
+          dnMin: brandingFeeForm.value.dnMin,
+          dnMax: brandingFeeForm.value.dnMax,
+          brandingFee: brandingFeeForm.value.brandingFee
+        });
+        message.success(result.message || '设置成功');
+        showBrandingFeeModal.value = false;
+        brandingFeeForm.value = {
+          seriesName: '',
+          dnMin: 50,
+          dnMax: 150,
+          brandingFee: 0
+        };
       } catch (e) {
         message.error('操作失败');
       }

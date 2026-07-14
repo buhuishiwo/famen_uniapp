@@ -46,7 +46,20 @@ async function calcItemPrice(item) {
   // 查询系数规则
   const coeff = await getPricingCoefficient(seriesName, item.valveName, item.spec, item.quantity, item.branding);
 
-  const minQty = p.min_order_qty || 1;
+  // 从报价系数规则获取起订量
+  let minQty = 50;
+  try {
+    const { data: rules } = await rdb.from('pricing_rules')
+      .select('min_order_qty')
+      .eq('series_name', seriesName)
+      .lte('dn_min', item.spec)
+      .gte('dn_max', item.spec);
+    if (rules && rules.length > 0) {
+      minQty = Number(rules[0].min_order_qty) || 50;
+    }
+  } catch (e) {
+    minQty = 50;
+  }
   if (item.quantity < minQty) throw new Error('起订量不足，需要≥' + minQty);
 
   const basePrice = calcBasePrice(item, p);
@@ -92,11 +105,7 @@ async function getPricingCoefficient(seriesName, valveName, specSize, quantity, 
 }
 
 function getBasePrice(name, p) {
-  const n = name.toLowerCase();
-  if (n.includes('气动')) return Number(p.pneumatic_price) || 0;
-  if (n.includes('电装')) return Number(p.electric_price) || 0;
-  if (n.includes('伞齿轮')) return Number(p.gear_price) || 0;
-  return Number(p.manual_price) || 0;
+  return Number(p.price) || 0;
 }
 
 async function calcBatch(items) {

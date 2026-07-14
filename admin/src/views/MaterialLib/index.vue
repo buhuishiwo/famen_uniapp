@@ -46,7 +46,7 @@
       </a-table>
     </a-card>
 
-    <a-modal :title="modalTitle" :open="showModal" @cancel="showModal = false" :maskClosable="false">
+    <DraggableModal :title="modalTitle" :open="showModal" @cancel="showModal = false" :maskClosable="false">
       <a-form :model="form" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
         <a-form-item label="材质代码" required>
           <a-input v-model:value="form.materialCode" placeholder="如 SS304" />
@@ -79,7 +79,7 @@
           <a-button type="primary" @click="handleOk(true)" v-if="!editId">添加并继续</a-button>
         </a-space>
       </template>
-    </a-modal>
+    </DraggableModal>
   </div>
 </template>
 
@@ -88,6 +88,7 @@ import { ref, computed, onMounted } from 'vue';
 import { PlusOutlined } from '@ant-design/icons-vue';
 import { materialLibApi } from '../../api';
 import { message, Modal } from 'ant-design-vue';
+import DraggableModal from '../../components/DraggableModal.vue';
 
 const { confirm } = Modal;
 

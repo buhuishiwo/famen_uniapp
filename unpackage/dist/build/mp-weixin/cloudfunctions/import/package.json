@@ -1,0 +1,10 @@
+{
+  "name": "import",
+  "version": "1.0.0",
+  "description": "Excel import cloud function",
+  "main": "index.js",
+  "dependencies": {
+    "@cloudbase/node-sdk": "latest",
+    "xlsx": "^0.18.5"
+  }
+}

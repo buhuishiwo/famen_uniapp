@@ -62,6 +62,7 @@ exports.main = async (event, context) => {
       case 'updateCoefficient': return await updateCoefficient(event);
       case 'deleteCoefficient': return await deleteCoefficient(event);
       case 'applyCoefficientToAllSeries': return await applyCoefficientToAllSeries(event);
+      case 'batchSetBrandingFee': return await batchSetBrandingFee(event);
       case 'createMaterialDiff': return await createMaterialDiff(event);
       case 'updateMaterialDiff': return await updateMaterialDiff(event);
       case 'deleteMaterialDiff': return await deleteMaterialDiff(event);
@@ -93,24 +94,39 @@ exports.main = async (event, context) => {
   }
 };
 
+function getMinOrderQty(seriesName, size, rules) {
+  if (!rules || rules.length === 0) return 50;
+  for (const rule of rules) {
+    if (rule.series_name === seriesName) {
+      const dnMin = Number(rule.dn_min) || 0;
+      const dnMax = Number(rule.dn_max) || Infinity;
+      if (size >= dnMin && size <= dnMax) {
+        return Number(rule.min_order_qty) || 50;
+      }
+    }
+  }
+  return 50;
+}
+
 // 格式化价格行
-function mapPriceRow(p) {
+function mapPriceRow(p, rules) {
+  const seriesName = p.series_name || '';
+  const size = p.size;
+  const minOrderQty = getMinOrderQty(seriesName, size, rules);
+  
   return {
     id: p.id,
     modelId: p.model_id,
-    seriesName: p.series_name || '',
+    seriesName: seriesName,
     valveName: p.valve_name || '',
-    size: p.size,
-    manualPrice: Number(p.manual_price) || 0,
-    pneumaticPrice: Number(p.pneumatic_price) || 0,
-    electricPrice: Number(p.electric_price) || 0,
-    gearPrice: Number(p.gear_price) || 0,
+    size: size,
+    price: Number(p.price) || 0,
     gatePlate304Diff: Number(p.gate_304_diff) || 0,
     gatePlate316Diff: Number(p.gate_316_diff) || 0,
     rod304Diff: Number(p.rod_304_diff) || 0,
     rod316Diff: Number(p.rod_316_diff) || 0,
     brandingFee: Number(p.branding_fee) || 0,
-    minOrderQty: Number(p.min_order_qty) || 1,
+    minOrderQty: minOrderQty,
     status: p.status,
     remark: p.remark || '',
     createdAt: p.created_at
@@ -121,6 +137,8 @@ function mapPriceRow(p) {
 async function getPrices(event) {
   const { series } = event;
   try {
+    var pricingRules = await selectAll('pricing_rules', 'series_name,dn_min,dn_max,min_order_qty');
+    
     if (series) {
       // 先查系列ID
       const { data: seriesData, error: sErr } = await rdb.from('product_series').select('id').eq('name', series);
@@ -150,7 +168,7 @@ async function getPrices(event) {
             ...p,
             series_name: series,
             valve_name: model.name
-          }));
+          }, pricingRules));
         }
       }
       // 按型号名 + 规格排序
@@ -188,7 +206,7 @@ async function getPrices(event) {
             ...p,
             series_name: m ? (seriesMap[m.series_id] || '') : '',
             valve_name: m ? m.name : ''
-          });
+          }, pricingRules);
         })
       };
     }
@@ -630,9 +648,8 @@ async function createPrice(event) {
   if (!model || model.length === 0) return { success: false, message: '型号不存在' };
   const { error } = await rdb.from('price_table').insert({
     _openid: 'admin', model_id: model[0].id, size: data.size,
-    manual_price: data.manualPrice || 0, pneumatic_price: data.pneumaticPrice || 0,
-    electric_price: data.electricPrice || 0, gear_price: data.gearPrice || 0,
-    branding_fee: data.brandingFee || 0, min_order_qty: data.minOrderQty || 50,
+    price: data.price || 0,
+    branding_fee: data.brandingFee || 0,
     status: data.status || 'enabled', remark: data.remark || '',
     created_at: now(), updated_at: now()
   });
@@ -650,12 +667,8 @@ async function updatePrice(event) {
     updateData.model_id = model[0].id;
   }
   if (data.size !== undefined) updateData.size = data.size;
-  if (data.manualPrice !== undefined) updateData.manual_price = data.manualPrice;
-  if (data.pneumaticPrice !== undefined) updateData.pneumatic_price = data.pneumaticPrice;
-  if (data.electricPrice !== undefined) updateData.electric_price = data.electricPrice;
-  if (data.gearPrice !== undefined) updateData.gear_price = data.gearPrice;
+  if (data.price !== undefined) updateData.price = data.price;
   if (data.brandingFee !== undefined) updateData.branding_fee = data.brandingFee;
-  if (data.minOrderQty !== undefined) updateData.min_order_qty = data.minOrderQty;
   if (data.status !== undefined) updateData.status = data.status;
   if (data.remark !== undefined) updateData.remark = data.remark;
   const { error } = await rdb.from('price_table').update(updateData).eq('id', id);
@@ -799,6 +812,64 @@ async function applyCoefficientToAllSeries(event) {
       }
     }
     return { success: true, data: { created, updated, message: `已应用到所有系列，新增${created}条，更新${updated}条` }, message: `已应用到所有系列，新增${created}条，更新${updated}条` };
+  } catch (e) {
+    return { success: false, message: e.message };
+  }
+}
+
+async function batchSetBrandingFee(event) {
+  const { data } = event;
+  if (!data || data.brandingFee === undefined) return { success: false, message: '磨标费不能为空' };
+  try {
+    const { seriesName, brandingFee, dnMin, dnMax } = data;
+    
+    let modelIds = [];
+    if (seriesName) {
+      const { data: series, error: sErr } = await rdb.from('product_series').select('id').eq('name', seriesName);
+      if (sErr || !series || series.length === 0) return { success: false, message: '系列不存在' };
+      
+      const { data: models, error: mErr } = await rdb.from('valve_models').select('id').eq('series_id', series[0].id);
+      if (mErr) return { success: false, message: '查询型号失败' };
+      
+      modelIds = (models || []).map(m => m.id);
+      if (modelIds.length === 0) {
+        return { success: true, data: { updatedCount: 0 }, message: '该系列下没有型号，未更新任何记录' };
+      }
+    }
+    
+    const allPrices = await selectAll('price_table', 'id,model_id,size');
+    
+    const matchedIds = allPrices.filter(p => {
+      const size = Number(p.size) || 0;
+      const inDnRange = (dnMin === undefined || dnMin === null || size >= dnMin) &&
+                        (dnMax === undefined || dnMax === null || size <= dnMax);
+      const inModelIds = modelIds.length === 0 || modelIds.includes(p.model_id);
+      return inDnRange && inModelIds;
+    }).map(p => p.id);
+    
+    if (matchedIds.length === 0) {
+      return { success: true, data: { updatedCount: 0 }, message: '没有匹配的价格记录，未更新任何记录' };
+    }
+    
+    const batchSize = 20;
+    let updatedCount = 0;
+    
+    for (let i = 0; i < matchedIds.length; i += batchSize) {
+      const batch = matchedIds.slice(i, i + batchSize);
+      const promises = batch.map(pid => {
+        return rdb.from('price_table').update({
+          branding_fee: brandingFee,
+          updated_at: now()
+        }).eq('id', pid);
+      });
+      
+      const results = await Promise.all(promises);
+      results.forEach(res => {
+        if (!res.error) updatedCount++;
+      });
+    }
+    
+    return { success: true, data: { updatedCount }, message: `成功更新${updatedCount}条价格记录的磨标费` };
   } catch (e) {
     return { success: false, message: e.message };
   }
@@ -1109,7 +1180,7 @@ async function getDashboardStats() {
     const [seriesList, modelList, priceList, materialList, materialDiffList, coefficientList, salespersonList, customerList] = await Promise.all([
       selectAll('product_series', 'id,name'),
       selectAll('valve_models', 'id,series_id,name'),
-      selectAll('price_table', 'id,model_id,valve_name,size,manual_price,status,created_at'),
+      selectAll('price_table', 'id,model_id,valve_name,size,price,status,created_at'),
       selectAll('valve_model_materials', 'id,model_id,body_material'),
       selectAll('material_price_diffs', 'id,series_name,part_name'),
       selectAll('pricing_rules', 'id,series_name'),
@@ -1162,7 +1233,7 @@ async function getDashboardStats() {
         id: p.id,
         valveName: p.valve_name,
         size: p.size,
-        manualPrice: p.manual_price,
+        price: p.price,
         status: p.status
       }));
 

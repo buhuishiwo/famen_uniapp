@@ -4,6 +4,7 @@
   "description": "Price data queries cloud function",
   "main": "index.js",
   "dependencies": {
-    "@cloudbase/node-sdk": "latest"
+    "@cloudbase/node-sdk": "latest",
+    "ws": "^8.17.0"
   }
 }

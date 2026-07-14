@@ -163,6 +163,9 @@ export const coefficientApi = {
   },
   applyToAllSeries(data) {
     return callCloudFunction({ action: 'applyCoefficientToAllSeries', data });
+  },
+  batchSetBrandingFee(data) {
+    return callCloudFunction({ action: 'batchSetBrandingFee', data });
   }
 };
 

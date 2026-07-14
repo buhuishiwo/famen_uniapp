@@ -28,16 +28,14 @@
                 <view class="card">
                     <view class="info-row">
                         <text class="info-label">报价员</text>
-                        <picker mode="selector" :range="salespersonOptions" @change="onSalespersonChange">
-                            <view class="picker-input">{{ selectedSalesperson.name || '请选择报价员' }}</view>
-                        </picker>
+                        <input class="info-input" placeholder="请输入报价员姓名" placeholder-class="placeholder-style" @input="onSalespersonInput"
+                            :value="salesperson" />
                     </view>
                     <view class="divider-line"></view>
                     <view class="info-row">
                         <text class="info-label">客户名称</text>
-                        <picker mode="selector" :range="customerOptions" @change="onCustomerChange">
-                            <view class="picker-input">{{ selectedCustomer.name || '请选择客户' }}</view>
-                        </picker>
+                        <input class="info-input" placeholder="请输入客户名称" placeholder-class="placeholder-style" @input="onCustomerNameInput"
+                            :value="customerName" />
                     </view>
                 </view>
 
@@ -203,18 +201,14 @@ export default {
             quoteData: [],
             currentDate: '',
             customerName: '',
+            salesperson: '',
             note: '阀体WCB，闸板304，单向硬密封。硬密封不做试压会有一定的漏水；连接方式：对夹PN10，执行方式气动含双左右气缸+限位开关+两位五通电磁阀+过滤器。此价格含税不含运费',
             paymentMethod: '预定定金30%，付清余款发货。',
             packaging: '木箱包装。可以提供产品使用说明，产品材质报告，产品检测报告。',
             quoter: '童惠业',
             quoterPhone: '13957713583',
             validity: '15天',
-            salespersons: [],
-            salespersonOptions: [],
-            selectedSalesperson: {},
-            customers: [],
-            customerOptions: [],
-            selectedCustomer: {}
+
         };
     },
     computed: {
@@ -245,8 +239,6 @@ export default {
             this.quoteData = formattedData;
         }
         this.currentDate = this.formatDate(new Date());
-        this.loadSalespersons();
-        this.loadCustomers();
     },
     onShareAppMessage() {
         return {
@@ -264,39 +256,9 @@ export default {
 
         // 输入框双向绑定函数（统一采用Vue直接赋值模式，拒绝混合setData导致的错误）
         onCustomerNameInput(e) { this.customerName = e.detail.value; },
+        onSalespersonInput(e) { this.salesperson = e.detail.value; },
 
-        async loadSalespersons() {
-            try {
-                const result = await priceApi.getSalespersons();
-                this.salespersons = result.data || [];
-                this.salespersonOptions = this.salespersons.map(item => item.name);
-            } catch (error) {
-                console.error('加载报价员失败:', error);
-            }
-        },
 
-        async loadCustomers() {
-            try {
-                const result = await priceApi.getCustomers();
-                this.customers = result.data || [];
-                this.customerOptions = this.customers.map(item => item.name);
-            } catch (error) {
-                console.error('加载客户失败:', error);
-            }
-        },
-
-        onSalespersonChange(e) {
-            const index = e.detail.value;
-            this.selectedSalesperson = this.salespersons[index] || {};
-            this.quoter = this.selectedSalesperson.name || '';
-            this.quoterPhone = this.selectedSalesperson.phone || '';
-        },
-
-        onCustomerChange(e) {
-            const index = e.detail.value;
-            this.selectedCustomer = this.customers[index] || {};
-            this.customerName = this.selectedCustomer.name || '';
-        },
         onNoteInput(e) { this.note = e.detail.value; },
         onPaymentMethodInput(e) { this.paymentMethod = e.detail.value; },
         onPackagingInput(e) { this.packaging = e.detail.value; },
@@ -312,9 +274,6 @@ export default {
         async saveQuotationToDatabase() {
             const quotationData = {
                 customerName: this.customerName,
-                customerId: this.selectedCustomer.id || null,
-                salespersonName: this.selectedSalesperson.name || '',
-                salespersonId: this.selectedSalesperson.id || null,
                 note: this.note,
                 paymentMethod: this.paymentMethod,
                 packaging: this.packaging,
@@ -464,7 +423,7 @@ export default {
                     ctx.fillText('报价员：', 30, y);
                     ctx.setFontSize(15);
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(this.selectedSalesperson.name || '未指定报价员', 110, y);
+                    ctx.fillText(this.salesperson || '未指定报价员', 110, y);
                     y += 35 * scale;
 
                     // 客户名称

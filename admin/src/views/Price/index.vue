@@ -34,7 +34,7 @@
           <template v-if="column.key === 'size'">
             <span>DN{{ record.size }}</span>
           </template>
-          <template v-if="column.key === 'manualPrice' || column.key === 'pneumaticPrice' || column.key === 'electricPrice' || column.key === 'gearPrice' || column.key === 'brandingFee'">
+          <template v-if="column.key === 'price' || column.key === 'brandingFee'">
             <span>¥{{ record[column.dataIndex] }}</span>
           </template>
           <template v-if="column.key === 'status'">
@@ -52,7 +52,7 @@
       </a-table>
     </a-card>
 
-    <a-modal :title="modalTitle" :open="showModal" @cancel="showModal = false" :maskClosable="false" width="600px">
+    <DraggableModal :title="modalTitle" :open="showModal" @cancel="showModal = false" :maskClosable="false" width="600px">
       <a-form :model="form" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
         <a-form-item label="系列名称" required>
           <a-select v-model:value="form.seriesName" placeholder="请选择系列">
@@ -71,42 +71,12 @@
         <a-form-item label="规格DN" required>
           <a-input-number v-model:value="form.size" :min="1" style="width: 100%" />
         </a-form-item>
-        <a-row :gutter="16">
-          <a-col :span="12">
-            <a-form-item label="手动价格" :label-col="{ span: 12 }" :wrapper-col="{ span: 12 }">
-              <a-input-number v-model:value="form.manualPrice" :min="0" style="width: 100%" prefix="¥" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item label="气动价格" :label-col="{ span: 12 }" :wrapper-col="{ span: 12 }">
-              <a-input-number v-model:value="form.pneumaticPrice" :min="0" style="width: 100%" prefix="¥" />
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-row :gutter="16">
-          <a-col :span="12">
-            <a-form-item label="电装价格" :label-col="{ span: 12 }" :wrapper-col="{ span: 12 }">
-              <a-input-number v-model:value="form.electricPrice" :min="0" style="width: 100%" prefix="¥" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item label="伞齿轮价格" :label-col="{ span: 12 }" :wrapper-col="{ span: 12 }">
-              <a-input-number v-model:value="form.gearPrice" :min="0" style="width: 100%" prefix="¥" />
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-row :gutter="16">
-          <a-col :span="12">
-            <a-form-item label="磨标费" :label-col="{ span: 12 }" :wrapper-col="{ span: 12 }">
-              <a-input-number v-model:value="form.brandingFee" :min="0" style="width: 100%" prefix="¥" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item label="起订量" :label-col="{ span: 12 }" :wrapper-col="{ span: 12 }">
-              <a-input-number v-model:value="form.minOrderQty" :min="1" style="width: 100%" />
-            </a-form-item>
-          </a-col>
-        </a-row>
+        <a-form-item label="价格" required>
+          <a-input-number v-model:value="form.price" :min="0" style="width: 100%" prefix="¥" />
+        </a-form-item>
+        <a-form-item label="磨标费">
+          <a-input-number v-model:value="form.brandingFee" :min="0" style="width: 100%" prefix="¥" />
+        </a-form-item>
         <a-form-item label="状态">
           <a-select v-model:value="form.status">
             <a-select-option value="enabled">启用</a-select-option>
@@ -125,7 +95,7 @@
           <a-button type="primary" @click="handleOk(true)" v-if="!editId">添加并继续</a-button>
         </a-space>
       </template>
-    </a-modal>
+    </DraggableModal>
   </div>
 </template>
 
@@ -134,6 +104,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { PlusOutlined } from '@ant-design/icons-vue';
 import { priceApi, seriesApi, modelApi } from '../../api';
 import { message, Modal } from 'ant-design-vue';
+import DraggableModal from '../../components/DraggableModal.vue';
 
 const { confirm } = Modal;
 
@@ -146,12 +117,8 @@ const form = ref({
   seriesName: '',
   valveName: '',
   size: 50,
-  manualPrice: 0,
-  pneumaticPrice: 0,
-  electricPrice: 0,
-  gearPrice: 0,
+  price: 0,
   brandingFee: 0,
-  minOrderQty: 50,
   status: 'enabled',
   remark: ''
 });
@@ -163,10 +130,7 @@ const columns = [
   { title: '系列', dataIndex: 'seriesName', key: 'seriesName', width: 100 },
   { title: '型号', dataIndex: 'valveName', key: 'valveName', width: 140 },
   { title: '规格', dataIndex: 'size', key: 'size', width: 80 },
-  { title: '手动', dataIndex: 'manualPrice', key: 'manualPrice', width: 90 },
-  { title: '气动', dataIndex: 'pneumaticPrice', key: 'pneumaticPrice', width: 90 },
-  { title: '电装', dataIndex: 'electricPrice', key: 'electricPrice', width: 90 },
-  { title: '伞齿轮', dataIndex: 'gearPrice', key: 'gearPrice', width: 90 },
+  { title: '价格', dataIndex: 'price', key: 'price', width: 90 },
   { title: '磨标费', dataIndex: 'brandingFee', key: 'brandingFee', width: 80 },
   { title: '起订量', dataIndex: 'minOrderQty', key: 'minOrderQty', width: 80 },
   { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
@@ -250,12 +214,8 @@ function edit(record) {
     seriesName: record.seriesName,
     valveName: record.valveName,
     size: record.size,
-    manualPrice: record.manualPrice,
-    pneumaticPrice: record.pneumaticPrice,
-    electricPrice: record.electricPrice,
-    gearPrice: record.gearPrice,
+    price: record.price,
     brandingFee: record.brandingFee,
-    minOrderQty: record.minOrderQty,
     status: record.status,
     remark: record.remark || ''
   };
@@ -297,12 +257,8 @@ async function handleOk(continueAdd = false) {
         seriesName: '',
         valveName: '',
         size: 50,
-        manualPrice: 0,
-        pneumaticPrice: 0,
-        electricPrice: 0,
-        gearPrice: 0,
+        price: 0,
         brandingFee: 0,
-        minOrderQty: 50,
         status: 'enabled',
         remark: ''
       };
@@ -312,12 +268,8 @@ async function handleOk(continueAdd = false) {
         seriesName: form.value.seriesName,
         valveName: form.value.valveName,
         size: 50,
-        manualPrice: 0,
-        pneumaticPrice: 0,
-        electricPrice: 0,
-        gearPrice: 0,
+        price: 0,
         brandingFee: 0,
-        minOrderQty: 50,
         status: 'enabled',
         remark: ''
       };
