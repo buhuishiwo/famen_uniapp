@@ -14,6 +14,9 @@
           <a-button type="primary" @click="showModal = true">
             <PlusOutlined /> 新增价格
           </a-button>
+          <a-button type="default" @click="showMinOrderQtyModal = true">
+            批量设置起订量
+          </a-button>
         </a-space>
       </template>
       <template v-if="loading">
@@ -74,6 +77,9 @@
         <a-form-item label="价格" required>
           <a-input-number v-model:value="form.price" :min="0" style="width: 100%" prefix="¥" />
         </a-form-item>
+        <a-form-item label="起订量(MOQ)" required>
+          <a-input-number v-model:value="form.minOrderQty" :min="1" :placeholder="'最小起订数量'" style="width: 100%" />
+        </a-form-item>
         <a-form-item label="磨标费">
           <a-input-number v-model:value="form.brandingFee" :min="0" style="width: 100%" prefix="¥" />
         </a-form-item>
@@ -96,6 +102,40 @@
         </a-space>
       </template>
     </DraggableModal>
+
+    <DraggableModal title="批量设置起订量" :open="showMinOrderQtyModal" @cancel="showMinOrderQtyModal = false" :maskClosable="false" width="520px">
+      <a-form :model="minOrderQtyForm" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
+        <a-form-item label="产品系列">
+          <a-select v-model:value="minOrderQtyForm.seriesName" placeholder="不填则应用到所有系列" style="width: 100%">
+            <a-select-option v-for="s in seriesList" :key="s.name" :value="s.name">
+              {{ s.name }}
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item label="DN起" required>
+              <a-input-number v-model:value="minOrderQtyForm.dnMin" :min="0" :placeholder="'如 50'" style="width: 100%" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="DN止" required>
+              <a-input-number v-model:value="minOrderQtyForm.dnMax" :min="0" :placeholder="'如 150'" style="width: 100%" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-form-item label="起订量(MOQ)" required>
+          <a-input-number v-model:value="minOrderQtyForm.minOrderQty" :min="1" :placeholder="'最小起订数量'" style="width: 100%" />
+        </a-form-item>
+        <a-alert type="warning" :showIcon="true" message="此操作将批量更新指定DN范围的产品起订量，请谨慎操作！" :closable="false" style="margin-top: 16px;" />
+      </a-form>
+      <template #footer>
+        <a-space>
+          <a-button @click="showMinOrderQtyModal = false">取消</a-button>
+          <a-button type="primary" @click="handleBatchSetMinOrderQty">确认设置</a-button>
+        </a-space>
+      </template>
+    </DraggableModal>
   </div>
 </template>
 
@@ -113,14 +153,22 @@ const seriesList = ref([]);
 const modelList = ref([]);
 const selectedSeries = ref('');
 const showModal = ref(false);
+const showMinOrderQtyModal = ref(false);
 const form = ref({
   seriesName: '',
   valveName: '',
   size: 50,
   price: 0,
+  minOrderQty: 50,
   brandingFee: 0,
   status: 'enabled',
   remark: ''
+});
+const minOrderQtyForm = ref({
+  seriesName: '',
+  dnMin: 50,
+  dnMax: 150,
+  minOrderQty: 50
 });
 const editId = ref(null);
 const loading = ref(true);
@@ -215,6 +263,7 @@ function edit(record) {
     valveName: record.valveName,
     size: record.size,
     price: record.price,
+    minOrderQty: record.minOrderQty || 50,
     brandingFee: record.brandingFee,
     status: record.status,
     remark: record.remark || ''
@@ -278,5 +327,56 @@ async function handleOk(continueAdd = false) {
   } catch (e) {
     message.error('操作失败');
   }
+}
+
+async function handleBatchSetMinOrderQty() {
+  if (minOrderQtyForm.value.dnMin === undefined || minOrderQtyForm.value.dnMin === null) {
+    message.warning('请输入DN起始值');
+    return;
+  }
+  if (minOrderQtyForm.value.dnMax === undefined || minOrderQtyForm.value.dnMax === null) {
+    message.warning('请输入DN终止值');
+    return;
+  }
+  if (minOrderQtyForm.value.minOrderQty === undefined || minOrderQtyForm.value.minOrderQty === null) {
+    message.warning('请输入起订量');
+    return;
+  }
+  if (minOrderQtyForm.value.dnMin > minOrderQtyForm.value.dnMax) {
+    message.warning('DN起始值不能大于终止值');
+    return;
+  }
+  
+  const targetSeries = minOrderQtyForm.value.seriesName || '所有系列';
+  const dnRange = `DN${minOrderQtyForm.value.dnMin} - DN${minOrderQtyForm.value.dnMax}`;
+  
+  confirm({
+    title: '确认批量设置起订量',
+    content: `此操作将把"${targetSeries}"下${dnRange}范围内的产品起订量设置为 ${minOrderQtyForm.value.minOrderQty}。是否继续？`,
+    okText: '确定',
+    cancelText: '取消',
+    okType: 'danger',
+    async onOk() {
+      try {
+        const result = await priceApi.batchSetMinOrderQty({
+          seriesName: minOrderQtyForm.value.seriesName,
+          dnMin: minOrderQtyForm.value.dnMin,
+          dnMax: minOrderQtyForm.value.dnMax,
+          minOrderQty: minOrderQtyForm.value.minOrderQty
+        });
+        message.success(result.message || '设置成功');
+        showMinOrderQtyModal.value = false;
+        minOrderQtyForm.value = {
+          seriesName: '',
+          dnMin: 50,
+          dnMax: 150,
+          minOrderQty: 50
+        };
+        loadData();
+      } catch (e) {
+        message.error('操作失败');
+      }
+    }
+  });
 }
 </script>

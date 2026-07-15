@@ -46,20 +46,8 @@ async function calcItemPrice(item) {
   // 查询系数规则
   const coeff = await getPricingCoefficient(seriesName, item.valveName, item.spec, item.quantity, item.branding);
 
-  // 从报价系数规则获取起订量
-  let minQty = 50;
-  try {
-    const { data: rules } = await rdb.from('pricing_rules')
-      .select('min_order_qty')
-      .eq('series_name', seriesName)
-      .lte('dn_min', item.spec)
-      .gte('dn_max', item.spec);
-    if (rules && rules.length > 0) {
-      minQty = Number(rules[0].min_order_qty) || 50;
-    }
-  } catch (e) {
-    minQty = 50;
-  }
+  // 从价格表获取起订量
+  const minQty = Number(p.min_order_qty) || 50;
   if (item.quantity < minQty) throw new Error('起订量不足，需要≥' + minQty);
 
   const basePrice = calcBasePrice(item, p);

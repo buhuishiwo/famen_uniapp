@@ -182,6 +182,7 @@ async function createPrice(event) {
     model_id: model[0].id,
     size: data.size,
     price: data.price || 0,
+    min_order_qty: data.minOrderQty || 50,
     branding_fee: data.brandingFee || 0,
     status: data.status || 'enabled',
     remark: data.remark || '',
@@ -208,6 +209,7 @@ async function updatePrice(event) {
   
   if (data.size !== undefined) updateData.size = data.size;
   if (data.price !== undefined) updateData.price = data.price;
+  if (data.minOrderQty !== undefined) updateData.min_order_qty = data.minOrderQty;
   if (data.brandingFee !== undefined) updateData.branding_fee = data.brandingFee;
   if (data.status !== undefined) updateData.status = data.status;
   if (data.remark !== undefined) updateData.remark = data.remark;
@@ -309,7 +311,6 @@ async function createCoefficient(event) {
     product_name: data.productName || '',
     dn_min: data.dnMin || 50,
     dn_max: data.dnMax || 150,
-    min_order_qty: data.minOrderQty || 50,
     moq_met_oem_coeff: data.moqMetOemCoeff || 1.5,
     moq_met_original_coeff: data.moqMetOriginalCoeff || 1.2,
     moq_unmet_oem_coeff: data.moqUnmetOemCoeff || 2.0,
@@ -332,7 +333,6 @@ async function updateCoefficient(event) {
   if (data.productName !== undefined) updateData.product_name = data.productName;
   if (data.dnMin !== undefined) updateData.dn_min = data.dnMin;
   if (data.dnMax !== undefined) updateData.dn_max = data.dnMax;
-  if (data.minOrderQty !== undefined) updateData.min_order_qty = data.minOrderQty;
   if (data.moqMetOemCoeff !== undefined) updateData.moq_met_oem_coeff = data.moqMetOemCoeff;
   if (data.moqMetOriginalCoeff !== undefined) updateData.moq_met_original_coeff = data.moqMetOriginalCoeff;
   if (data.moqUnmetOemCoeff !== undefined) updateData.moq_unmet_oem_coeff = data.moqUnmetOemCoeff;

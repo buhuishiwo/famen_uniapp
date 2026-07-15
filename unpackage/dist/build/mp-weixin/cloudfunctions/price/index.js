@@ -33,6 +33,7 @@ exports.main = async (event, context) => {
   try {
     switch (action) {
       case 'getPrices':        return await getPrices(event);
+      case 'getAllPrices':     return await getAllPrices();
       case 'getAllSeries':     return await getAllSeries();
       case 'getAllModels':     return await getAllModels();
       case 'getModelsBySeries': return await getModelsBySeries(event);
@@ -63,6 +64,7 @@ exports.main = async (event, context) => {
       case 'deleteCoefficient': return await deleteCoefficient(event);
       case 'applyCoefficientToAllSeries': return await applyCoefficientToAllSeries(event);
       case 'batchSetBrandingFee': return await batchSetBrandingFee(event);
+      case 'batchSetMinOrderQty': return await batchSetMinOrderQty(event);
       case 'createMaterialDiff': return await createMaterialDiff(event);
       case 'updateMaterialDiff': return await updateMaterialDiff(event);
       case 'deleteMaterialDiff': return await deleteMaterialDiff(event);
@@ -94,25 +96,15 @@ exports.main = async (event, context) => {
   }
 };
 
-function getMinOrderQty(seriesName, size, rules) {
-  if (!rules || rules.length === 0) return 50;
-  for (const rule of rules) {
-    if (rule.series_name === seriesName) {
-      const dnMin = Number(rule.dn_min) || 0;
-      const dnMax = Number(rule.dn_max) || Infinity;
-      if (size >= dnMin && size <= dnMax) {
-        return Number(rule.min_order_qty) || 50;
-      }
-    }
-  }
-  return 50;
+function getMinOrderQty(priceItem) {
+  return Number(priceItem.min_order_qty) || 50;
 }
 
 // 格式化价格行
 function mapPriceRow(p, rules) {
   const seriesName = p.series_name || '';
   const size = p.size;
-  const minOrderQty = getMinOrderQty(seriesName, size, rules);
+  const minOrderQty = getMinOrderQty(p);
   
   return {
     id: p.id,
@@ -134,6 +126,10 @@ function mapPriceRow(p, rules) {
 }
 
 // 获取价格数据
+async function getAllPrices() {
+  return await getPrices({});
+}
+
 async function getPrices(event) {
   const { series } = event;
   try {
@@ -280,7 +276,6 @@ async function getPricingRules() {
           productName: r.product_name || '',
           dnMin: r.dn_min,
           dnMax: r.dn_max,
-          minOrderQty: r.min_order_qty,
           moqMetOemCoeff: Number(r.moq_met_oem_coeff),
           moqMetOriginalCoeff: Number(r.moq_met_original_coeff),
           moqUnmetOemCoeff: Number(r.moq_unmet_oem_coeff),
@@ -649,6 +644,7 @@ async function createPrice(event) {
   const { error } = await rdb.from('price_table').insert({
     _openid: 'admin', model_id: model[0].id, size: data.size,
     price: data.price || 0,
+    min_order_qty: data.minOrderQty || 50,
     branding_fee: data.brandingFee || 0,
     status: data.status || 'enabled', remark: data.remark || '',
     created_at: now(), updated_at: now()
@@ -668,6 +664,7 @@ async function updatePrice(event) {
   }
   if (data.size !== undefined) updateData.size = data.size;
   if (data.price !== undefined) updateData.price = data.price;
+  if (data.minOrderQty !== undefined) updateData.min_order_qty = data.minOrderQty;
   if (data.brandingFee !== undefined) updateData.branding_fee = data.brandingFee;
   if (data.status !== undefined) updateData.status = data.status;
   if (data.remark !== undefined) updateData.remark = data.remark;
@@ -734,7 +731,6 @@ async function createCoefficient(event) {
   const { error } = await rdb.from('pricing_rules').insert({
     _openid: 'admin', series_name: data.seriesName, product_name: data.productName || '',
     dn_min: data.dnMin || 50, dn_max: data.dnMax || 150,
-    min_order_qty: data.minOrderQty || 50,
     moq_met_oem_coeff: data.moqMetOemCoeff || 1.5, moq_met_original_coeff: data.moqMetOriginalCoeff || 1.2,
     moq_unmet_oem_coeff: data.moqUnmetOemCoeff || 2.0, moq_unmet_original_coeff: data.moqUnmetOriginalCoeff || 1.5,
     created_at: now(), updated_at: now()
@@ -751,7 +747,6 @@ async function updateCoefficient(event) {
   if (data.productName !== undefined) updateData.product_name = data.productName;
   if (data.dnMin !== undefined) updateData.dn_min = data.dnMin;
   if (data.dnMax !== undefined) updateData.dn_max = data.dnMax;
-  if (data.minOrderQty !== undefined) updateData.min_order_qty = data.minOrderQty;
   if (data.moqMetOemCoeff !== undefined) updateData.moq_met_oem_coeff = data.moqMetOemCoeff;
   if (data.moqMetOriginalCoeff !== undefined) updateData.moq_met_original_coeff = data.moqMetOriginalCoeff;
   if (data.moqUnmetOemCoeff !== undefined) updateData.moq_unmet_oem_coeff = data.moqUnmetOemCoeff;
@@ -774,7 +769,7 @@ async function applyCoefficientToAllSeries(event) {
   if (!data) return { success: false, message: '数据不能为空' };
   try {
     const seriesList = await selectAll('product_series', 'id,name');
-    const { dnMin, dnMax, minOrderQty, moqMetOemCoeff, moqMetOriginalCoeff, moqUnmetOemCoeff, moqUnmetOriginalCoeff } = data;
+    const { dnMin, dnMax, moqMetOemCoeff, moqMetOriginalCoeff, moqUnmetOemCoeff, moqUnmetOriginalCoeff } = data;
     let created = 0;
     let updated = 0;
     for (const series of seriesList) {
@@ -785,7 +780,6 @@ async function applyCoefficientToAllSeries(event) {
         .eq('dn_max', dnMax);
       if (existRows && existRows.length > 0) {
         await rdb.from('pricing_rules').update({
-          min_order_qty: minOrderQty,
           moq_met_oem_coeff: moqMetOemCoeff,
           moq_met_original_coeff: moqMetOriginalCoeff,
           moq_unmet_oem_coeff: moqUnmetOemCoeff,
@@ -800,7 +794,6 @@ async function applyCoefficientToAllSeries(event) {
           product_name: '',
           dn_min: dnMin,
           dn_max: dnMax,
-          min_order_qty: minOrderQty,
           moq_met_oem_coeff: moqMetOemCoeff,
           moq_met_original_coeff: moqMetOriginalCoeff,
           moq_unmet_oem_coeff: moqUnmetOemCoeff,
@@ -870,6 +863,64 @@ async function batchSetBrandingFee(event) {
     }
     
     return { success: true, data: { updatedCount }, message: `成功更新${updatedCount}条价格记录的磨标费` };
+  } catch (e) {
+    return { success: false, message: e.message };
+  }
+}
+
+async function batchSetMinOrderQty(event) {
+  const { data } = event;
+  if (!data || data.minOrderQty === undefined) return { success: false, message: '起订量不能为空' };
+  try {
+    const { seriesName, minOrderQty, dnMin, dnMax } = data;
+    
+    let modelIds = [];
+    if (seriesName) {
+      const { data: series, error: sErr } = await rdb.from('product_series').select('id').eq('name', seriesName);
+      if (sErr || !series || series.length === 0) return { success: false, message: '系列不存在' };
+      
+      const { data: models, error: mErr } = await rdb.from('valve_models').select('id').eq('series_id', series[0].id);
+      if (mErr) return { success: false, message: '查询型号失败' };
+      
+      modelIds = (models || []).map(m => m.id);
+      if (modelIds.length === 0) {
+        return { success: true, data: { updatedCount: 0 }, message: '该系列下没有型号，未更新任何记录' };
+      }
+    }
+    
+    const allPrices = await selectAll('price_table', 'id,model_id,size');
+    
+    const matchedIds = allPrices.filter(p => {
+      const size = Number(p.size) || 0;
+      const inDnRange = (dnMin === undefined || dnMin === null || size >= dnMin) &&
+                        (dnMax === undefined || dnMax === null || size <= dnMax);
+      const inModelIds = modelIds.length === 0 || modelIds.includes(p.model_id);
+      return inDnRange && inModelIds;
+    }).map(p => p.id);
+    
+    if (matchedIds.length === 0) {
+      return { success: true, data: { updatedCount: 0 }, message: '没有匹配的价格记录，未更新任何记录' };
+    }
+    
+    const batchSize = 20;
+    let updatedCount = 0;
+    
+    for (let i = 0; i < matchedIds.length; i += batchSize) {
+      const batch = matchedIds.slice(i, i + batchSize);
+      const promises = batch.map(pid => {
+        return rdb.from('price_table').update({
+          min_order_qty: minOrderQty,
+          updated_at: now()
+        }).eq('id', pid);
+      });
+      
+      const results = await Promise.all(promises);
+      results.forEach(res => {
+        if (!res.error) updatedCount++;
+      });
+    }
+    
+    return { success: true, data: { updatedCount }, message: `成功更新${updatedCount}条价格记录的起订量` };
   } catch (e) {
     return { success: false, message: e.message };
   }

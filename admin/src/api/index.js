@@ -114,10 +114,10 @@ export const modelApi = {
 
 export const priceApi = {
   getAll() {
-    return callCloudFunction({ action: 'getPrices' });
+    return callCloudFunction({ action: 'getAllPrices' });
   },
-  getBySeries(series) {
-    return callCloudFunction({ action: 'getPrices', series });
+  getBySeries(seriesName) {
+    return callCloudFunction({ action: 'getPricesBySeries', seriesName });
   },
   create(data) {
     return callCloudFunction({ action: 'createPrice', data });
@@ -127,6 +127,9 @@ export const priceApi = {
   },
   delete(id) {
     return callCloudFunction({ action: 'deletePrice', id });
+  },
+  batchSetMinOrderQty(data) {
+    return callCloudFunction({ action: 'batchSetMinOrderQty', data });
   }
 };
 

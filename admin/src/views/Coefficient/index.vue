@@ -68,9 +68,6 @@
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="起订量(MOQ)">
-          <a-input-number v-model:value="form.minOrderQty" :min="1" :placeholder="'最小起订数量'" style="width: 100%" />
-        </a-form-item>
         <a-divider style="margin: 16px 0 12px 0;" />
         <a-card :bordered="false" class="coeff-card">
           <template #title>
@@ -171,7 +168,6 @@ const form = ref({
   productName: '',
   dnMin: 50,
   dnMax: 150,
-  minOrderQty: 50,
   moqMetOemCoeff: 1.5,
   moqMetOriginalCoeff: 1.2,
   moqUnmetOemCoeff: 2.0,
@@ -192,7 +188,6 @@ const columns = [
   { title: '产品系列', dataIndex: 'seriesName', key: 'seriesName', width: 110 },
   { title: '产品名', dataIndex: 'productName', key: 'productName', width: 120 },
   { title: '规格范围', key: 'dnRange', width: 120 },
-  { title: '起订量', dataIndex: 'minOrderQty', key: 'minOrderQty', width: 80 },
   { title: 'MOQ磨标', dataIndex: 'moqMetOemCoeff', key: 'moqMetOemCoeff', width: 90 },
   { title: 'MOQ原装', dataIndex: 'moqMetOriginalCoeff', key: 'moqMetOriginalCoeff', width: 90 },
   { title: '未达MOQ磨标', dataIndex: 'moqUnmetOemCoeff', key: 'moqUnmetOemCoeff', width: 110 },
@@ -239,7 +234,6 @@ function edit(record) {
     productName: record.productName || '',
     dnMin: record.dnMin,
     dnMax: record.dnMax,
-    minOrderQty: record.minOrderQty,
     moqMetOemCoeff: record.moqMetOemCoeff,
     moqMetOriginalCoeff: record.moqMetOriginalCoeff,
     moqUnmetOemCoeff: record.moqUnmetOemCoeff,
@@ -284,7 +278,6 @@ async function handleOk(continueAdd = false) {
         productName: '',
         dnMin: 50,
         dnMax: 150,
-        minOrderQty: 50,
         moqMetOemCoeff: 1.5,
         moqMetOriginalCoeff: 1.2,
         moqUnmetOemCoeff: 2.0,
@@ -297,7 +290,6 @@ async function handleOk(continueAdd = false) {
         productName: '',
         dnMin: 50,
         dnMax: 150,
-        minOrderQty: 50,
         moqMetOemCoeff: 1.5,
         moqMetOriginalCoeff: 1.2,
         moqUnmetOemCoeff: 2.0,
@@ -313,7 +305,7 @@ async function handleOk(continueAdd = false) {
 async function handleApplyToAll() {
   confirm({
     title: '确认应用到所有系列',
-    content: '此操作将把当前配置的系数规则（规格范围、起订量、各系数）应用到所有产品系列。如果某个系列已有相同规格范围的规则，将被更新；如果没有，将新建规则。是否继续？',
+    content: '此操作将把当前配置的系数规则（规格范围、各系数）应用到所有产品系列。如果某个系列已有相同规格范围的规则，将被更新；如果没有，将新建规则。是否继续？',
     okText: '确定',
     cancelText: '取消',
     okType: 'primary',
@@ -322,7 +314,6 @@ async function handleApplyToAll() {
         const result = await coefficientApi.applyToAllSeries({
           dnMin: form.value.dnMin,
           dnMax: form.value.dnMax,
-          minOrderQty: form.value.minOrderQty,
           moqMetOemCoeff: form.value.moqMetOemCoeff,
           moqMetOriginalCoeff: form.value.moqMetOriginalCoeff,
           moqUnmetOemCoeff: form.value.moqUnmetOemCoeff,
