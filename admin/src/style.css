@@ -43,6 +43,12 @@ body {
   font-size: 13px;
 }
 
+/* 筛选标签 */
+.filter-label {
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 13px;
+}
+
 .text-success {
   color: #52c41a;
 }

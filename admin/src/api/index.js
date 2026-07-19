@@ -117,7 +117,7 @@ export const priceApi = {
     return callCloudFunction({ action: 'getAllPrices' });
   },
   getBySeries(seriesName) {
-    return callCloudFunction({ action: 'getPricesBySeries', seriesName });
+    return callCloudFunction({ action: 'getPricesBySeries', series: seriesName });
   },
   create(data) {
     return callCloudFunction({ action: 'createPrice', data });
@@ -214,6 +214,24 @@ export const materialComboApi = {
   },
   delete(id) {
     return callCloudFunction({ action: 'deleteMaterialCombo', id });
+  }
+};
+
+export const modelSpecApi = {
+  getAll(params) {
+    return callCloudFunction({ action: 'getModelSpecs', ...params });
+  },
+  getByModel(valveName, size) {
+    return callCloudFunction({ action: 'getModelSpec', valveName, size });
+  },
+  create(data) {
+    return callCloudFunction({ action: 'createModelSpec', data });
+  },
+  update(id, data) {
+    return callCloudFunction({ action: 'updateModelSpec', id, data });
+  },
+  delete(id) {
+    return callCloudFunction({ action: 'deleteModelSpec', id });
   }
 };
 

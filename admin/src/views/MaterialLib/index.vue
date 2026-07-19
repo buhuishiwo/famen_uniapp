@@ -6,7 +6,20 @@
       </template>
       <template #extra>
         <a-space>
-          <a-input-search v-model:value="searchText" placeholder="搜索材质代码/名称" style="width: 220px" allowClear />
+          <span class="filter-label">分类：</span>
+          <a-select v-model:value="selectedCategory" placeholder="请选择" style="width: 130px" allowClear @change="loadData">
+            <a-select-option value="阀体">阀体</a-select-option>
+            <a-select-option value="闸板/阀杆/支架">闸板/阀杆/支架</a-select-option>
+            <a-select-option value="闸板/阀杆">闸板/阀杆</a-select-option>
+            <a-select-option value="阀杆">阀杆</a-select-option>
+            <a-select-option value="支架">支架</a-select-option>
+            <a-select-option value="闸板">闸板</a-select-option>
+          </a-select>
+          <span class="filter-label">搜索：</span>
+          <a-input-search v-model:value="searchText" placeholder="材质代码/名称" style="width: 180px" allowClear />
+          <a-button v-if="selectedRowKeys.length > 0" type="primary" danger @click="batchDelete">
+            删除选中 ({{ selectedRowKeys.length }})
+          </a-button>
           <a-button type="primary" @click="showModal = true">
             <PlusOutlined /> 新增材质
           </a-button>
@@ -19,7 +32,7 @@
           </template>
         </a-table>
       </template>
-      <a-table v-else :columns="columns" :data-source="filteredData" :pagination="{ pageSize: 10, showSizeChanger: true }" rowKey="id" size="middle">
+      <a-table v-else :columns="columns" :data-source="filteredData" :pagination="{ pageSize: 10, showSizeChanger: true }" rowKey="id" size="middle" :row-selection="rowSelection">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'materialCode'">
             <a-tag color="blue">{{ record.materialCode }}</a-tag>
@@ -94,6 +107,7 @@ const { confirm } = Modal;
 
 const data = ref([]);
 const searchText = ref('');
+const selectedCategory = ref('');
 const showModal = ref(false);
 const form = ref({
   materialCode: '',
@@ -104,24 +118,38 @@ const form = ref({
 });
 const editId = ref(null);
 const loading = ref(true);
+const selectedRowKeys = ref([]);
 
 const filteredData = computed(() => {
-  if (!searchText.value) return data.value;
-  return data.value.filter(item =>
-    (item.materialCode && item.materialCode.includes(searchText.value)) ||
-    (item.materialName && item.materialName.includes(searchText.value))
-  );
+  let filtered = data.value;
+  if (selectedCategory.value) {
+    filtered = filtered.filter(item => item.category === selectedCategory.value);
+  }
+  if (searchText.value) {
+    filtered = filtered.filter(item =>
+      (item.materialCode && item.materialCode.includes(searchText.value)) ||
+      (item.materialName && item.materialName.includes(searchText.value))
+    );
+  }
+  return filtered;
 });
 
 const columns = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
   { title: '材质代码', dataIndex: 'materialCode', key: 'materialCode', width: 110 },
   { title: '材质名称', dataIndex: 'materialName', key: 'materialName', width: 140 },
-  { title: '材质分类', dataIndex: 'category', key: 'category', width: 130 },
+  { title: '材质分类', dataIndex: 'category', key: 'category', width: 130, sorter: (a, b) => (a.category || '').localeCompare(b.category || '') },
   { title: '适用部位', dataIndex: 'applicableParts', key: 'applicableParts', width: 150 },
   { title: '备注', dataIndex: 'remark', key: 'remark', ellipsis: true },
   { title: '操作', key: 'action', width: 120 }
 ];
+
+const rowSelection = {
+  selectedRowKeys,
+  onChange: (keys) => {
+    selectedRowKeys.value = keys;
+  },
+};
 
 const skeletonData = computed(() => {
   return Array.from({ length: 5 }, (_, i) => ({ key: i }));
@@ -164,7 +192,7 @@ function del(record) {
     content: `确定要删除材质 "${record.materialCode}" 吗？`,
     okText: '确定',
     cancelText: '取消',
-    okType: 'danger',
+    okButtonProps: { danger: true },
     async onOk() {
       try {
         await materialLibApi.delete(record.id);
@@ -172,6 +200,28 @@ function del(record) {
         loadData();
       } catch (e) {
         message.error('删除失败');
+      }
+    }
+  });
+}
+
+async function batchDelete() {
+  confirm({
+    title: '确认批量删除',
+    content: `确定要删除选中的 ${selectedRowKeys.value.length} 条材质吗？`,
+    okText: '确定',
+    cancelText: '取消',
+    okButtonProps: { danger: true },
+    async onOk() {
+      try {
+        for (const id of selectedRowKeys.value) {
+          await materialLibApi.delete(id);
+        }
+        message.success('批量删除成功');
+        selectedRowKeys.value = [];
+        loadData();
+      } catch (e) {
+        message.error(e.message || '批量删除失败');
       }
     }
   });

@@ -176,6 +176,11 @@ export const priceApi = {
     const params = { action: 'getCustomers' };
     if (salespersonId) params.salespersonId = salespersonId;
     return callCloudFunctionRaw('price', params);
+  },
+
+  // 获取规格参数
+  getModelSpecs(valveName, size) {
+    return callCloudFunctionRaw('price', { action: 'getModelSpec', valveName, size });
   }
 };
 

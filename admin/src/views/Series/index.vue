@@ -6,7 +6,11 @@
       </template>
       <template #extra>
         <a-space>
-          <a-input-search v-model:value="searchText" placeholder="搜索系列名称" style="width: 200px" @search="filterData" allowClear />
+          <span class="filter-label">搜索：</span>
+          <a-input-search v-model:value="searchText" placeholder="系列名称" style="width: 150px" @search="filterData" allowClear />
+          <a-button v-if="selectedRowKeys.length > 0" type="primary" danger @click="batchDelete">
+            删除选中 ({{ selectedRowKeys.length }})
+          </a-button>
           <a-button type="primary" @click="showModal = true">
             <PlusOutlined /> 新增系列
           </a-button>
@@ -19,7 +23,7 @@
           </template>
         </a-table>
       </template>
-      <a-table v-else :columns="columns" :data-source="filteredData" :pagination="{ pageSize: 10, showSizeChanger: true }" rowKey="id" size="middle">
+      <a-table v-else :columns="columns" :data-source="filteredData" :pagination="{ pageSize: 10, showSizeChanger: true }" rowKey="id" size="middle" :row-selection="rowSelection">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'name'">
             <a-tag color="blue">{{ record.name }}</a-tag>
@@ -33,7 +37,7 @@
               <a-button size="small" type="link" @click="edit(record)">编辑</a-button>
               <a-button size="small" type="link" danger @click="del(record)">删除</a-button>
               <a-popconfirm
-                title="此操作将删除该系列及其下所有型号、价格、材质配置、报价系数和材质价差数据，且不可恢复！"
+                title="此操作将删除该系列及其下所有型号、价格、材质标配、报价系数和材质价差数据，且不可恢复！"
                 ok-text="确认删除"
                 cancel-text="取消"
                 @confirm="delCascade(record)"
@@ -92,6 +96,7 @@ const showModal = ref(false);
 const form = ref({ name: '', image: '', imageFileID: '' });
 const editId = ref(null);
 const loading = ref(true);
+const selectedRowKeys = ref([]);
 
 const skeletonData = computed(() => {
   return Array.from({ length: 5 }, (_, i) => ({ key: i }));
@@ -108,6 +113,13 @@ const columns = [
   { title: '系列图片', dataIndex: 'image', key: 'image' },
   { title: '操作', key: 'action', width: 240 }
 ];
+
+const rowSelection = {
+  selectedRowKeys,
+  onChange: (keys) => {
+    selectedRowKeys.value = keys;
+  },
+};
 
 const modalTitle = ref('新增系列');
 
@@ -184,7 +196,7 @@ function del(record) {
     content: `确定要删除系列 "${record.name}" 吗？（仅在该系列下无型号时可删除）`,
     okText: '确定',
     cancelText: '取消',
-    okType: 'danger',
+    okButtonProps: { danger: true },
     async onOk() {
       try {
         await seriesApi.delete(record.id);
@@ -205,6 +217,28 @@ async function delCascade(record) {
   } catch (e) {
     message.error(e.message || '级联删除失败');
   }
+}
+
+async function batchDelete() {
+  confirm({
+    title: '确认批量删除',
+    content: `确定要删除选中的 ${selectedRowKeys.value.length} 个系列吗？（仅在系列下无型号时可删除）`,
+    okText: '确定',
+    cancelText: '取消',
+    okButtonProps: { danger: true },
+    async onOk() {
+      try {
+        for (const id of selectedRowKeys.value) {
+          await seriesApi.delete(id);
+        }
+        message.success('批量删除成功');
+        selectedRowKeys.value = [];
+        loadData();
+      } catch (e) {
+        message.error(e.message || '批量删除失败');
+      }
+    }
+  });
 }
 
 async function handleOk(continueAdd = false) {

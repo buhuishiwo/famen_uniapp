@@ -6,11 +6,15 @@
       </template>
       <template #extra>
         <a-space>
-          <a-select v-model:value="selectedSeries" placeholder="筛选系列" style="width: 180px" allowClear @change="loadData">
+          <span class="filter-label">系列：</span>
+          <a-select v-model:value="selectedSeries" placeholder="请选择" style="width: 120px" allowClear @change="loadData">
             <a-select-option v-for="s in seriesList" :key="s.name" :value="s.name">
               {{ s.name }}
             </a-select-option>
           </a-select>
+          <a-button v-if="selectedRowKeys.length > 0" type="primary" danger @click="batchDelete">
+            删除选中 ({{ selectedRowKeys.length }})
+          </a-button>
           <a-button type="primary" @click="showModal = true">
             <PlusOutlined /> 新增价格
           </a-button>
@@ -26,7 +30,7 @@
           </template>
         </a-table>
       </template>
-      <a-table v-else :columns="columns" :data-source="data" :pagination="{ pageSize: 10, showSizeChanger: true }" rowKey="id" size="middle" :scroll="{ x: 1200 }">
+      <a-table v-else :columns="columns" :data-source="data" :pagination="{ pageSize: 10, showSizeChanger: true }" rowKey="id" size="middle" :scroll="{ x: 1200 }" :row-selection="rowSelection">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'seriesName'">
             <a-tag color="blue">{{ record.seriesName }}</a-tag>
@@ -172,6 +176,7 @@ const minOrderQtyForm = ref({
 });
 const editId = ref(null);
 const loading = ref(true);
+const selectedRowKeys = ref([]);
 
 const columns = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
@@ -184,6 +189,13 @@ const columns = [
   { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
   { title: '操作', key: 'action', width: 120, fixed: 'right' }
 ];
+
+const rowSelection = {
+  selectedRowKeys,
+  onChange: (keys) => {
+    selectedRowKeys.value = keys;
+  },
+};
 
 const skeletonData = computed(() => {
   return Array.from({ length: 5 }, (_, i) => ({ key: i }));
@@ -278,7 +290,7 @@ function del(record) {
     content: `确定要删除价格数据 "${record.valveName} DN${record.size}" 吗？`,
     okText: '确定',
     cancelText: '取消',
-    okType: 'danger',
+    okButtonProps: { danger: true },
     async onOk() {
       try {
         await priceApi.delete(record.id);
@@ -286,6 +298,28 @@ function del(record) {
         loadData();
       } catch (e) {
         message.error('删除失败');
+      }
+    }
+  });
+}
+
+async function batchDelete() {
+  confirm({
+    title: '确认批量删除',
+    content: `确定要删除选中的 ${selectedRowKeys.value.length} 条价格数据吗？`,
+    okText: '确定',
+    cancelText: '取消',
+    okButtonProps: { danger: true },
+    async onOk() {
+      try {
+        for (const id of selectedRowKeys.value) {
+          await priceApi.delete(id);
+        }
+        message.success('批量删除成功');
+        selectedRowKeys.value = [];
+        loadData();
+      } catch (e) {
+        message.error(e.message || '批量删除失败');
       }
     }
   });
@@ -355,7 +389,7 @@ async function handleBatchSetMinOrderQty() {
     content: `此操作将把"${targetSeries}"下${dnRange}范围内的产品起订量设置为 ${minOrderQtyForm.value.minOrderQty}。是否继续？`,
     okText: '确定',
     cancelText: '取消',
-    okType: 'danger',
+    okButtonProps: { danger: true },
     async onOk() {
       try {
         const result = await priceApi.batchSetMinOrderQty({

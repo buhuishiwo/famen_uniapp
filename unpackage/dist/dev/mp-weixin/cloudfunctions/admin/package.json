@@ -1,9 +1,0 @@
-{
-  "name": "admin",
-  "version": "1.0.0",
-  "description": "Admin CRUD cloud function",
-  "main": "index.js",
-  "dependencies": {
-    "@cloudbase/node-sdk": "latest"
-  }
-}

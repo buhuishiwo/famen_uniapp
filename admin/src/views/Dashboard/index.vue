@@ -107,7 +107,7 @@ const statCards = computed(() => [
   { label: '产品系列', value: summary.value.seriesCount || 0, icon: AppstoreOutlined },
   { label: '阀门型号', value: summary.value.modelCount || 0, icon: TagsOutlined },
   { label: '价格记录', value: summary.value.priceCount || 0, icon: DollarOutlined },
-  { label: '材质配置', value: summary.value.materialCount || 0, icon: BgColorsOutlined }
+  { label: '材质标配', value: summary.value.materialCount || 0, icon: BgColorsOutlined }
 ]);
 
 const skeletonData = computed(() => {

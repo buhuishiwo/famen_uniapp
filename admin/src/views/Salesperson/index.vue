@@ -6,7 +6,11 @@
       </template>
       <template #extra>
         <a-space>
-          <a-input-search v-model:value="searchText" placeholder="搜索营销员姓名/电话" style="width: 220px" allowClear />
+          <span class="filter-label">搜索：</span>
+          <a-input-search v-model:value="searchText" placeholder="姓名/电话" style="width: 180px" allowClear />
+          <a-button v-if="selectedRowKeys.length > 0" type="primary" danger @click="batchDelete">
+            删除选中 ({{ selectedRowKeys.length }})
+          </a-button>
           <a-button type="primary" @click="showModal = true">
             <PlusOutlined /> 新增营销员
           </a-button>
@@ -19,7 +23,7 @@
           </template>
         </a-table>
       </template>
-      <a-table v-else :columns="columns" :data-source="filteredData" :pagination="{ pageSize: 10, showSizeChanger: true }" rowKey="id" size="middle">
+      <a-table v-else :columns="columns" :data-source="filteredData" :pagination="{ pageSize: 10, showSizeChanger: true }" rowKey="id" size="middle" :row-selection="rowSelection">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'name'">
             <a-tag color="blue">{{ record.name }}</a-tag>
@@ -103,6 +107,7 @@ const form = ref({
 });
 const editId = ref(null);
 const loading = ref(true);
+const selectedRowKeys = ref([]);
 
 const filteredData = computed(() => {
   if (!searchText.value) return data.value;
@@ -122,6 +127,13 @@ const columns = [
   { title: '备注', dataIndex: 'remark', key: 'remark', ellipsis: true },
   { title: '操作', key: 'action', width: 120 }
 ];
+
+const rowSelection = {
+  selectedRowKeys,
+  onChange: (keys) => {
+    selectedRowKeys.value = keys;
+  },
+};
 
 const skeletonData = computed(() => {
   return Array.from({ length: 5 }, (_, i) => ({ key: i }));
@@ -165,7 +177,7 @@ function del(record) {
     content: `确定要删除营销员 "${record.name}" 吗？`,
     okText: '确定',
     cancelText: '取消',
-    okType: 'danger',
+    okButtonProps: { danger: true },
     async onOk() {
       try {
         await salespersonApi.delete(record.id);
@@ -173,6 +185,28 @@ function del(record) {
         loadData();
       } catch (e) {
         message.error('删除失败');
+      }
+    }
+  });
+}
+
+async function batchDelete() {
+  confirm({
+    title: '确认批量删除',
+    content: `确定要删除选中的 ${selectedRowKeys.value.length} 个营销员吗？`,
+    okText: '确定',
+    cancelText: '取消',
+    okButtonProps: { danger: true },
+    async onOk() {
+      try {
+        for (const id of selectedRowKeys.value) {
+          await salespersonApi.delete(id);
+        }
+        message.success('批量删除成功');
+        selectedRowKeys.value = [];
+        loadData();
+      } catch (e) {
+        message.error(e.message || '批量删除失败');
       }
     }
   });

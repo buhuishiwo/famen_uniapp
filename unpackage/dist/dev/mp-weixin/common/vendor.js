@@ -13408,6 +13408,14 @@ var priceApi = {
     };
     if (salespersonId) params.salespersonId = salespersonId;
     return callCloudFunctionRaw('price', params);
+  },
+  // 获取规格参数
+  getModelSpecs: function getModelSpecs(valveName, size) {
+    return callCloudFunctionRaw('price', {
+      action: 'getModelSpec',
+      valveName: valveName,
+      size: size
+    });
   }
 };
 

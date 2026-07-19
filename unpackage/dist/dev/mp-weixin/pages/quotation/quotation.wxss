@@ -582,6 +582,68 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* 根页面样式 */
 page {
     background-color: #f1f5f9;
@@ -1006,6 +1068,42 @@ page {
     font-weight: 700;
     color: #c8aa6e;
     letter-spacing: -1rpx;
+}
+.final-price-row {
+    margin: 0 -30rpx -30rpx;
+    padding: 24rpx 30rpx;
+    background: #fff7ed;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 2rpx dashed #fed7aa;
+    border-radius: 0 0 20rpx 20rpx;
+}
+.final-price-label {
+    font-size: 26rpx;
+    font-weight: 600;
+    color: #9a3412;
+}
+.final-price-input-wrap {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 2rpx solid #fb923c;
+    border-radius: 10rpx;
+    padding: 8rpx 16rpx;
+}
+.final-price-prefix {
+    font-size: 28rpx;
+    font-weight: 700;
+    color: #dc2626;
+    margin-right: 4rpx;
+}
+.final-price-input {
+    font-size: 32rpx;
+    font-weight: 700;
+    color: #dc2626;
+    width: 200rpx;
+    text-align: right;
 }
 /* 按钮操作系统组 */
 .button-group {

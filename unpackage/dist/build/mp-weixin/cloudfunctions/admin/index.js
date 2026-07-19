@@ -154,7 +154,7 @@ async function deleteModel(event) {
   
   var { data: mats, error: matErr } = await rdb.from('valve_model_materials').select('id').eq('model_id', id);
   if (mats && mats.length > 0) {
-    return { success: false, message: '该型号下存在材质配置，无法删除' };
+    return { success: false, message: '该型号下存在材质标配，无法删除' };
   }
   
   const { error } = await rdb.from('valve_models').delete().eq('id', id);
@@ -231,7 +231,7 @@ async function deletePrice(event) {
 }
 
 // ============================================
-// 材质配置 CRUD
+// 材质标配 CRUD
 // ============================================
 
 async function createMaterial(event) {
@@ -367,11 +367,11 @@ async function createMaterialDiff(event) {
   const { error } = await rdb.from('material_price_diffs').insert({
     _openid: 'admin',
     series_name: data.seriesName,
+    model_name: data.modelName || '',
+    size: data.size || null,
     part_name: data.partName,
     base_material: data.baseMaterial,
     target_material: data.targetMaterial,
-    dn_min: data.dnMin || 50,
-    dn_max: data.dnMax || 2000,
     price_diff: data.priceDiff || 0,
     remark: data.remark || '',
     created_at: new Date(),
@@ -389,11 +389,11 @@ async function updateMaterialDiff(event) {
   var updateData = { updated_at: new Date() };
   
   if (data.seriesName !== undefined) updateData.series_name = data.seriesName;
+  if (data.modelName !== undefined) updateData.model_name = data.modelName || '';
+  if (data.size !== undefined) updateData.size = data.size || null;
   if (data.partName !== undefined) updateData.part_name = data.partName;
   if (data.baseMaterial !== undefined) updateData.base_material = data.baseMaterial;
   if (data.targetMaterial !== undefined) updateData.target_material = data.targetMaterial;
-  if (data.dnMin !== undefined) updateData.dn_min = data.dnMin;
-  if (data.dnMax !== undefined) updateData.dn_max = data.dnMax;
   if (data.priceDiff !== undefined) updateData.price_diff = data.priceDiff;
   if (data.remark !== undefined) updateData.remark = data.remark;
   

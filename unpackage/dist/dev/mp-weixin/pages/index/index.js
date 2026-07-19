@@ -836,84 +836,149 @@ var _default = {
   }), (0, _defineProperty2.default)(_methods, "getPriceByType", function getPriceByType(priceItem, type) {
     return priceItem.price || 0;
   }), (0, _defineProperty2.default)(_methods, "calculatePrice", function calculatePrice() {
-    var _this$SelectValveBody2, _this$SelectValveBody3;
-    var selectedValve = this.selectedValve,
-      selectedSpec = this.selectedSpec,
-      selectedGatePlate = this.selectedGatePlate,
-      selectedRodMaterial = this.selectedRodMaterial,
-      selectedYokeMaterial = this.selectedYokeMaterial,
-      quantity = this.quantity,
-      selectedProductType = this.selectedProductType;
-    if (!selectedValve || !selectedSpec || !selectedGatePlate || !selectedRodMaterial) {
-      uni.showToast({
-        title: '请填写完整信息',
-        icon: 'none'
-      });
-      return null;
-    }
-    var priceItem = this.priceData.find(function (p) {
-      return p.valveName === selectedValve.name && p.size === selectedSpec.name;
-    });
-    if (!priceItem) {
-      uni.showToast({
-        title: '该组合不可用',
-        icon: 'none'
-      });
-      return null;
-    }
-    var material = this.getMaterialByValveName(selectedValve.name);
-    var type = selectedValve.type;
-    var basePrice = this.getPriceByType(priceItem, type);
-    var specSize = selectedSpec.name;
-    var seriesName = this.currentProductSeries;
-    var bodyDiff = this.getMaterialPriceDiff(seriesName, 'body', (material === null || material === void 0 ? void 0 : material.bodyMaterial) || '', ((_this$SelectValveBody2 = this.SelectValveBody) === null || _this$SelectValveBody2 === void 0 ? void 0 : _this$SelectValveBody2.name) || '', specSize);
-    var gatePlateDiff = this.getMaterialPriceDiff(seriesName, 'gate_plate', (material === null || material === void 0 ? void 0 : material.gatePlateMaterial) || '', (selectedGatePlate === null || selectedGatePlate === void 0 ? void 0 : selectedGatePlate.name) || '', specSize);
-    var rodDiff = this.getMaterialPriceDiff(seriesName, 'stem', (material === null || material === void 0 ? void 0 : material.stemMaterial) || '', (selectedRodMaterial === null || selectedRodMaterial === void 0 ? void 0 : selectedRodMaterial.name) || '', specSize);
-    var yokeDiff = this.getMaterialPriceDiff(seriesName, 'yoke', (material === null || material === void 0 ? void 0 : material.yokeMaterial) || '', (selectedYokeMaterial === null || selectedYokeMaterial === void 0 ? void 0 : selectedYokeMaterial.name) || '', specSize);
-    var multiplier = this.priceTable.productTypeMultiplier[selectedProductType];
-    var minQty = this.getMinOrderQuantity(specSize);
-    var isMeetMinOrder = quantity >= minQty;
-    var hasBranding = this.selectedBranding;
-    var brandingFee = hasBranding ? priceItem.brandingFee || 0 : 0;
-    var pricingCoeff = this.getPricingCoefficient(seriesName, selectedValve.name, specSize, quantity, hasBranding);
-    var baseTotal = basePrice + bodyDiff + gatePlateDiff + rodDiff + yokeDiff + brandingFee;
-    var unitPrice = baseTotal * pricingCoeff * multiplier;
-    var totalPrice = unitPrice * quantity;
-    return {
-      valveName: selectedValve.name,
-      spec: selectedSpec.name,
-      brandingFee: brandingFee,
-      hasBranding: hasBranding,
-      bodyMaterial: ((_this$SelectValveBody3 = this.SelectValveBody) === null || _this$SelectValveBody3 === void 0 ? void 0 : _this$SelectValveBody3.name) || '',
-      gatePlate: selectedGatePlate.name,
-      rodMaterial: selectedRodMaterial.name,
-      yokeMaterial: (selectedYokeMaterial === null || selectedYokeMaterial === void 0 ? void 0 : selectedYokeMaterial.name) || '',
-      productType: selectedProductType,
-      quantity: quantity,
-      unitPrice: unitPrice.toFixed(2),
-      totalPrice: totalPrice.toFixed(2),
-      productSeries: seriesName,
-      isMeetMinOrder: isMeetMinOrder
-    };
+    var _this4 = this;
+    return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
+      var _this4$SelectValveBod, _this4$SelectValveBod2;
+      var selectedValve, selectedSpec, selectedGatePlate, selectedRodMaterial, selectedYokeMaterial, quantity, selectedProductType, priceItem, material, type, basePrice, specSize, seriesName, bodyDiff, gatePlateDiff, rodDiff, yokeDiff, multiplier, minQty, isMeetMinOrder, hasBranding, brandingFee, pricingCoeff, baseTotal, unitPrice, totalPrice, maxPressure, unitWeight, laps, torque, specResult, spec;
+      return _regenerator.default.wrap(function _callee3$(_context3) {
+        while (1) {
+          switch (_context3.prev = _context3.next) {
+            case 0:
+              selectedValve = _this4.selectedValve, selectedSpec = _this4.selectedSpec, selectedGatePlate = _this4.selectedGatePlate, selectedRodMaterial = _this4.selectedRodMaterial, selectedYokeMaterial = _this4.selectedYokeMaterial, quantity = _this4.quantity, selectedProductType = _this4.selectedProductType;
+              if (!(!selectedValve || !selectedSpec || !selectedGatePlate || !selectedRodMaterial)) {
+                _context3.next = 4;
+                break;
+              }
+              uni.showToast({
+                title: '请填写完整信息',
+                icon: 'none'
+              });
+              return _context3.abrupt("return", null);
+            case 4:
+              priceItem = _this4.priceData.find(function (p) {
+                return p.valveName === selectedValve.name && p.size === selectedSpec.name;
+              });
+              if (priceItem) {
+                _context3.next = 8;
+                break;
+              }
+              uni.showToast({
+                title: '该组合不可用',
+                icon: 'none'
+              });
+              return _context3.abrupt("return", null);
+            case 8:
+              material = _this4.getMaterialByValveName(selectedValve.name);
+              type = selectedValve.type;
+              basePrice = _this4.getPriceByType(priceItem, type);
+              specSize = selectedSpec.name;
+              seriesName = _this4.currentProductSeries;
+              bodyDiff = _this4.getMaterialPriceDiff(seriesName, 'body', (material === null || material === void 0 ? void 0 : material.bodyMaterial) || '', ((_this4$SelectValveBod = _this4.SelectValveBody) === null || _this4$SelectValveBod === void 0 ? void 0 : _this4$SelectValveBod.name) || '', specSize);
+              gatePlateDiff = _this4.getMaterialPriceDiff(seriesName, 'gate_plate', (material === null || material === void 0 ? void 0 : material.gatePlateMaterial) || '', (selectedGatePlate === null || selectedGatePlate === void 0 ? void 0 : selectedGatePlate.name) || '', specSize);
+              rodDiff = _this4.getMaterialPriceDiff(seriesName, 'stem', (material === null || material === void 0 ? void 0 : material.stemMaterial) || '', (selectedRodMaterial === null || selectedRodMaterial === void 0 ? void 0 : selectedRodMaterial.name) || '', specSize);
+              yokeDiff = _this4.getMaterialPriceDiff(seriesName, 'yoke', (material === null || material === void 0 ? void 0 : material.yokeMaterial) || '', (selectedYokeMaterial === null || selectedYokeMaterial === void 0 ? void 0 : selectedYokeMaterial.name) || '', specSize);
+              multiplier = _this4.priceTable.productTypeMultiplier[selectedProductType];
+              minQty = _this4.getMinOrderQuantity(specSize);
+              isMeetMinOrder = quantity >= minQty;
+              hasBranding = _this4.selectedBranding;
+              brandingFee = hasBranding ? priceItem.brandingFee || 0 : 0;
+              pricingCoeff = _this4.getPricingCoefficient(seriesName, selectedValve.name, specSize, quantity, hasBranding);
+              baseTotal = basePrice + bodyDiff + gatePlateDiff + rodDiff + yokeDiff + brandingFee;
+              unitPrice = baseTotal * pricingCoeff * multiplier;
+              totalPrice = unitPrice * quantity;
+              maxPressure = '', unitWeight = '', laps = '', torque = '';
+              _context3.prev = 27;
+              _context3.next = 30;
+              return _cloudApi.priceApi.getModelSpecs(selectedValve.name, specSize);
+            case 30:
+              specResult = _context3.sent;
+              if (specResult && specResult.data) {
+                spec = specResult.data;
+                maxPressure = spec.maxPressure || '';
+                unitWeight = spec.unitWeight || '';
+                laps = spec.laps || '';
+                torque = spec.torque || '';
+              }
+              _context3.next = 37;
+              break;
+            case 34:
+              _context3.prev = 34;
+              _context3.t0 = _context3["catch"](27);
+              console.log('获取规格参数失败:', _context3.t0);
+            case 37:
+              return _context3.abrupt("return", {
+                valveName: selectedValve.name,
+                spec: selectedSpec.name,
+                brandingFee: brandingFee,
+                hasBranding: hasBranding,
+                bodyMaterial: ((_this4$SelectValveBod2 = _this4.SelectValveBody) === null || _this4$SelectValveBod2 === void 0 ? void 0 : _this4$SelectValveBod2.name) || '',
+                gatePlate: selectedGatePlate.name,
+                rodMaterial: selectedRodMaterial.name,
+                yokeMaterial: (selectedYokeMaterial === null || selectedYokeMaterial === void 0 ? void 0 : selectedYokeMaterial.name) || '',
+                productType: selectedProductType,
+                quantity: quantity,
+                unitPrice: unitPrice.toFixed(2),
+                totalPrice: totalPrice.toFixed(2),
+                productSeries: seriesName,
+                isMeetMinOrder: isMeetMinOrder,
+                maxPressure: maxPressure,
+                unitWeight: unitWeight,
+                laps: laps,
+                torque: torque
+              });
+            case 38:
+            case "end":
+              return _context3.stop();
+          }
+        }
+      }, _callee3, null, [[27, 34]]);
+    }))();
   }), (0, _defineProperty2.default)(_methods, "onBackToCategory", function onBackToCategory() {
     uni.navigateBack({
       delta: 1
     });
   }), (0, _defineProperty2.default)(_methods, "onAddToQuote", function onAddToQuote() {
-    var item = this.calculatePrice();
-    if (!item) return;
-    var newQuoteItems = [].concat((0, _toConsumableArray2.default)(this.quoteItems), [item]);
-    var newTotalPrice = this.calculateTotal(newQuoteItems);
-    this.setData({
-      quoteItems: newQuoteItems,
-      totalPrice: newTotalPrice
-    });
-    uni.setStorageSync('quoteItems', newQuoteItems);
-    uni.showToast({
-      title: '已添加到报价表',
-      icon: 'success'
-    });
-    this.resetSelection();
+    var _this5 = this;
+    return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee4() {
+      var item, newQuoteItems, newTotalPrice;
+      return _regenerator.default.wrap(function _callee4$(_context4) {
+        while (1) {
+          switch (_context4.prev = _context4.next) {
+            case 0:
+              uni.showLoading({
+                title: '计算中...',
+                mask: true
+              });
+              _context4.next = 3;
+              return _this5.calculatePrice();
+            case 3:
+              item = _context4.sent;
+              uni.hideLoading();
+              if (item) {
+                _context4.next = 7;
+                break;
+              }
+              return _context4.abrupt("return");
+            case 7:
+              newQuoteItems = [].concat((0, _toConsumableArray2.default)(_this5.quoteItems), [item]);
+              newTotalPrice = _this5.calculateTotal(newQuoteItems);
+              _this5.setData({
+                quoteItems: newQuoteItems,
+                totalPrice: newTotalPrice
+              });
+              uni.setStorageSync('quoteItems', newQuoteItems);
+              uni.showToast({
+                title: '已添加到报价表',
+                icon: 'success'
+              });
+              _this5.resetSelection();
+            case 13:
+            case "end":
+              return _context4.stop();
+          }
+        }
+      }, _callee4);
+    }))();
   }), (0, _defineProperty2.default)(_methods, "calculateTotal", function calculateTotal(items) {
     var total = items.reduce(function (sum, item) {
       return sum + parseFloat(item.totalPrice);

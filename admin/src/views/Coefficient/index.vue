@@ -6,6 +6,9 @@
       </template>
       <template #extra>
         <a-space>
+          <a-button v-if="selectedRowKeys.length > 0" type="primary" danger @click="batchDelete">
+            删除选中 ({{ selectedRowKeys.length }})
+          </a-button>
           <a-button type="primary" @click="showModal = true">
             <PlusOutlined /> 新增系数规则
           </a-button>
@@ -21,7 +24,7 @@
           </template>
         </a-table>
       </template>
-      <a-table v-else :columns="columns" :data-source="data" :pagination="{ pageSize: 10, showSizeChanger: true }" rowKey="id" size="middle" :scroll="{ x: 1100 }">
+      <a-table v-else :columns="columns" :data-source="data" :pagination="{ pageSize: 10, showSizeChanger: true }" rowKey="id" size="middle" :scroll="{ x: 1100 }" :row-selection="rowSelection">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'seriesName'">
             <a-tag color="blue">{{ record.seriesName }}</a-tag>
@@ -182,6 +185,7 @@ const brandingFeeForm = ref({
   dnMax: 150,
   brandingFee: 0
 });
+const selectedRowKeys = ref([]);
 
 const columns = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
@@ -194,6 +198,13 @@ const columns = [
   { title: '未达MOQ原装', dataIndex: 'moqUnmetOriginalCoeff', key: 'moqUnmetOriginalCoeff', width: 110 },
   { title: '操作', key: 'action', width: 120, fixed: 'right' }
 ];
+
+const rowSelection = {
+  selectedRowKeys,
+  onChange: (keys) => {
+    selectedRowKeys.value = keys;
+  },
+};
 
 const skeletonData = computed(() => {
   return Array.from({ length: 5 }, (_, i) => ({ key: i }));
@@ -249,7 +260,7 @@ function del(record) {
     content: `确定要删除系数规则 "${record.seriesName}" 吗？`,
     okText: '确定',
     cancelText: '取消',
-    okType: 'danger',
+    okButtonProps: { danger: true },
     async onOk() {
       try {
         await coefficientApi.delete(record.id);
@@ -257,6 +268,28 @@ function del(record) {
         loadData();
       } catch (e) {
         message.error('删除失败');
+      }
+    }
+  });
+}
+
+async function batchDelete() {
+  confirm({
+    title: '确认批量删除',
+    content: `确定要删除选中的 ${selectedRowKeys.value.length} 条系数规则吗？`,
+    okText: '确定',
+    cancelText: '取消',
+    okButtonProps: { danger: true },
+    async onOk() {
+      try {
+        for (const id of selectedRowKeys.value) {
+          await coefficientApi.delete(id);
+        }
+        message.success('批量删除成功');
+        selectedRowKeys.value = [];
+        loadData();
+      } catch (e) {
+        message.error(e.message || '批量删除失败');
       }
     }
   });
@@ -371,7 +404,7 @@ async function handleBatchSetBrandingFee() {
     content: `此操作将把"${targetSeries}"下${dnRange}范围内的产品磨标费设置为 ${brandingFeeForm.value.brandingFee} 元。是否继续？`,
     okText: '确定',
     cancelText: '取消',
-    okType: 'danger',
+    okButtonProps: { danger: true },
     async onOk() {
       try {
         const result = await coefficientApi.batchSetBrandingFee({

@@ -1,9 +1,0 @@
-{
-  "name": "quotation",
-  "version": "1.0.0",
-  "description": "Quotation CRUD and price calculation cloud function",
-  "main": "index.js",
-  "dependencies": {
-    "@cloudbase/node-sdk": "latest"
-  }
-}

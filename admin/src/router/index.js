@@ -27,6 +27,11 @@ const routes = [
     component: () => import('../views/Model/index.vue')
   },
   {
+    path: '/model-spec',
+    name: 'ModelSpec',
+    component: () => import('../views/ModelSpec/index.vue')
+  },
+  {
     path: '/price',
     name: 'Price',
     component: () => import('../views/Price/index.vue')

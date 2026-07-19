@@ -69,6 +69,12 @@ function validateMaterialDiffHeaders(headers) {
   return { valid: missing.length === 0, missing: missing };
 }
 
+function validateModelSpecHeaders(headers) {
+  const required = ['阀门型号', '规格DN'];
+  const missing = required.filter(function(h) { return !headers.includes(h); });
+  return { valid: missing.length === 0, missing: missing };
+}
+
 function parseSeriesRow(row) {
   const getRaw = function(idx) {
     return (row[idx] !== undefined && row[idx] !== null) ? row[idx] : '';
@@ -207,6 +213,34 @@ function parseMaterialDiffRow(row) {
   };
 }
 
+function parseModelSpecRow(row) {
+  const getRaw = function(idx) {
+    return (row[idx] !== undefined && row[idx] !== null) ? row[idx] : '';
+  };
+
+  const valveName = String(getRaw(0)).trim();
+  if (!valveName) throw new Error('阀门型号不能为空');
+
+  const sizeRaw = getRaw(1);
+  if (isEmpty(sizeRaw)) throw new Error('规格DN不能为空');
+  const size = parseInt(sizeRaw);
+  if (isNaN(size) || size < 1) throw new Error('规格DN必须为正整数');
+
+  const maxPressure = parseFloat(getRaw(2));
+  const unitWeight = parseFloat(getRaw(3));
+  const laps = parseInt(getRaw(4));
+  const torque = parseFloat(getRaw(5));
+
+  return {
+    valveName: valveName,
+    size: size,
+    maxPressure: isNaN(maxPressure) ? 0 : maxPressure,
+    unitWeight: isNaN(unitWeight) ? 0 : unitWeight,
+    laps: isNaN(laps) ? 0 : laps,
+    torque: isNaN(torque) ? 0 : torque
+  };
+}
+
 function validatePriceHeaders(headers) {
   const missing = PRICE_HEADERS.filter(h => !headers.includes(h));
   return { valid: missing.length === 0, missing };
@@ -316,6 +350,9 @@ function detectSheetType(headers) {
   const materialDiffValidation = validateMaterialDiffHeaders(headers);
   if (materialDiffValidation.valid) return { type: 'material_diff', validation: materialDiffValidation };
 
+  const modelSpecValidation = validateModelSpecHeaders(headers);
+  if (modelSpecValidation.valid) return { type: 'model_spec', validation: modelSpecValidation };
+
   return { type: null, validation: null };
 }
 
@@ -389,6 +426,7 @@ async function parseFile(event) {
       materials: { rows: [], failed: [], count: 0 },
       materialLib: { rows: [], failed: [], count: 0 },
       materialDiffs: { rows: [], failed: [], count: 0 },
+      modelSpecs: { rows: [], failed: [], count: 0 },
       coefficientRules: []
     };
 
@@ -445,6 +483,11 @@ async function parseFile(event) {
               parsedData.materialDiffs.rows.push(row);
               parsedData.materialDiffs.count++;
               break;
+            case 'model_spec':
+              row = parseModelSpecRow(data[i]);
+              parsedData.modelSpecs.rows.push(row);
+              parsedData.modelSpecs.count++;
+              break;
           }
         } catch (e) {
           const typeKey = detectedType.type === 'coefficient' ? 'coefficient' : detectedType.type + 's';
@@ -457,10 +500,10 @@ async function parseFile(event) {
 
     console.log('[parseFile] 解析完成: 系列=' + parsedData.series.count + ', 型号=' + parsedData.models.count + 
       ', 价格=' + parsedData.prices.count + ', 材质=' + parsedData.materials.count + 
-      ', 材质价差=' + parsedData.materialDiffs.count + ', 系数=' + parsedData.coefficientRules.length);
+      ', 材质价差=' + parsedData.materialDiffs.count + ', 规格参数=' + parsedData.modelSpecs.count + ', 系数=' + parsedData.coefficientRules.length);
 
-    const totalCount = parsedData.series.count + parsedData.models.count + parsedData.prices.count + parsedData.materials.count + parsedData.materialDiffs.count + parsedData.coefficientRules.length;
-    const totalFailed = parsedData.series.failed.length + parsedData.models.failed.length + parsedData.prices.failed.length + parsedData.materials.failed.length + parsedData.materialDiffs.failed.length;
+    const totalCount = parsedData.series.count + parsedData.models.count + parsedData.prices.count + parsedData.materials.count + parsedData.materialDiffs.count + parsedData.modelSpecs.count + parsedData.coefficientRules.length;
+    const totalFailed = parsedData.series.failed.length + parsedData.models.failed.length + parsedData.prices.failed.length + parsedData.materials.failed.length + parsedData.materialDiffs.failed.length + parsedData.modelSpecs.failed.length;
 
     return {
       success: true,
@@ -473,14 +516,16 @@ async function parseFile(event) {
           ...parsedData.models.failed,
           ...parsedData.prices.failed,
           ...parsedData.materials.failed,
-          ...parsedData.materialDiffs.failed
+          ...parsedData.materialDiffs.failed,
+          ...parsedData.modelSpecs.failed
         ],
         previewData: {
           series: parsedData.series.rows.slice(0, 10),
           models: parsedData.models.rows.slice(0, 10),
           prices: parsedData.prices.rows.slice(0, 10),
           materials: parsedData.materials.rows.slice(0, 10),
-          materialDiffs: parsedData.materialDiffs.rows.slice(0, 10)
+          materialDiffs: parsedData.materialDiffs.rows.slice(0, 10),
+          modelSpecs: parsedData.modelSpecs.rows.slice(0, 10)
         },
         coefficientRules: parsedData.coefficientRules,
         sheetNames: allSheetNames,
@@ -749,6 +794,7 @@ async function confirmIntegratedImport(event) {
     prices: { created: 0, updated: 0, failed: 0 },
     materials: { created: 0, updated: 0, failed: 0 },
     materialDiffs: { created: 0, updated: 0, failed: 0 },
+    modelSpecs: { created: 0, updated: 0, failed: 0 },
     coefficients: { created: 0, updated: 0, failed: 0 }
   };
 
@@ -940,24 +986,24 @@ async function confirmIntegratedImport(event) {
   console.log('[阶段6] 导入材质价差数据...');
   const materialDiffs = data.materialDiffs && data.materialDiffs.rows ? data.materialDiffs.rows : [];
   if (materialDiffs.length > 0) {
-    const allDiffs = await selectAll('material_price_diffs', 'id, series_name, part_name, base_material, target_material, dn_min, dn_max');
+    const allDiffs = await selectAll('material_price_diffs', 'id, series_name, model_name, size, part_name, base_material, target_material');
     const diffMap = new Map();
     for (const d of (allDiffs || [])) {
-      const key = d.series_name + '||' + d.part_name + '||' + d.base_material + '||' + d.target_material + '||' + d.dn_min + '||' + d.dn_max;
+      const key = d.series_name + '||' + (d.model_name || '') + '||' + (d.size || '') + '||' + d.part_name + '||' + d.base_material + '||' + d.target_material;
       diffMap.set(key, d.id);
     }
 
     for (const item of materialDiffs) {
-      const key = item.seriesName + '||' + item.partName + '||' + item.baseMaterial + '||' + item.targetMaterial + '||' + item.dnMin + '||' + item.dnMax;
+      const key = item.seriesName + '||' + (item.modelName || '') + '||' + (item.size || '') + '||' + item.partName + '||' + item.baseMaterial + '||' + item.targetMaterial;
       const existId = diffMap.get(key);
 
       var diffData = {
         series_name: item.seriesName,
+        model_name: item.modelName || '',
+        size: item.size || null,
         part_name: item.partName,
         base_material: item.baseMaterial,
         target_material: item.targetMaterial,
-        dn_min: item.dnMin,
-        dn_max: item.dnMax,
         price_diff: item.priceDiff
       };
       if (item.remark) diffData.remark = item.remark;
@@ -980,6 +1026,53 @@ async function confirmIntegratedImport(event) {
     }
   }
   console.log('[阶段6] 材质价差导入完成: 创建=' + results.materialDiffs.created + ', 更新=' + results.materialDiffs.updated + ', 失败=' + results.materialDiffs.failed);
+
+  console.log('[阶段7] 导入规格参数数据...');
+  const modelSpecs = data.modelSpecs && data.modelSpecs.rows ? data.modelSpecs.rows : [];
+  if (modelSpecs.length > 0) {
+    const allSpecs = await selectAll('model_specs', 'id, model_id, size');
+    const specMap = new Map();
+    for (const s of (allSpecs || [])) {
+      const key = s.model_id + '||' + s.size;
+      specMap.set(key, s.id);
+    }
+
+    for (const item of modelSpecs) {
+      if (!modelMap[item.valveName]) {
+        results.modelSpecs.failed++;
+        continue;
+      }
+      const modelId = modelMap[item.valveName];
+      const key = modelId + '||' + item.size;
+      const existId = specMap.get(key);
+
+      var specData = {
+        model_id: modelId,
+        size: item.size,
+        max_pressure: item.maxPressure,
+        unit_weight: item.unitWeight,
+        laps: item.laps,
+        torque: item.torque
+      };
+
+      if (existId) {
+        const { error: e } = await rdb.from('model_specs').update(specData).eq('id', existId);
+        if (e) {
+          results.modelSpecs.failed++;
+        } else {
+          results.modelSpecs.updated++;
+        }
+      } else {
+        const { error: e } = await rdb.from('model_specs').insert({ _openid: 'import', ...specData });
+        if (e) {
+          results.modelSpecs.failed++;
+        } else {
+          results.modelSpecs.created++;
+        }
+      }
+    }
+  }
+  console.log('[阶段7] 规格参数导入完成: 创建=' + results.modelSpecs.created + ', 更新=' + results.modelSpecs.updated + ', 失败=' + results.modelSpecs.failed);
 
   console.log('[import] ====== 整合导入完成 ======');
   return {

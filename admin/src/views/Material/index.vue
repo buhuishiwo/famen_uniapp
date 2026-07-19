@@ -2,15 +2,19 @@
   <div>
     <a-card :bordered="false" class="page-card">
       <template #title>
-        <span class="page-title">材质配置管理</span>
+        <span class="page-title">材质标配管理</span>
       </template>
       <template #extra>
         <a-space>
-          <a-select v-model:value="selectedSeries" placeholder="筛选系列" style="width: 180px" allowClear @change="loadData">
+          <span class="filter-label">系列：</span>
+          <a-select v-model:value="selectedSeries" placeholder="请选择" style="width: 120px" allowClear @change="loadData">
             <a-select-option v-for="s in seriesList" :key="s.name" :value="s.name">
               {{ s.name }}
             </a-select-option>
           </a-select>
+          <a-button v-if="selectedRowKeys.length > 0" type="primary" danger @click="batchDelete">
+            删除选中 ({{ selectedRowKeys.length }})
+          </a-button>
           <a-button type="primary" @click="showModal = true">
             <PlusOutlined /> 新增配置
           </a-button>
@@ -23,7 +27,7 @@
           </template>
         </a-table>
       </template>
-      <a-table v-else :columns="columns" :data-source="data" :pagination="{ pageSize: 10, showSizeChanger: true }" rowKey="id" size="middle">
+      <a-table v-else :columns="columns" :data-source="data" :pagination="{ pageSize: 10, showSizeChanger: true }" rowKey="id" size="middle" :row-selection="rowSelection">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'seriesName'">
             <a-tag color="blue">{{ record.seriesName }}</a-tag>
@@ -148,6 +152,7 @@ const form = ref({
 });
 const editId = ref(null);
 const loading = ref(true);
+const selectedRowKeys = ref([]);
 
 const columns = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
@@ -160,11 +165,18 @@ const columns = [
   { title: '操作', key: 'action', width: 120 }
 ];
 
+const rowSelection = {
+  selectedRowKeys,
+  onChange: (keys) => {
+    selectedRowKeys.value = keys;
+  },
+};
+
 const skeletonData = computed(() => {
   return Array.from({ length: 5 }, (_, i) => ({ key: i }));
 });
 
-const modalTitle = ref('新增材质配置');
+const modalTitle = ref('新增材质标配');
 
 onMounted(() => {
   loadSeries();
@@ -265,17 +277,17 @@ function edit(record) {
     yokeMaterial: record.yokeMaterial,
     remark: record.remark || ''
   };
-  modalTitle.value = '编辑材质配置';
+  modalTitle.value = '编辑材质标配';
   showModal.value = true;
 }
 
 function del(record) {
   confirm({
     title: '确认删除',
-    content: `确定要删除材质配置 "${record.valveName}" 吗？`,
+    content: `确定要删除材质标配 "${record.valveName}" 吗？`,
     okText: '确定',
     cancelText: '取消',
-    okType: 'danger',
+    okButtonProps: { danger: true },
     async onOk() {
       try {
         await materialApi.delete(record.id);
@@ -283,6 +295,28 @@ function del(record) {
         loadData();
       } catch (e) {
         message.error('删除失败');
+      }
+    }
+  });
+}
+
+async function batchDelete() {
+  confirm({
+    title: '确认批量删除',
+    content: `确定要删除选中的 ${selectedRowKeys.value.length} 条材质标配吗？`,
+    okText: '确定',
+    cancelText: '取消',
+    okButtonProps: { danger: true },
+    async onOk() {
+      try {
+        for (const id of selectedRowKeys.value) {
+          await materialApi.delete(id);
+        }
+        message.success('批量删除成功');
+        selectedRowKeys.value = [];
+        loadData();
+      } catch (e) {
+        message.error(e.message || '批量删除失败');
       }
     }
   });

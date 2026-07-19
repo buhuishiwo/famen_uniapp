@@ -6,12 +6,17 @@
       </template>
       <template #extra>
         <a-space>
-          <a-input-search v-model:value="searchText" placeholder="搜索客户姓名/电话" style="width: 220px" allowClear />
-          <a-select v-model:value="selectedSalesperson" placeholder="筛选营销员" style="width: 150px" allowClear @change="loadData">
+          <span class="filter-label">搜索：</span>
+          <a-input-search v-model:value="searchText" placeholder="姓名/电话" style="width: 160px" allowClear />
+          <span class="filter-label">营销员：</span>
+          <a-select v-model:value="selectedSalesperson" placeholder="请选择" style="width: 100px" allowClear @change="loadData">
             <a-select-option v-for="s in salespersonList" :key="s.id" :value="s.id">
               {{ s.name }}
             </a-select-option>
           </a-select>
+          <a-button v-if="selectedRowKeys.length > 0" type="primary" danger @click="batchDelete">
+            删除选中 ({{ selectedRowKeys.length }})
+          </a-button>
           <a-button type="primary" @click="showModal = true">
             <PlusOutlined /> 新增客户
           </a-button>
@@ -24,7 +29,7 @@
           </template>
         </a-table>
       </template>
-      <a-table v-else :columns="columns" :data-source="filteredData" :pagination="{ pageSize: 10, showSizeChanger: true }" rowKey="id" size="middle">
+      <a-table v-else :columns="columns" :data-source="filteredData" :pagination="{ pageSize: 10, showSizeChanger: true }" rowKey="id" size="middle" :row-selection="rowSelection">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'name'">
             <a-tag color="blue">{{ record.name }}</a-tag>
@@ -126,6 +131,7 @@ const form = ref({
 });
 const editId = ref(null);
 const loading = ref(true);
+const selectedRowKeys = ref([]);
 
 const filteredData = computed(() => {
   let result = data.value;
@@ -148,6 +154,13 @@ const columns = [
   { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
   { title: '操作', key: 'action', width: 120 }
 ];
+
+const rowSelection = {
+  selectedRowKeys,
+  onChange: (keys) => {
+    selectedRowKeys.value = keys;
+  },
+};
 
 const skeletonData = computed(() => {
   return Array.from({ length: 5 }, (_, i) => ({ key: i }));
@@ -205,7 +218,7 @@ function del(record) {
     content: `确定要删除客户 "${record.name}" 吗？`,
     okText: '确定',
     cancelText: '取消',
-    okType: 'danger',
+    okButtonProps: { danger: true },
     async onOk() {
       try {
         await customerApi.delete(record.id);
@@ -213,6 +226,28 @@ function del(record) {
         loadData();
       } catch (e) {
         message.error('删除失败');
+      }
+    }
+  });
+}
+
+async function batchDelete() {
+  confirm({
+    title: '确认批量删除',
+    content: `确定要删除选中的 ${selectedRowKeys.value.length} 个客户吗？`,
+    okText: '确定',
+    cancelText: '取消',
+    okButtonProps: { danger: true },
+    async onOk() {
+      try {
+        for (const id of selectedRowKeys.value) {
+          await customerApi.delete(id);
+        }
+        message.success('批量删除成功');
+        selectedRowKeys.value = [];
+        loadData();
+      } catch (e) {
+        message.error(e.message || '批量删除失败');
       }
     }
   });

@@ -34,6 +34,7 @@ exports.main = async (event, context) => {
     switch (action) {
       case 'getPrices':        return await getPrices(event);
       case 'getAllPrices':     return await getAllPrices();
+      case 'getPricesBySeries': return await getPrices(event);
       case 'getAllSeries':     return await getAllSeries();
       case 'getAllModels':     return await getAllModels();
       case 'getModelsBySeries': return await getModelsBySeries(event);
@@ -59,6 +60,11 @@ exports.main = async (event, context) => {
       case 'createMaterial': return await createMaterial(event);
       case 'updateMaterial': return await updateMaterial(event);
       case 'deleteMaterial': return await deleteMaterial(event);
+      case 'createModelSpec': return await createModelSpec(event);
+      case 'updateModelSpec': return await updateModelSpec(event);
+      case 'deleteModelSpec': return await deleteModelSpec(event);
+      case 'getModelSpecs': return await getModelSpecs(event);
+      case 'getModelSpec': return await getModelSpec(event);
       case 'createCoefficient': return await createCoefficient(event);
       case 'updateCoefficient': return await updateCoefficient(event);
       case 'deleteCoefficient': return await deleteCoefficient(event);
@@ -391,11 +397,11 @@ async function getMaterialDiffs(event) {
       return {
         id: d.id,
         seriesName: d.series_name || '',
+        modelName: d.model_name || '',
+        size: d.size || null,
         partName: d.part_name || '',
         baseMaterial: d.base_material || '',
         targetMaterial: d.target_material || '',
-        dnMin: d.dn_min || 0,
-        dnMax: d.dn_max || 2000,
         priceDiff: Number(d.price_diff) || 0,
         remark: d.remark || ''
       };
@@ -416,7 +422,7 @@ async function getMaterialDiffs(event) {
 }
 
 async function getMaterialDiff(event) {
-  const { seriesName, partName, baseMaterial, targetMaterial, dn } = event;
+  const { seriesName, partName, baseMaterial, targetMaterial, dn, modelName } = event;
   if (!seriesName || !partName || !baseMaterial || !targetMaterial || dn === undefined) {
     return { success: false, message: '参数不完整' };
   }
@@ -424,14 +430,28 @@ async function getMaterialDiff(event) {
   try {
     var allDiffs = await selectAll('material_price_diffs', '*');
     
-    const matched = allDiffs.find(function(d) {
+    const candidates = allDiffs.filter(function(d) {
       return d.series_name === seriesName
         && d.part_name === partName
         && d.base_material === baseMaterial
-        && d.target_material === targetMaterial
-        && dn >= (d.dn_min || 0)
-        && dn <= (d.dn_max || 2000);
+        && d.target_material === targetMaterial;
     });
+
+    let matched = null;
+    if (candidates.length > 0) {
+      if (modelName) {
+        matched = candidates.find(d => d.model_name === modelName && d.size === dn);
+      }
+      if (!matched && modelName) {
+        matched = candidates.find(d => d.model_name === modelName && d.size === null);
+      }
+      if (!matched) {
+        matched = candidates.find(d => d.size === dn && d.model_name === '');
+      }
+      if (!matched) {
+        matched = candidates.find(d => d.size === null && d.model_name === '');
+      }
+    }
 
     if (matched) {
       return {
@@ -439,11 +459,11 @@ async function getMaterialDiff(event) {
         data: {
           id: matched.id,
           seriesName: matched.series_name,
+          modelName: matched.model_name || '',
+          size: matched.size || null,
           partName: matched.part_name,
           baseMaterial: matched.base_material,
           targetMaterial: matched.target_material,
-          dnMin: matched.dn_min,
-          dnMax: matched.dn_max,
           priceDiff: Number(matched.price_diff) || 0
         }
       };
@@ -585,7 +605,7 @@ async function deleteSeriesCascade(event) {
 
     return {
       success: true,
-      message: '级联删除成功，共删除 ' + deletedCount.models + ' 个型号、' + deletedCount.prices + ' 条价格、' + deletedCount.materials + ' 条材质配置'
+      message: '级联删除成功，共删除 ' + deletedCount.models + ' 个型号、' + deletedCount.prices + ' 条价格、' + deletedCount.materials + ' 条材质标配'
     };
   } catch (e) {
     console.error('[deleteSeriesCascade] 错误:', e);
@@ -629,7 +649,7 @@ async function deleteModel(event) {
   var { data: prices } = await rdb.from('price_table').select('id').eq('model_id', id);
   if (prices && prices.length > 0) return { success: false, message: '该型号下存在价格数据，无法删除' };
   var { data: mats } = await rdb.from('valve_model_materials').select('id').eq('model_id', id);
-  if (mats && mats.length > 0) return { success: false, message: '该型号下存在材质配置，无法删除' };
+  if (mats && mats.length > 0) return { success: false, message: '该型号下存在材质标配，无法删除' };
   const { error } = await rdb.from('valve_models').delete().eq('id', id);
   if (error) return { success: false, message: error.message };
   return { success: true, message: '删除成功' };
@@ -681,7 +701,7 @@ async function deletePrice(event) {
   return { success: true, message: '删除成功' };
 }
 
-// ----- 材质配置 -----
+// ----- 材质标配 -----
 async function createMaterial(event) {
   const { data } = event;
   if (!data || !data.valveName) return { success: false, message: '型号名称不能为空' };
@@ -722,6 +742,135 @@ async function deleteMaterial(event) {
   const { error } = await rdb.from('valve_model_materials').delete().eq('id', id);
   if (error) return { success: false, message: error.message };
   return { success: true, message: '删除成功' };
+}
+
+// ----- 规格参数 -----
+async function createModelSpec(event) {
+  const { data } = event;
+  if (!data || !data.valveName) return { success: false, message: '型号名称不能为空' };
+  var { data: model } = await rdb.from('valve_models').select('id').eq('name', data.valveName);
+  if (!model || model.length === 0) return { success: false, message: '型号不存在' };
+  const { error } = await rdb.from('model_specs').insert({
+    _openid: 'admin', model_id: model[0].id, size: data.size || 0,
+    max_pressure: data.maxPressure || 0,
+    unit_weight: data.unitWeight || 0,
+    laps: data.laps || 0,
+    torque: data.torque || 0,
+    created_at: now(), updated_at: now()
+  });
+  if (error) return { success: false, message: error.message };
+  return { success: true, message: '创建成功' };
+}
+
+async function updateModelSpec(event) {
+  const { id, data } = event;
+  if (!id) return { success: false, message: 'ID不能为空' };
+  var updateData = { updated_at: now() };
+  if (data.valveName !== undefined) {
+    var { data: model } = await rdb.from('valve_models').select('id').eq('name', data.valveName);
+    if (!model || model.length === 0) return { success: false, message: '型号不存在' };
+    updateData.model_id = model[0].id;
+  }
+  if (data.size !== undefined) updateData.size = data.size;
+  if (data.maxPressure !== undefined) updateData.max_pressure = data.maxPressure;
+  if (data.unitWeight !== undefined) updateData.unit_weight = data.unitWeight;
+  if (data.laps !== undefined) updateData.laps = data.laps;
+  if (data.torque !== undefined) updateData.torque = data.torque;
+  const { error } = await rdb.from('model_specs').update(updateData).eq('id', id);
+  if (error) return { success: false, message: error.message };
+  return { success: true, message: '更新成功' };
+}
+
+async function deleteModelSpec(event) {
+  const { id } = event;
+  if (!id) return { success: false, message: 'ID不能为空' };
+  const { error } = await rdb.from('model_specs').delete().eq('id', id);
+  if (error) return { success: false, message: error.message };
+  return { success: true, message: '删除成功' };
+}
+
+async function getModelSpecs(event) {
+  var { seriesName, valveName } = event;
+  
+  var modelIds = [];
+  if (valveName) {
+    var { data: model } = await rdb.from('valve_models').select('id').eq('name', valveName);
+    if (model && model.length > 0) modelIds = [model[0].id];
+  } else if (seriesName) {
+    var { data: series } = await rdb.from('product_series').select('id').eq('name', seriesName);
+    if (series && series.length > 0) {
+      var { data: models } = await rdb.from('valve_models').select('id').eq('series_id', series[0].id);
+      if (models && models.length > 0) modelIds = models.map(m => m.id);
+    }
+  }
+  
+  if (modelIds.length === 0) {
+    var { data: allModels } = await rdb.from('valve_models').select('id');
+    modelIds = (allModels || []).map(m => m.id);
+  }
+  
+  var specs = [];
+  for (var i = 0; i < modelIds.length; i += 100) {
+    var batch = modelIds.slice(i, i + 100);
+    var { data: batchSpecs } = await rdb.from('model_specs').select('*').in('model_id', batch);
+    if (batchSpecs) specs = specs.concat(batchSpecs);
+  }
+  
+  var modelMap = {};
+  var { data: models } = await rdb.from('valve_models').select('id, name, series_id');
+  for (const m of (models || [])) modelMap[m.id] = m;
+  
+  var seriesMap = {};
+  var { data: series } = await rdb.from('product_series').select('id, name');
+  for (const s of (series || [])) seriesMap[s.id] = s.name;
+  
+  var result = [];
+  for (const s of specs) {
+    var model = modelMap[s.model_id];
+    if (model) {
+      result.push({
+        id: s.id,
+        seriesName: seriesMap[model.series_id] || '',
+        valveName: model.name,
+        size: s.size,
+        maxPressure: s.max_pressure,
+        unitWeight: s.unit_weight,
+        laps: s.laps,
+        torque: s.torque
+      });
+    }
+  }
+  
+  return { success: true, data: result };
+}
+
+async function getModelSpec(event) {
+  const { valveName, size } = event;
+  if (!valveName) return { success: false, message: '型号名称不能为空' };
+  var { data: model } = await rdb.from('valve_models').select('id').eq('name', valveName);
+  if (!model || model.length === 0) return { success: false, message: '型号不存在' };
+  var { data: specs } = await rdb.from('model_specs').select('*').eq('model_id', model[0].id);
+  if (!specs || specs.length === 0) return { success: true, data: null };
+  
+  if (size !== undefined) {
+    var spec = specs.find(s => s.size === size);
+    return { success: true, data: spec ? {
+      id: spec.id,
+      maxPressure: spec.max_pressure,
+      unitWeight: spec.unit_weight,
+      laps: spec.laps,
+      torque: spec.torque
+    } : null };
+  }
+  
+  return { success: true, data: specs.map(s => ({
+    id: s.id,
+    size: s.size,
+    maxPressure: s.max_pressure,
+    unitWeight: s.unit_weight,
+    laps: s.laps,
+    torque: s.torque
+  })) };
 }
 
 // ----- 报价系数 -----
@@ -933,9 +1082,12 @@ async function createMaterialDiff(event) {
     return { success: false, message: '产品系列、部位名称、基础材质和目标材质不能为空' };
   }
   const { error } = await rdb.from('material_price_diffs').insert({
-    _openid: 'admin', series_name: data.seriesName, part_name: data.partName,
+    _openid: 'admin', series_name: data.seriesName,
+    model_name: data.modelName || '',
+    size: data.size || null,
+    part_name: data.partName,
     base_material: data.baseMaterial, target_material: data.targetMaterial,
-    dn_min: data.dnMin || 50, dn_max: data.dnMax || 2000, price_diff: data.priceDiff || 0,
+    price_diff: data.priceDiff || 0,
     remark: data.remark || '', created_at: now(), updated_at: now()
   });
   if (error) return { success: false, message: error.message };
@@ -947,11 +1099,11 @@ async function updateMaterialDiff(event) {
   if (!id) return { success: false, message: 'ID不能为空' };
   var updateData = { updated_at: now() };
   if (data.seriesName !== undefined) updateData.series_name = data.seriesName;
+  if (data.modelName !== undefined) updateData.model_name = data.modelName || '';
+  if (data.size !== undefined) updateData.size = data.size || null;
   if (data.partName !== undefined) updateData.part_name = data.partName;
   if (data.baseMaterial !== undefined) updateData.base_material = data.baseMaterial;
   if (data.targetMaterial !== undefined) updateData.target_material = data.targetMaterial;
-  if (data.dnMin !== undefined) updateData.dn_min = data.dnMin;
-  if (data.dnMax !== undefined) updateData.dn_max = data.dnMax;
   if (data.priceDiff !== undefined) updateData.price_diff = data.priceDiff;
   if (data.remark !== undefined) updateData.remark = data.remark;
   const { error } = await rdb.from('material_price_diffs').update(updateData).eq('id', id);

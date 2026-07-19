@@ -163,12 +163,13 @@ var _default = {
       currentDate: '',
       customerName: '',
       salesperson: '',
-      note: '阀体WCB，闸板304，单向硬密封。硬密封不做试压会有一定的漏水；连接方式：对夹PN10，执行方式气动含双左右气缸+限位开关+两位五通电磁阀+过滤器。此价格含税不含运费',
+      note: '',
       paymentMethod: '预定定金30%，付清余款发货。',
       packaging: '木箱包装。可以提供产品使用说明，产品材质报告，产品检测报告。',
       quoter: '童惠业',
       quoterPhone: '13957713583',
-      validity: '15天'
+      validity: '15天',
+      finalPrice: ''
     };
   },
   computed: {
@@ -177,6 +178,16 @@ var _default = {
         return sum + parseFloat(item.totalPrice || 0);
       }, 0);
       return total.toFixed(2);
+    }
+  },
+  watch: {
+    totalAmount: {
+      immediate: true,
+      handler: function handler(newVal) {
+        if (!this.finalPrice) {
+          this.finalPrice = newVal;
+        }
+      }
     }
   },
   onLoad: function onLoad(options) {
@@ -191,16 +202,20 @@ var _default = {
           gateMaterial: item.gatePlate,
           stemMaterial: item.rodMaterial,
           yokeMaterial: item.yokeMaterial || '',
-          seal: 'W',
           quantity: item.quantity || 1,
           unitPrice: String(item.unitPrice || '0'),
           totalPrice: String(item.totalPrice || '0'),
           brandingFee: item.brandingFee || 0,
           hasBranding: item.hasBranding || false,
-          productSeries: item.productSeries || ''
+          productSeries: item.productSeries || '',
+          maxPressure: item.maxPressure || '',
+          unitWeight: item.unitWeight || '',
+          laps: item.laps || '',
+          torque: item.torque || ''
         };
       });
       this.quoteData = formattedData;
+      this.finalPrice = this.totalAmount;
     }
     this.currentDate = this.formatDate(new Date());
   },
@@ -242,6 +257,9 @@ var _default = {
     onValidityInput: function onValidityInput(e) {
       this.validity = e.detail.value;
     },
+    onFinalPriceInput: function onFinalPriceInput(e) {
+      this.finalPrice = e.detail.value;
+    },
     onBack: function onBack() {
       uni.navigateBack();
     },
@@ -262,6 +280,7 @@ var _default = {
                   quoter: _this.quoter,
                   quoterPhone: _this.quoterPhone,
                   validity: _this.validity,
+                  finalPrice: parseFloat(_this.finalPrice) || parseFloat(_this.totalAmount) || 0,
                   items: _this.quoteData.map(function (item) {
                     return {
                       valveName: item.productName,
@@ -436,8 +455,8 @@ var _default = {
                     // 绘制核心表格明细
                     var totalWidth = 690;
                     var startX = 30;
-                    var headers = ['产品名称', '型号规格', '材质', '密封面', '数量', '单价', '总价'];
-                    var cellWidths = [130, 170, 70, 70, 50, 90, 110];
+                    var headers = ['产品名称', '型号规格', '闸板材质', '阀杆材质', '数量', '单价', '总价'];
+                    var cellWidths = [130, 170, 80, 80, 50, 90, 110];
 
                     // 表头背景色更改为深蓝钢铁色
                     ctx.setFillStyle('#0d1526');
@@ -453,25 +472,65 @@ var _default = {
 
                     // 循环生成行
                     var rowHeight = 38;
+                    var specRowHeight = 28;
                     _this2.quoteData.forEach(function (item, idx) {
                       x = startX + 8;
-                      var values = [item.productType, item.productName, item.material, item.seal, String(item.quantity), '¥' + item.unitPrice, '¥' + item.totalPrice];
+                      var values = [item.productType, item.productName + '-DN' + item.model, item.gateMaterial || '', item.stemMaterial || '', String(item.quantity), '¥' + item.unitPrice, '¥' + item.totalPrice];
                       if (idx % 2 === 1) {
                         ctx.setFillStyle('#f8fafc');
-                        ctx.fillRect(startX, y, totalWidth, rowHeight);
+                        ctx.fillRect(startX, y, totalWidth, rowHeight + specRowHeight);
                       }
                       values.forEach(function (val, i) {
-                        if (i === 6) ctx.setFillStyle('#dc2626'); // 总价高亮红
-                        else ctx.setFillStyle('#1e293b');
+                        if (i === 6) ctx.setFillStyle('#dc2626');else ctx.setFillStyle('#1e293b');
                         ctx.fillText(val || '', x, y + 24);
                         x += cellWidths[i];
                       });
+                      y += rowHeight * scale;
+
+                      // 绘制规格参数行（跨列显示）
+                      ctx.setFontSize(11);
+                      ctx.setFillStyle('#64748b');
+                      ctx.fillText('规格参数：', startX + 8, y + 18);
+                      x = startX + 60;
+                      var specs = [{
+                        label: '最高承压',
+                        en: 'Max Pressure',
+                        value: item.maxPressure,
+                        unit: 'BAR'
+                      }, {
+                        label: '单重',
+                        en: 'Unit Weight',
+                        value: item.unitWeight,
+                        unit: 'KG'
+                      }, {
+                        label: '圈数',
+                        en: 'Laps',
+                        value: item.laps,
+                        unit: ''
+                      }, {
+                        label: '扭矩',
+                        en: 'Torque',
+                        value: item.torque,
+                        unit: 'N.M'
+                      }];
+                      specs.forEach(function (spec, i) {
+                        if (spec.value) {
+                          var labelText = "".concat(spec.label, "(").concat(spec.en, "): ").concat(spec.value).concat(spec.unit);
+                          var labelWidth = ctx.measureText(labelText).width;
+                          if (x + labelWidth <= startX + totalWidth - 10) {
+                            ctx.setFillStyle('#475569');
+                            ctx.fillText(labelText, x, y + 18);
+                            x += labelWidth + 15;
+                          }
+                        }
+                      });
                       ctx.setStrokeStyle('#e2e8f0');
                       ctx.beginPath();
-                      ctx.moveTo(startX, y + rowHeight);
-                      ctx.lineTo(startX + totalWidth, y + rowHeight);
+                      ctx.moveTo(startX, y + specRowHeight);
+                      ctx.lineTo(startX + totalWidth, y + specRowHeight);
                       ctx.stroke();
-                      y += rowHeight * scale;
+                      y += specRowHeight * scale;
+                      ctx.setFontSize(13);
                     });
 
                     // 绘制条款与备注段落
@@ -491,6 +550,13 @@ var _default = {
                     ctx.fillText('包装方式：', 30, y);
                     ctx.setFillStyle('#0d1526');
                     ctx.fillText(_this2.packaging, 105, y);
+                    y += 26 * scale;
+                    ctx.setFillStyle('#475569');
+                    ctx.fillText('确认报价金额：', 30, y);
+                    ctx.setFillStyle('#dc2626');
+                    ctx.setFontSize(16);
+                    ctx.fillText('¥' + (_this2.finalPrice || _this2.totalAmount), 130, y);
+                    ctx.setFontSize(14);
                     y += 35 * scale;
 
                     // 底部边栏与签章区

@@ -128,6 +128,14 @@
                         <text class="summary-label">合计金额</text>
                         <text class="summary-value">¥{{ totalAmount }}</text>
                     </view>
+                    <view class="final-price-row">
+                        <text class="final-price-label">确认报价金额</text>
+                        <view class="final-price-input-wrap">
+                            <text class="final-price-prefix">¥</text>
+                            <input class="final-price-input" type="digit" placeholder="请输入最终报价金额" placeholder-class="placeholder-style"
+                                :value="finalPrice" @input="onFinalPriceInput" />
+                        </view>
+                    </view>
                 </view>
 
                 <view class="card">
@@ -202,12 +210,13 @@ export default {
             currentDate: '',
             customerName: '',
             salesperson: '',
-            note: '阀体WCB，闸板304，单向硬密封。硬密封不做试压会有一定的漏水；连接方式：对夹PN10，执行方式气动含双左右气缸+限位开关+两位五通电磁阀+过滤器。此价格含税不含运费',
+            note: '',
             paymentMethod: '预定定金30%，付清余款发货。',
             packaging: '木箱包装。可以提供产品使用说明，产品材质报告，产品检测报告。',
             quoter: '童惠业',
             quoterPhone: '13957713583',
             validity: '15天',
+            finalPrice: '',
 
         };
     },
@@ -217,26 +226,40 @@ export default {
             return total.toFixed(2);
         }
     },
+    watch: {
+        totalAmount: {
+            immediate: true,
+            handler(newVal) {
+                if (!this.finalPrice) {
+                    this.finalPrice = newVal;
+                }
+            }
+        }
+    },
     onLoad(options) {
         if (options.data) {
             const quoteData = JSON.parse(decodeURIComponent(options.data));
             const formattedData = quoteData.map((item) => ({
-                productType: item.productType || '常规品',
-                productName: item.productName || item.valveName,
-                model: item.model || item.spec || '',
-                bodyMaterial: item.bodyMaterial || 'WCB',
-                gateMaterial: item.gatePlate,
-                stemMaterial: item.rodMaterial,
-                yokeMaterial: item.yokeMaterial || '',
-                seal: 'W',
-                quantity: item.quantity || 1,
-                unitPrice: String(item.unitPrice || '0'),
-                totalPrice: String(item.totalPrice || '0'),
-                brandingFee: item.brandingFee || 0,
-                hasBranding: item.hasBranding || false,
-                productSeries: item.productSeries || ''
-            }));
+                    productType: item.productType || '常规品',
+                    productName: item.productName || item.valveName,
+                    model: item.model || item.spec || '',
+                    bodyMaterial: item.bodyMaterial || 'WCB',
+                    gateMaterial: item.gatePlate,
+                    stemMaterial: item.rodMaterial,
+                    yokeMaterial: item.yokeMaterial || '',
+                    quantity: item.quantity || 1,
+                    unitPrice: String(item.unitPrice || '0'),
+                    totalPrice: String(item.totalPrice || '0'),
+                    brandingFee: item.brandingFee || 0,
+                    hasBranding: item.hasBranding || false,
+                    productSeries: item.productSeries || '',
+                    maxPressure: item.maxPressure || '',
+                    unitWeight: item.unitWeight || '',
+                    laps: item.laps || '',
+                    torque: item.torque || ''
+                }));
             this.quoteData = formattedData;
+            this.finalPrice = this.totalAmount;
         }
         this.currentDate = this.formatDate(new Date());
     },
@@ -265,6 +288,7 @@ export default {
         onQuoterInput(e) { this.quoter = e.detail.value; },
         onQuoterPhoneInput(e) { this.quoterPhone = e.detail.value; },
         onValidityInput(e) { this.validity = e.detail.value; },
+        onFinalPriceInput(e) { this.finalPrice = e.detail.value; },
 
         onBack() {
             uni.navigateBack();
@@ -280,6 +304,7 @@ export default {
                 quoter: this.quoter,
                 quoterPhone: this.quoterPhone,
                 validity: this.validity,
+                finalPrice: parseFloat(this.finalPrice) || parseFloat(this.totalAmount) || 0,
                 items: this.quoteData.map(item => ({
                     valveName: item.productName,
                     spec: parseInt(item.model),
@@ -438,8 +463,8 @@ export default {
                     // 绘制核心表格明细
                     const totalWidth = 690;
                     const startX = 30;
-                    const headers = ['产品名称', '型号规格', '材质', '密封面', '数量', '单价', '总价'];
-                    const cellWidths = [130, 170, 70, 70, 50, 90, 110];
+                    const headers = ['产品名称', '型号规格', '闸板材质', '阀杆材质', '数量', '单价', '总价'];
+                    const cellWidths = [130, 170, 80, 80, 50, 90, 110];
 
                     // 表头背景色更改为深蓝钢铁色
                     ctx.setFillStyle('#0d1526');
@@ -456,13 +481,14 @@ export default {
 
                     // 循环生成行
                     const rowHeight = 38;
+                    const specRowHeight = 28;
                     this.quoteData.forEach((item, idx) => {
                         x = startX + 8;
                         const values = [
                             item.productType,
-                            item.productName,
-                            item.material,
-                            item.seal,
+                            item.productName + '-DN' + item.model,
+                            item.gateMaterial || '',
+                            item.stemMaterial || '',
                             String(item.quantity),
                             '¥' + item.unitPrice,
                             '¥' + item.totalPrice
@@ -470,23 +496,51 @@ export default {
 
                         if (idx % 2 === 1) {
                             ctx.setFillStyle('#f8fafc');
-                            ctx.fillRect(startX, y, totalWidth, rowHeight);
+                            ctx.fillRect(startX, y, totalWidth, rowHeight + specRowHeight);
                         }
 
                         values.forEach((val, i) => {
-                            if (i === 6) ctx.setFillStyle('#dc2626'); // 总价高亮红
+                            if (i === 6) ctx.setFillStyle('#dc2626');
                             else ctx.setFillStyle('#1e293b');
                             ctx.fillText(val || '', x, y + 24);
                             x += cellWidths[i];
                         });
 
+                        y += rowHeight * scale;
+
+                        // 绘制规格参数行（跨列显示）
+                        ctx.setFontSize(11);
+                        ctx.setFillStyle('#64748b');
+                        ctx.fillText('规格参数：', startX + 8, y + 18);
+                        
+                        x = startX + 60;
+                        const specs = [
+                            { label: '最高承压', en: 'Max Pressure', value: item.maxPressure, unit: 'BAR' },
+                            { label: '单重', en: 'Unit Weight', value: item.unitWeight, unit: 'KG' },
+                            { label: '圈数', en: 'Laps', value: item.laps, unit: '' },
+                            { label: '扭矩', en: 'Torque', value: item.torque, unit: 'N.M' }
+                        ];
+
+                        specs.forEach((spec, i) => {
+                            if (spec.value) {
+                                const labelText = `${spec.label}(${spec.en}): ${spec.value}${spec.unit}`;
+                                const labelWidth = ctx.measureText(labelText).width;
+                                if (x + labelWidth <= startX + totalWidth - 10) {
+                                    ctx.setFillStyle('#475569');
+                                    ctx.fillText(labelText, x, y + 18);
+                                    x += labelWidth + 15;
+                                }
+                            }
+                        });
+
                         ctx.setStrokeStyle('#e2e8f0');
                         ctx.beginPath();
-                        ctx.moveTo(startX, y + rowHeight);
-                        ctx.lineTo(startX + totalWidth, y + rowHeight);
+                        ctx.moveTo(startX, y + specRowHeight);
+                        ctx.lineTo(startX + totalWidth, y + specRowHeight);
                         ctx.stroke();
 
-                        y += rowHeight * scale;
+                        y += specRowHeight * scale;
+                        ctx.setFontSize(13);
                     });
 
                     // 绘制条款与备注段落
@@ -508,6 +562,14 @@ export default {
                     ctx.fillText('包装方式：', 30, y);
                     ctx.setFillStyle('#0d1526');
                     ctx.fillText(this.packaging, 105, y);
+                    y += 26 * scale;
+
+                    ctx.setFillStyle('#475569');
+                    ctx.fillText('确认报价金额：', 30, y);
+                    ctx.setFillStyle('#dc2626');
+                    ctx.setFontSize(16);
+                    ctx.fillText('¥' + (this.finalPrice || this.totalAmount), 130, y);
+                    ctx.setFontSize(14);
                     y += 35 * scale;
 
                     // 底部边栏与签章区
@@ -1064,6 +1126,47 @@ page {
     font-weight: 700;
     color: #c8aa6e;
     letter-spacing: -1rpx;
+}
+
+.final-price-row {
+    margin: 0 -30rpx -30rpx;
+    padding: 24rpx 30rpx;
+    background: #fff7ed;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 2rpx dashed #fed7aa;
+    border-radius: 0 0 20rpx 20rpx;
+}
+
+.final-price-label {
+    font-size: 26rpx;
+    font-weight: 600;
+    color: #9a3412;
+}
+
+.final-price-input-wrap {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 2rpx solid #fb923c;
+    border-radius: 10rpx;
+    padding: 8rpx 16rpx;
+}
+
+.final-price-prefix {
+    font-size: 28rpx;
+    font-weight: 700;
+    color: #dc2626;
+    margin-right: 4rpx;
+}
+
+.final-price-input {
+    font-size: 32rpx;
+    font-weight: 700;
+    color: #dc2626;
+    width: 200rpx;
+    text-align: right;
 }
 
 /* 按钮操作系统组 */

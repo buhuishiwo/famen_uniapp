@@ -3,6 +3,7 @@
     <router-view />
   </template>
   <template v-else>
+    <a-config-provider :locale="zhCN">
     <a-layout style="min-height: 100vh">
       <a-layout-sider width="220" v-model:collapsed="collapsed" :trigger="null" collapsible class="admin-sider">
         <div class="logo">
@@ -23,6 +24,10 @@
             <TagsOutlined />
             <span>阀门型号</span>
           </a-menu-item>
+          <a-menu-item key="model-spec">
+            <BarChartOutlined />
+            <span>规格参数</span>
+          </a-menu-item>
           <a-menu-item key="price">
             <DollarOutlined />
             <span>价格管理</span>
@@ -33,7 +38,7 @@
           </a-menu-item>
           <a-menu-item key="material">
             <BgColorsOutlined />
-            <span>材质配置</span>
+            <span>材质标配</span>
           </a-menu-item>
           <a-menu-item key="material-diff">
             <SwapOutlined />
@@ -84,16 +89,19 @@
         </a-layout-footer>
       </a-layout>
     </a-layout>
+    </a-config-provider>
   </template>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import zhCN from 'ant-design-vue/es/locale/zh_CN';
 import {
   DashboardOutlined,
   AppstoreOutlined,
   TagsOutlined,
+  BarChartOutlined,
   DollarOutlined,
   BgColorsOutlined,
   PercentageOutlined,
@@ -117,8 +125,9 @@ const pageTitles = {
   dashboard: '首页概览',
   series: '产品系列',
   model: '阀门型号',
+  'model-spec': '规格参数',
   price: '价格管理',
-  material: '材质配置',
+  material: '材质标配',
   coefficient: '报价系数',
   'material-diff': '材质价差',
   'material-lib': '材质库',

@@ -718,7 +718,7 @@ export default {
         getPriceByType(priceItem, type) {
             return priceItem.price || 0;
         },
-        calculatePrice() {
+        async calculatePrice() {
             const { selectedValve, selectedSpec, selectedGatePlate, selectedRodMaterial, selectedYokeMaterial, quantity, selectedProductType } = this;
             if (!selectedValve || !selectedSpec || !selectedGatePlate || !selectedRodMaterial) {
                 uni.showToast({ title: '请填写完整信息', icon: 'none' }); return null;
@@ -764,6 +764,21 @@ export default {
             const baseTotal = basePrice + bodyDiff + gatePlateDiff + rodDiff + yokeDiff + brandingFee;
             const unitPrice = baseTotal * pricingCoeff * multiplier;
             const totalPrice = unitPrice * quantity;
+
+            let maxPressure = '', unitWeight = '', laps = '', torque = '';
+            try {
+                const specResult = await priceApi.getModelSpecs(selectedValve.name, specSize);
+                if (specResult && specResult.data) {
+                    const spec = specResult.data;
+                    maxPressure = spec.maxPressure || '';
+                    unitWeight = spec.unitWeight || '';
+                    laps = spec.laps || '';
+                    torque = spec.torque || '';
+                }
+            } catch (e) {
+                console.log('获取规格参数失败:', e);
+            }
+
             return {
                 valveName: selectedValve.name,
                 spec: selectedSpec.name,
@@ -778,14 +793,20 @@ export default {
                 unitPrice: unitPrice.toFixed(2),
                 totalPrice: totalPrice.toFixed(2),
                 productSeries: seriesName,
-                isMeetMinOrder: isMeetMinOrder
+                isMeetMinOrder: isMeetMinOrder,
+                maxPressure: maxPressure,
+                unitWeight: unitWeight,
+                laps: laps,
+                torque: torque
             };
         },
         onBackToCategory() {
             uni.navigateBack({ delta: 1 });
         },
-        onAddToQuote() {
-            const item = this.calculatePrice();
+        async onAddToQuote() {
+            uni.showLoading({ title: '计算中...', mask: true });
+            const item = await this.calculatePrice();
+            uni.hideLoading();
             if (!item) return;
             const newQuoteItems = [...this.quoteItems, item];
             const newTotalPrice = this.calculateTotal(newQuoteItems);
