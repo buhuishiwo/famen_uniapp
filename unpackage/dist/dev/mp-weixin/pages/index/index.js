@@ -219,7 +219,14 @@ var _default = {
       quoteItems: [],
       totalPrice: '0.00',
       currentPrice: '0.00',
-      totalPreviewPrice: '0.00'
+      // loading状态
+      showLoading: false,
+      loadingText: '',
+      showToastDialog: false,
+      toastText: '',
+      toastType: 'success',
+      totalPreviewPrice: '0.00',
+      confirmedPrice: '0.00'
     };
   },
   onLoad: function onLoad() {
@@ -232,22 +239,30 @@ var _default = {
     }
   },
   methods: (_methods = {
-    loadDataFromBackend: function loadDataFromBackend() {
+    showToast: function showToast(text) {
       var _this = this;
+      var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'success';
+      this.showToastDialog = true;
+      this.toastText = text;
+      this.toastType = type;
+      setTimeout(function () {
+        _this.showToastDialog = false;
+      }, 2000);
+    },
+    loadDataFromBackend: function loadDataFromBackend() {
+      var _this2 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
         var _yield$Promise$all, _yield$Promise$all2, series, models, rulesRes, materialsRes, diffsRes, groupedModels, seriesName;
         return _regenerator.default.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                uni.showLoading({
-                  title: '加载数据中...',
-                  mask: true
-                });
-                _context.prev = 1;
-                _context.next = 4;
+                _this2.showLoading = true;
+                _this2.loadingText = '加载数据中...';
+                _context.prev = 2;
+                _context.next = 5;
                 return Promise.all([_cloudApi.priceApi.getSeries(), _cloudApi.priceApi.getModels(), _cloudApi.priceApi.getPricingRules(), _cloudApi.priceApi.getMaterials(), _cloudApi.priceApi.getMaterialDiffs()]);
-              case 4:
+              case 5:
                 _yield$Promise$all = _context.sent;
                 _yield$Promise$all2 = (0, _slicedToArray2.default)(_yield$Promise$all, 5);
                 series = _yield$Promise$all2[0];
@@ -256,17 +271,17 @@ var _default = {
                 materialsRes = _yield$Promise$all2[3];
                 diffsRes = _yield$Promise$all2[4];
                 if (rulesRes && rulesRes.success) {
-                  _this.pricingRules = rulesRes.data || [];
-                  console.log('[index] 加载报价系数规则: ' + _this.pricingRules.length + ' 条');
+                  _this2.pricingRules = rulesRes.data || [];
+                  console.log('[index] 加载报价系数规则: ' + _this2.pricingRules.length + ' 条');
                 }
                 if (materialsRes && materialsRes.success) {
-                  _this.materialData = materialsRes.data || [];
-                  console.log('[index] 加载材质数据: ' + _this.materialData.length + ' 条');
-                  _this.updateMaterialOptions();
+                  _this2.materialData = materialsRes.data || [];
+                  console.log('[index] 加载材质数据: ' + _this2.materialData.length + ' 条');
+                  _this2.updateMaterialOptions();
                 }
                 if (diffsRes && diffsRes.success) {
-                  _this.materialDiffs = diffsRes.data || [];
-                  console.log('[index] 加载材质价差数据: ' + _this.materialDiffs.length + ' 条');
+                  _this2.materialDiffs = diffsRes.data || [];
+                  console.log('[index] 加载材质价差数据: ' + _this2.materialDiffs.length + ' 条');
                 }
                 groupedModels = {};
                 Object.keys(models).forEach(function (seriesName) {
@@ -278,34 +293,31 @@ var _default = {
                     };
                   });
                 });
-                _this.seriesValveTypes = groupedModels;
-                seriesName = _this.currentProductSeries || null;
-                _context.next = 20;
+                _this2.seriesValveTypes = groupedModels;
+                seriesName = _this2.currentProductSeries || null;
+                _context.next = 21;
                 return _cloudApi.priceApi.getPrices(seriesName);
-              case 20:
-                _this.priceData = _context.sent;
-                _this.setValveTypesBySeries();
-                _this.updateSpecifications();
-                _context.next = 29;
+              case 21:
+                _this2.priceData = _context.sent;
+                _this2.setValveTypesBySeries();
+                _this2.updateSpecifications();
+                _context.next = 30;
                 break;
-              case 25:
-                _context.prev = 25;
-                _context.t0 = _context["catch"](1);
+              case 26:
+                _context.prev = 26;
+                _context.t0 = _context["catch"](2);
                 console.error('加载数据失败:', _context.t0);
-                uni.showToast({
-                  title: '加载数据失败',
-                  icon: 'none'
-                });
-              case 29:
-                _context.prev = 29;
-                uni.hideLoading();
-                return _context.finish(29);
-              case 32:
+                _this2.showToast('加载数据失败', 'error');
+              case 30:
+                _context.prev = 30;
+                _this2.showLoading = false;
+                return _context.finish(30);
+              case 33:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[1, 25, 29, 32]]);
+        }, _callee, null, [[2, 26, 30, 33]]);
       }))();
     },
     setValveTypesBySeries: function setValveTypesBySeries() {
@@ -335,7 +347,7 @@ var _default = {
       }
     },
     loadPriceDataBySeries: function loadPriceDataBySeries(seriesName) {
-      var _this2 = this;
+      var _this3 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
         var i, materialsRes;
         return _regenerator.default.wrap(function _callee2$(_context2) {
@@ -346,11 +358,11 @@ var _default = {
                 _context2.next = 3;
                 return _cloudApi.priceApi.getPrices(seriesName);
               case 3:
-                _this2.priceData = _context2.sent;
-                console.log('[index] loadPriceDataBySeries: series=' + seriesName + ', 条数=' + (_this2.priceData ? _this2.priceData.length : 0));
-                if (_this2.priceData && _this2.priceData.length > 0) {
-                  for (i = 0; i < Math.min(_this2.priceData.length, 3); i++) {
-                    console.log('[index] priceData[' + i + ']: valve=' + _this2.priceData[i].valveName + ' size=' + _this2.priceData[i].size + ' minOrderQty=' + _this2.priceData[i].minOrderQty + ' price=' + _this2.priceData[i].price);
+                _this3.priceData = _context2.sent;
+                console.log('[index] loadPriceDataBySeries: series=' + seriesName + ', 条数=' + (_this3.priceData ? _this3.priceData.length : 0));
+                if (_this3.priceData && _this3.priceData.length > 0) {
+                  for (i = 0; i < Math.min(_this3.priceData.length, 3); i++) {
+                    console.log('[index] priceData[' + i + ']: valve=' + _this3.priceData[i].valveName + ' size=' + _this3.priceData[i].size + ' minOrderQty=' + _this3.priceData[i].minOrderQty + ' price=' + _this3.priceData[i].price);
                   }
                 }
                 _context2.next = 8;
@@ -358,8 +370,8 @@ var _default = {
               case 8:
                 materialsRes = _context2.sent;
                 if (materialsRes && materialsRes.success) {
-                  _this2.materialData = materialsRes.data || [];
-                  _this2.updateMaterialOptions();
+                  _this3.materialData = materialsRes.data || [];
+                  _this3.updateMaterialOptions();
                 }
                 _context2.next = 15;
                 break;
@@ -726,7 +738,19 @@ var _default = {
     this.setData({
       quantity: newQuantity
     });
-    this.updateCurrentPrice();
+    var price = parseFloat(this.confirmedPrice) || parseFloat(this.currentPrice) || 0;
+    this.setData({
+      totalPreviewPrice: (price * newQuantity).toFixed(2)
+    });
+  }), (0, _defineProperty2.default)(_methods, "onPriceInput", function onPriceInput(e) {
+    var newPrice = e.detail.value;
+    this.setData({
+      confirmedPrice: newPrice
+    });
+    var price = parseFloat(newPrice) || 0;
+    this.setData({
+      totalPreviewPrice: (price * this.quantity).toFixed(2)
+    });
   }), (0, _defineProperty2.default)(_methods, "getMaterialPriceDiff", function getMaterialPriceDiff(seriesName, partName, baseMaterial, targetMaterial, dn) {
     if (!baseMaterial || !targetMaterial || baseMaterial === targetMaterial) return 0;
     var matched = this.materialDiffs.find(function (d) {
@@ -773,6 +797,7 @@ var _default = {
     var total = baseTotal * pricingCoeff * multiplier;
     this.setData({
       currentPrice: total.toFixed(2),
+      confirmedPrice: total.toFixed(2),
       totalPreviewPrice: (total * this.quantity).toFixed(2)
     });
   }), (0, _defineProperty2.default)(_methods, "getBrandingFee", function getBrandingFee(size) {
@@ -799,7 +824,7 @@ var _default = {
     };
     return brandingFeeMap[size] || 0;
   }), (0, _defineProperty2.default)(_methods, "updateSpecifications", function updateSpecifications() {
-    var _this3 = this;
+    var _this4 = this;
     // 根据选中的阀门型号，从已加载的价格数据中提取可用规格
     // 清除之前选的规格（不同型号的可用规格不同）
     this.selectedSpec = null;
@@ -818,7 +843,7 @@ var _default = {
       return;
     }
     var sizes = this.priceData.filter(function (p) {
-      return p.valveName === _this3.selectedValve.name;
+      return p.valveName === _this4.selectedValve.name;
     }).map(function (p) {
       return p.size;
     }).sort(function (a, b) {
@@ -836,61 +861,56 @@ var _default = {
   }), (0, _defineProperty2.default)(_methods, "getPriceByType", function getPriceByType(priceItem, type) {
     return priceItem.price || 0;
   }), (0, _defineProperty2.default)(_methods, "calculatePrice", function calculatePrice() {
-    var _this4 = this;
+    var _this5 = this;
     return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
-      var _this4$SelectValveBod, _this4$SelectValveBod2;
-      var selectedValve, selectedSpec, selectedGatePlate, selectedRodMaterial, selectedYokeMaterial, quantity, selectedProductType, priceItem, material, type, basePrice, specSize, seriesName, bodyDiff, gatePlateDiff, rodDiff, yokeDiff, multiplier, minQty, isMeetMinOrder, hasBranding, brandingFee, pricingCoeff, baseTotal, unitPrice, totalPrice, maxPressure, unitWeight, laps, torque, specResult, spec;
+      var _this5$SelectValveBod, _this5$SelectValveBod2;
+      var selectedValve, selectedSpec, selectedGatePlate, selectedRodMaterial, selectedYokeMaterial, quantity, selectedProductType, priceItem, material, type, basePrice, specSize, seriesName, bodyDiff, gatePlateDiff, rodDiff, yokeDiff, multiplier, minQty, isMeetMinOrder, hasBranding, brandingFee, pricingCoeff, baseTotal, calculatedUnitPrice, finalUnitPrice, totalPrice, maxPressure, unitWeight, laps, torque, specResult, spec;
       return _regenerator.default.wrap(function _callee3$(_context3) {
         while (1) {
           switch (_context3.prev = _context3.next) {
             case 0:
-              selectedValve = _this4.selectedValve, selectedSpec = _this4.selectedSpec, selectedGatePlate = _this4.selectedGatePlate, selectedRodMaterial = _this4.selectedRodMaterial, selectedYokeMaterial = _this4.selectedYokeMaterial, quantity = _this4.quantity, selectedProductType = _this4.selectedProductType;
+              selectedValve = _this5.selectedValve, selectedSpec = _this5.selectedSpec, selectedGatePlate = _this5.selectedGatePlate, selectedRodMaterial = _this5.selectedRodMaterial, selectedYokeMaterial = _this5.selectedYokeMaterial, quantity = _this5.quantity, selectedProductType = _this5.selectedProductType;
               if (!(!selectedValve || !selectedSpec || !selectedGatePlate || !selectedRodMaterial)) {
                 _context3.next = 4;
                 break;
               }
-              uni.showToast({
-                title: '请填写完整信息',
-                icon: 'none'
-              });
+              _this5.showToast('请填写完整信息', 'error');
               return _context3.abrupt("return", null);
             case 4:
-              priceItem = _this4.priceData.find(function (p) {
+              priceItem = _this5.priceData.find(function (p) {
                 return p.valveName === selectedValve.name && p.size === selectedSpec.name;
               });
               if (priceItem) {
                 _context3.next = 8;
                 break;
               }
-              uni.showToast({
-                title: '该组合不可用',
-                icon: 'none'
-              });
+              _this5.showToast('该组合不可用', 'error');
               return _context3.abrupt("return", null);
             case 8:
-              material = _this4.getMaterialByValveName(selectedValve.name);
+              material = _this5.getMaterialByValveName(selectedValve.name);
               type = selectedValve.type;
-              basePrice = _this4.getPriceByType(priceItem, type);
+              basePrice = _this5.getPriceByType(priceItem, type);
               specSize = selectedSpec.name;
-              seriesName = _this4.currentProductSeries;
-              bodyDiff = _this4.getMaterialPriceDiff(seriesName, 'body', (material === null || material === void 0 ? void 0 : material.bodyMaterial) || '', ((_this4$SelectValveBod = _this4.SelectValveBody) === null || _this4$SelectValveBod === void 0 ? void 0 : _this4$SelectValveBod.name) || '', specSize);
-              gatePlateDiff = _this4.getMaterialPriceDiff(seriesName, 'gate_plate', (material === null || material === void 0 ? void 0 : material.gatePlateMaterial) || '', (selectedGatePlate === null || selectedGatePlate === void 0 ? void 0 : selectedGatePlate.name) || '', specSize);
-              rodDiff = _this4.getMaterialPriceDiff(seriesName, 'stem', (material === null || material === void 0 ? void 0 : material.stemMaterial) || '', (selectedRodMaterial === null || selectedRodMaterial === void 0 ? void 0 : selectedRodMaterial.name) || '', specSize);
-              yokeDiff = _this4.getMaterialPriceDiff(seriesName, 'yoke', (material === null || material === void 0 ? void 0 : material.yokeMaterial) || '', (selectedYokeMaterial === null || selectedYokeMaterial === void 0 ? void 0 : selectedYokeMaterial.name) || '', specSize);
-              multiplier = _this4.priceTable.productTypeMultiplier[selectedProductType];
-              minQty = _this4.getMinOrderQuantity(specSize);
+              seriesName = _this5.currentProductSeries;
+              bodyDiff = _this5.getMaterialPriceDiff(seriesName, 'body', (material === null || material === void 0 ? void 0 : material.bodyMaterial) || '', ((_this5$SelectValveBod = _this5.SelectValveBody) === null || _this5$SelectValveBod === void 0 ? void 0 : _this5$SelectValveBod.name) || '', specSize);
+              gatePlateDiff = _this5.getMaterialPriceDiff(seriesName, 'gate_plate', (material === null || material === void 0 ? void 0 : material.gatePlateMaterial) || '', (selectedGatePlate === null || selectedGatePlate === void 0 ? void 0 : selectedGatePlate.name) || '', specSize);
+              rodDiff = _this5.getMaterialPriceDiff(seriesName, 'stem', (material === null || material === void 0 ? void 0 : material.stemMaterial) || '', (selectedRodMaterial === null || selectedRodMaterial === void 0 ? void 0 : selectedRodMaterial.name) || '', specSize);
+              yokeDiff = _this5.getMaterialPriceDiff(seriesName, 'yoke', (material === null || material === void 0 ? void 0 : material.yokeMaterial) || '', (selectedYokeMaterial === null || selectedYokeMaterial === void 0 ? void 0 : selectedYokeMaterial.name) || '', specSize);
+              multiplier = _this5.priceTable.productTypeMultiplier[selectedProductType];
+              minQty = _this5.getMinOrderQuantity(specSize);
               isMeetMinOrder = quantity >= minQty;
-              hasBranding = _this4.selectedBranding;
+              hasBranding = _this5.selectedBranding;
               brandingFee = hasBranding ? priceItem.brandingFee || 0 : 0;
-              pricingCoeff = _this4.getPricingCoefficient(seriesName, selectedValve.name, specSize, quantity, hasBranding);
+              pricingCoeff = _this5.getPricingCoefficient(seriesName, selectedValve.name, specSize, quantity, hasBranding);
               baseTotal = basePrice + bodyDiff + gatePlateDiff + rodDiff + yokeDiff + brandingFee;
-              unitPrice = baseTotal * pricingCoeff * multiplier;
-              totalPrice = unitPrice * quantity;
+              calculatedUnitPrice = baseTotal * pricingCoeff * multiplier;
+              finalUnitPrice = parseFloat(_this5.confirmedPrice) || calculatedUnitPrice;
+              totalPrice = finalUnitPrice * quantity;
               maxPressure = '', unitWeight = '', laps = '', torque = '';
-              _context3.prev = 27;
-              _context3.next = 30;
+              _context3.prev = 28;
+              _context3.next = 31;
               return _cloudApi.priceApi.getModelSpecs(selectedValve.name, specSize);
-            case 30:
+            case 31:
               specResult = _context3.sent;
               if (specResult && specResult.data) {
                 spec = specResult.data;
@@ -899,25 +919,25 @@ var _default = {
                 laps = spec.laps || '';
                 torque = spec.torque || '';
               }
-              _context3.next = 37;
+              _context3.next = 38;
               break;
-            case 34:
-              _context3.prev = 34;
-              _context3.t0 = _context3["catch"](27);
+            case 35:
+              _context3.prev = 35;
+              _context3.t0 = _context3["catch"](28);
               console.log('获取规格参数失败:', _context3.t0);
-            case 37:
+            case 38:
               return _context3.abrupt("return", {
                 valveName: selectedValve.name,
                 spec: selectedSpec.name,
                 brandingFee: brandingFee,
                 hasBranding: hasBranding,
-                bodyMaterial: ((_this4$SelectValveBod2 = _this4.SelectValveBody) === null || _this4$SelectValveBod2 === void 0 ? void 0 : _this4$SelectValveBod2.name) || '',
+                bodyMaterial: ((_this5$SelectValveBod2 = _this5.SelectValveBody) === null || _this5$SelectValveBod2 === void 0 ? void 0 : _this5$SelectValveBod2.name) || '',
                 gatePlate: selectedGatePlate.name,
                 rodMaterial: selectedRodMaterial.name,
                 yokeMaterial: (selectedYokeMaterial === null || selectedYokeMaterial === void 0 ? void 0 : selectedYokeMaterial.name) || '',
                 productType: selectedProductType,
                 quantity: quantity,
-                unitPrice: unitPrice.toFixed(2),
+                unitPrice: finalUnitPrice.toFixed(2),
                 totalPrice: totalPrice.toFixed(2),
                 productSeries: seriesName,
                 isMeetMinOrder: isMeetMinOrder,
@@ -926,53 +946,48 @@ var _default = {
                 laps: laps,
                 torque: torque
               });
-            case 38:
+            case 39:
             case "end":
               return _context3.stop();
           }
         }
-      }, _callee3, null, [[27, 34]]);
+      }, _callee3, null, [[28, 35]]);
     }))();
   }), (0, _defineProperty2.default)(_methods, "onBackToCategory", function onBackToCategory() {
     uni.navigateBack({
       delta: 1
     });
   }), (0, _defineProperty2.default)(_methods, "onAddToQuote", function onAddToQuote() {
-    var _this5 = this;
+    var _this6 = this;
     return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee4() {
       var item, newQuoteItems, newTotalPrice;
       return _regenerator.default.wrap(function _callee4$(_context4) {
         while (1) {
           switch (_context4.prev = _context4.next) {
             case 0:
-              uni.showLoading({
-                title: '计算中...',
-                mask: true
-              });
-              _context4.next = 3;
-              return _this5.calculatePrice();
-            case 3:
+              _this6.showLoading = true;
+              _this6.loadingText = '计算中...';
+              _context4.next = 4;
+              return _this6.calculatePrice();
+            case 4:
               item = _context4.sent;
-              uni.hideLoading();
+              _this6.showLoading = false;
               if (item) {
-                _context4.next = 7;
+                _context4.next = 8;
                 break;
               }
               return _context4.abrupt("return");
-            case 7:
-              newQuoteItems = [].concat((0, _toConsumableArray2.default)(_this5.quoteItems), [item]);
-              newTotalPrice = _this5.calculateTotal(newQuoteItems);
-              _this5.setData({
+            case 8:
+              newQuoteItems = [].concat((0, _toConsumableArray2.default)(_this6.quoteItems), [item]);
+              newTotalPrice = _this6.calculateTotal(newQuoteItems);
+              _this6.setData({
                 quoteItems: newQuoteItems,
                 totalPrice: newTotalPrice
               });
               uni.setStorageSync('quoteItems', newQuoteItems);
-              uni.showToast({
-                title: '已添加到报价表',
-                icon: 'success'
-              });
-              _this5.resetSelection();
-            case 13:
+              _this6.showToast('已添加到报价表', 'success');
+              _this6.resetSelection();
+            case 14:
             case "end":
               return _context4.stop();
           }
@@ -1011,10 +1026,7 @@ var _default = {
     uni.setStorageSync('quoteItems', newQuoteItems);
   }), (0, _defineProperty2.default)(_methods, "onGenerateQuotation", function onGenerateQuotation() {
     if (this.quoteItems.length === 0) {
-      uni.showToast({
-        title: '请先添加阀门到报价表',
-        icon: 'none'
-      });
+      this.showToast('请先添加阀门到报价表', 'error');
       return;
     }
     uni.navigateTo({

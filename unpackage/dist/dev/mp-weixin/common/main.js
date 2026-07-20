@@ -93,35 +93,47 @@ __webpack_require__.r(__webpack_exports__);
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(wx) {
+/* WEBPACK VAR INJECTION */(function(wx, uni) {
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-// app.js
 var _default = {
   data: function data() {
     return {};
   },
-  globalData: {},
+  globalData: {
+    loadingVisible: false,
+    loadingText: '加载中...'
+  },
   onLaunch: function onLaunch() {
-    // 初始化微信云开发环境
     if (wx.cloud) {
       wx.cloud.init({
-        // env: 'your-cloud-env-id', // 请替换为你的云环境ID
         env: 'cloud1-d2g6k45v21dd52696',
-        // TODO: 替换为实际的云环境ID
         traceUser: true
       });
       console.log('云开发环境初始化成功');
     } else {
       console.warn('当前环境不支持云开发');
     }
+  },
+  onShow: function onShow() {},
+  onHide: function onHide() {},
+  showLoading: function showLoading() {
+    var text = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '加载中...';
+    this.globalData.loadingVisible = true;
+    this.globalData.loadingText = text;
+    uni.setStorageSync('loadingVisible', true);
+    uni.setStorageSync('loadingText', text);
+  },
+  hideLoading: function hideLoading() {
+    this.globalData.loadingVisible = false;
+    uni.setStorageSync('loadingVisible', false);
   }
 };
 exports.default = _default;
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/wx.js */ 1)["default"]))
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/wx.js */ 1)["default"], __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))
 
 /***/ }),
 

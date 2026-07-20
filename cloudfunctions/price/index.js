@@ -38,6 +38,7 @@ exports.main = async (event, context) => {
       case 'getAllSeries':     return await getAllSeries();
       case 'getAllModels':     return await getAllModels();
       case 'getModelsBySeries': return await getModelsBySeries(event);
+      case 'getSizesByModel': return await getSizesByModel(event);
       case 'getPricingRules':  return await getPricingRules();
       case 'getMaterials':     return await getMaterials(event);
       case 'getMaterialByModel': return await getMaterialByModel(event);
@@ -61,6 +62,7 @@ exports.main = async (event, context) => {
       case 'updateMaterial': return await updateMaterial(event);
       case 'deleteMaterial': return await deleteMaterial(event);
       case 'createModelSpec': return await createModelSpec(event);
+      case 'batchCreateModelSpec': return await batchCreateModelSpec(event);
       case 'updateModelSpec': return await updateModelSpec(event);
       case 'deleteModelSpec': return await deleteModelSpec(event);
       case 'getModelSpecs': return await getModelSpecs(event);
@@ -265,6 +267,21 @@ async function getModelsBySeries(event) {
   return {
     success: true,
     data: (models || []).map(m => ({ id: m.id, name: m.name, type: m.type_code || '', seriesId: m.series_id }))
+  };
+}
+
+async function getSizesByModel(event) {
+  const { valveName } = event;
+  if (!valveName) return { success: false, message: '型号名称不能为空' };
+
+  const { data, error } = await rdb.from('price_table').select('size').eq('valveName', valveName).order('size');
+  if (error) return { success: false, message: '查询失败: ' + error.message };
+
+  const sizes = [...new Set((data || []).map(item => item.size))].sort((a, b) => a - b);
+  
+  return {
+    success: true,
+    data: sizes
   };
 }
 
@@ -760,6 +777,52 @@ async function createModelSpec(event) {
   });
   if (error) return { success: false, message: error.message };
   return { success: true, message: '创建成功' };
+}
+
+async function batchCreateModelSpec(event) {
+  const { data } = event;
+  if (!data || !Array.isArray(data) || data.length === 0) return { success: false, message: '数据不能为空' };
+  
+  const seriesName = data[0].seriesName;
+  const valveName = data[0].valveName;
+  
+  if (!valveName) return { success: false, message: '型号名称不能为空' };
+  
+  var { data: model } = await rdb.from('valve_models').select('id').eq('name', valveName);
+  if (!model || model.length === 0) return { success: false, message: '型号不存在' };
+  
+  const modelId = model[0].id;
+  let successCount = 0;
+  let failCount = 0;
+  
+  const batchSize = 20;
+  for (let i = 0; i < data.length; i += batchSize) {
+    const batch = data.slice(i, i + batchSize);
+    const records = batch.map(item => ({
+      _openid: 'admin',
+      model_id: modelId,
+      size: item.size || 0,
+      max_pressure: item.maxPressure || 0,
+      unit_weight: item.unitWeight || 0,
+      laps: item.laps || 0,
+      torque: item.torque || 0,
+      created_at: now(),
+      updated_at: now()
+    }));
+    
+    const { error } = await rdb.from('model_specs').insert(records);
+    if (error) {
+      failCount += batch.length;
+    } else {
+      successCount += batch.length;
+    }
+  }
+  
+  return { 
+    success: successCount > 0, 
+    message: `批量导入完成：成功 ${successCount} 条，失败 ${failCount} 条`,
+    data: { successCount, failCount }
+  };
 }
 
 async function updateModelSpec(event) {

@@ -644,6 +644,34 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* 根页面样式 */
 page {
     background-color: #f1f5f9;
@@ -1139,5 +1167,123 @@ page {
 .btn-back {
     background-color: #e2e8f0;
     color: #475569;
+}
+.custom-loading-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(13, 21, 38, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    -webkit-backdrop-filter: blur(4px);
+            backdrop-filter: blur(4px);
+}
+.custom-loading-container {
+    background-color: #ffffff;
+    border-radius: 24rpx;
+    padding: 60rpx 80rpx;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.15);
+    min-width: 320rpx;
+}
+.loading-spinner {
+    width: 80rpx;
+    height: 80rpx;
+    position: relative;
+    margin-bottom: 32rpx;
+}
+.spinner-ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 4rpx solid rgba(13, 21, 38, 0.1);
+    border-radius: 50%;
+    border-top-color: #0d1526;
+    -webkit-animation: spinner-rotate 1s linear infinite;
+            animation: spinner-rotate 1s linear infinite;
+}
+.spinner-ring-delay {
+    -webkit-animation-delay: 0.5s;
+            animation-delay: 0.5s;
+    border-top-color: #c8aa6e;
+}
+@-webkit-keyframes spinner-rotate {
+to {
+        -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+}
+}
+@keyframes spinner-rotate {
+to {
+        -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+}
+}
+.loading-text {
+    font-size: 28rpx;
+    color: #475569;
+    font-weight: 600;
+    letter-spacing: 2rpx;
+}
+.custom-toast-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(13, 21, 38, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    -webkit-backdrop-filter: blur(2px);
+            backdrop-filter: blur(2px);
+}
+.custom-toast-container {
+    background-color: #ffffff;
+    border-radius: 20rpx;
+    padding: 40rpx 60rpx;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.12);
+    min-width: 280rpx;
+}
+.custom-toast-container.success .toast-icon {
+    background-color: #10b981;
+}
+.custom-toast-container.error .toast-icon {
+    background-color: #ef4444;
+}
+.toast-icon {
+    width: 60rpx;
+    height: 60rpx;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20rpx;
+}
+.toast-icon-error {
+    background-color: #ef4444;
+}
+.icon-check,
+.icon-x {
+    font-size: 36rpx;
+    color: #ffffff;
+    font-weight: 700;
+}
+.toast-text {
+    font-size: 28rpx;
+    color: #475569;
+    font-weight: 600;
+    letter-spacing: 2rpx;
+    text-align: center;
 }
 

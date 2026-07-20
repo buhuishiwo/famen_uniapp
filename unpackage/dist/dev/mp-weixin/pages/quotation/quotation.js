@@ -169,7 +169,12 @@ var _default = {
       quoter: '童惠业',
       quoterPhone: '13957713583',
       validity: '15天',
-      finalPrice: ''
+      finalPrice: '',
+      showLoading: false,
+      loadingText: '',
+      showToastDialog: false,
+      toastText: '',
+      toastType: 'success'
     };
   },
   computed: {
@@ -232,6 +237,16 @@ var _default = {
       var day = String(date.getDate()).padStart(2, '0');
       return "".concat(year, "\u5E74").concat(month, "\u6708").concat(day, "\u65E5");
     },
+    showToast: function showToast(text) {
+      var _this = this;
+      var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'success';
+      this.showToastDialog = true;
+      this.toastText = text;
+      this.toastType = type;
+      setTimeout(function () {
+        _this.showToastDialog = false;
+      }, 2000);
+    },
     // 输入框双向绑定函数（统一采用Vue直接赋值模式，拒绝混合setData导致的错误）
     onCustomerNameInput: function onCustomerNameInput(e) {
       this.customerName = e.detail.value;
@@ -265,7 +280,7 @@ var _default = {
     },
     // 保存报价数据到数据库
     saveQuotationToDatabase: function saveQuotationToDatabase() {
-      var _this = this;
+      var _this2 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
         var quotationData, result;
         return _regenerator.default.wrap(function _callee$(_context) {
@@ -273,15 +288,15 @@ var _default = {
             switch (_context.prev = _context.next) {
               case 0:
                 quotationData = {
-                  customerName: _this.customerName,
-                  note: _this.note,
-                  paymentMethod: _this.paymentMethod,
-                  packaging: _this.packaging,
-                  quoter: _this.quoter,
-                  quoterPhone: _this.quoterPhone,
-                  validity: _this.validity,
-                  finalPrice: parseFloat(_this.finalPrice) || parseFloat(_this.totalAmount) || 0,
-                  items: _this.quoteData.map(function (item) {
+                  customerName: _this2.customerName,
+                  note: _this2.note,
+                  paymentMethod: _this2.paymentMethod,
+                  packaging: _this2.packaging,
+                  quoter: _this2.quoter,
+                  quoterPhone: _this2.quoterPhone,
+                  validity: _this2.validity,
+                  finalPrice: parseFloat(_this2.finalPrice) || parseFloat(_this2.totalAmount) || 0,
+                  items: _this2.quoteData.map(function (item) {
                     return {
                       valveName: item.productName,
                       spec: parseInt(item.model),
@@ -299,21 +314,13 @@ var _default = {
               case 4:
                 result = _context.sent;
                 console.log('报价数据保存成功:', result);
-                uni.showToast({
-                  title: '报价数据已保存',
-                  icon: 'success',
-                  duration: 2000
-                });
+                _this2.showToast('报价数据已保存', 'success');
                 return _context.abrupt("return", result);
               case 10:
                 _context.prev = 10;
                 _context.t0 = _context["catch"](1);
                 console.error('保存报价数据失败:', _context.t0);
-                uni.showToast({
-                  title: '保存失败，请检查网络',
-                  icon: 'none',
-                  duration: 2000
-                });
+                _this2.showToast('保存失败，请检查网络', 'error');
                 throw _context.t0;
               case 15:
               case "end":
@@ -356,30 +363,28 @@ var _default = {
     },
     // 生成报价表图片并保存至本地
     generateQuotation: function generateQuotation() {
-      var _this2 = this;
+      var _this3 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
-        var ctx, scale, width, y, logoPath;
+        var that, ctx, scale, width, y, logoPath;
         return _regenerator.default.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                _context2.prev = 0;
-                _context2.next = 3;
-                return _this2.saveQuotationToDatabase();
-              case 3:
-                _context2.next = 8;
+                _this3.showLoading = true;
+                _this3.loadingText = '正在制作报价表...';
+                that = _this3;
+                _context2.prev = 3;
+                _context2.next = 6;
+                return _this3.saveQuotationToDatabase();
+              case 6:
+                _context2.next = 11;
                 break;
-              case 5:
-                _context2.prev = 5;
-                _context2.t0 = _context2["catch"](0);
-                console.error('保存报价数据失败:', _context2.t0);
-                // 即使保存失败，也继续生成图片
               case 8:
-                uni.showLoading({
-                  title: '正在输出精工原件...',
-                  mask: true
-                });
-                ctx = uni.createCanvasContext('quotationCanvas', _this2);
+                _context2.prev = 8;
+                _context2.t0 = _context2["catch"](3);
+                console.error('保存报价数据失败:', _context2.t0);
+              case 11:
+                ctx = uni.createCanvasContext('quotationCanvas', _this3);
                 scale = 1;
                 width = 750;
                 y = 30 * scale; // 填充高端卡片白背景
@@ -440,7 +445,7 @@ var _default = {
                     ctx.fillText('报价员：', 30, y);
                     ctx.setFontSize(15);
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(_this2.salesperson || '未指定报价员', 110, y);
+                    ctx.fillText(_this3.salesperson || '未指定报价员', 110, y);
                     y += 35 * scale;
 
                     // 客户名称
@@ -449,7 +454,7 @@ var _default = {
                     ctx.fillText('客户名称：', 30, y);
                     ctx.setFontSize(15);
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(_this2.customerName || '未指定客户', 110, y);
+                    ctx.fillText(_this3.customerName || '未指定客户', 110, y);
                     y += 35 * scale;
 
                     // 绘制核心表格明细
@@ -473,7 +478,7 @@ var _default = {
                     // 循环生成行
                     var rowHeight = 38;
                     var specRowHeight = 28;
-                    _this2.quoteData.forEach(function (item, idx) {
+                    _this3.quoteData.forEach(function (item, idx) {
                       x = startX + 8;
                       var values = [item.productType, item.productName + '-DN' + item.model, item.gateMaterial || '', item.stemMaterial || '', String(item.quantity), '¥' + item.unitPrice, '¥' + item.totalPrice];
                       if (idx % 2 === 1) {
@@ -539,23 +544,23 @@ var _default = {
                     ctx.setFillStyle('#0d1526');
                     ctx.fillText('备注及技术要求：', 30, y);
                     y += 24 * scale;
-                    y = _this2.drawText(ctx, _this2.note, 30, y, 690, 22, 13) + 15;
+                    y = _this3.drawText(ctx, _this3.note, 30, y, 690, 22, 13) + 15;
                     ctx.setFontSize(14);
                     ctx.setFillStyle('#475569');
                     ctx.fillText('付款方式：', 30, y);
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(_this2.paymentMethod, 105, y);
+                    ctx.fillText(_this3.paymentMethod, 105, y);
                     y += 26 * scale;
                     ctx.setFillStyle('#475569');
                     ctx.fillText('包装方式：', 30, y);
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(_this2.packaging, 105, y);
+                    ctx.fillText(_this3.packaging, 105, y);
                     y += 26 * scale;
                     ctx.setFillStyle('#475569');
                     ctx.fillText('确认报价金额：', 30, y);
                     ctx.setFillStyle('#dc2626');
                     ctx.setFontSize(16);
-                    ctx.fillText('¥' + (_this2.finalPrice || _this2.totalAmount), 130, y);
+                    ctx.fillText('¥' + (_this3.finalPrice || _this3.totalAmount), 130, y);
                     ctx.setFontSize(14);
                     y += 35 * scale;
 
@@ -571,20 +576,20 @@ var _default = {
                     ctx.fillText('报价制单人：', 30, y);
                     ctx.getActions;
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(_this2.quoter, 115, y);
+                    ctx.fillText(_this3.quoter, 115, y);
                     ctx.setFillStyle('#475569');
                     ctx.fillText('联系电话：', 280, y);
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(_this2.quoterPhone, 350, y);
+                    ctx.fillText(_this3.quoterPhone, 350, y);
                     y += 26 * scale;
                     ctx.setFillStyle('#475569');
                     ctx.fillText('报价有效期：', 30, y);
                     ctx.setFillStyle('#c8aa6e'); // 强调色高亮
-                    ctx.fillText(_this2.validity, 115, y);
+                    ctx.fillText(_this3.validity, 115, y);
                     ctx.setFillStyle('#475569');
                     ctx.fillText('发布日期：', 280, y);
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(_this2.currentDate, 350, y);
+                    ctx.fillText(_this3.currentDate, 350, y);
                     y += 60 * scale;
 
                     // 渲染并保存至用户手机本地相册
@@ -600,47 +605,35 @@ var _default = {
                           uni.saveImageToPhotosAlbum({
                             filePath: res.tempFilePath,
                             success: function success() {
-                              uni.showToast({
-                                title: '报价单已妥善存储到相册',
-                                icon: 'success'
-                              });
+                              that.showToast('报价单已妥善存储到相册', 'success');
                             },
                             fail: function fail() {
-                              uni.showToast({
-                                title: '请开启相册读写权限',
-                                icon: 'none'
-                              });
+                              that.showToast('请开启相册读写权限', 'error');
                             }
                           });
                         },
                         fail: function fail(err) {
                           console.error(err);
-                          uni.showToast({
-                            title: '高精度渲染失败',
-                            icon: 'error'
-                          });
+                          that.showToast('高精度渲染失败', 'error');
                         },
                         complete: function complete() {
-                          return uni.hideLoading();
+                          _this3.showLoading = false;
                         }
                       });
                     });
                   },
                   fail: function fail(err) {
                     console.error(err);
-                    uni.showToast({
-                      title: '企业徽标调取失败',
-                      icon: 'error'
-                    });
-                    uni.hideLoading();
+                    that.showToast('企业徽标调取失败', 'error');
+                    that.showLoading = false;
                   }
                 });
-              case 19:
+              case 21:
               case "end":
                 return _context2.stop();
             }
           }
-        }, _callee2, null, [[0, 5]]);
+        }, _callee2, null, [[3, 8]]);
       }))();
     }
   }

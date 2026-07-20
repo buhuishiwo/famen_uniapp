@@ -193,6 +193,28 @@
 
         <canvas canvas-id="quotationCanvas"
             style="width: 5000rpx; height: 5000rpx; position: fixed; left: -9999rpx"></canvas>
+
+        <view class="custom-loading-mask" v-if="showLoading">
+            <view class="custom-loading-container">
+                <view class="loading-spinner">
+                    <view class="spinner-ring"></view>
+                    <view class="spinner-ring spinner-ring-delay"></view>
+                </view>
+                <text class="loading-text">{{ loadingText }}</text>
+            </view>
+        </view>
+
+        <view class="custom-toast-mask" v-if="showToastDialog">
+            <view class="custom-toast-container" :class="toastType">
+                <view class="toast-icon" v-if="toastType === 'success'">
+                    <text class="icon-check">✓</text>
+                </view>
+                <view class="toast-icon toast-icon-error" v-else-if="toastType === 'error'">
+                    <text class="icon-x">✕</text>
+                </view>
+                <text class="toast-text">{{ toastText }}</text>
+            </view>
+        </view>
     </view>
 </template>
 
@@ -217,6 +239,11 @@ export default {
             quoterPhone: '13957713583',
             validity: '15天',
             finalPrice: '',
+            showLoading: false,
+            loadingText: '',
+            showToastDialog: false,
+            toastText: '',
+            toastType: 'success'
 
         };
     },
@@ -277,6 +304,15 @@ export default {
             return `${year}年${month}月${day}日`;
         },
 
+        showToast(text, type = 'success') {
+            this.showToastDialog = true;
+            this.toastText = text;
+            this.toastType = type;
+            setTimeout(() => {
+                this.showToastDialog = false;
+            }, 2000);
+        },
+
         // 输入框双向绑定函数（统一采用Vue直接赋值模式，拒绝混合setData导致的错误）
         onCustomerNameInput(e) { this.customerName = e.detail.value; },
         onSalespersonInput(e) { this.salesperson = e.detail.value; },
@@ -319,19 +355,11 @@ export default {
             try {
                 const result = await quotationApi.create(quotationData);
                 console.log('报价数据保存成功:', result);
-                uni.showToast({
-                    title: '报价数据已保存',
-                    icon: 'success',
-                    duration: 2000
-                });
+                this.showToast('报价数据已保存', 'success');
                 return result;
             } catch (error) {
                 console.error('保存报价数据失败:', error);
-                uni.showToast({
-                    title: '保存失败，请检查网络',
-                    icon: 'none',
-                    duration: 2000
-                });
+                this.showToast('保存失败，请检查网络', 'error');
                 throw error;
             }
         },
@@ -359,18 +387,16 @@ export default {
 
         // 生成报价表图片并保存至本地
         async generateQuotation() {
-            // 先保存报价数据到数据库
+            this.showLoading = true;
+            this.loadingText = '正在制作报价表...';
+
+            const that = this;
+
             try {
                 await this.saveQuotationToDatabase();
             } catch (error) {
                 console.error('保存报价数据失败:', error);
-                // 即使保存失败，也继续生成图片
             }
-
-            uni.showLoading({
-                title: '正在输出精工原件...',
-                mask: true
-            });
 
             const ctx = uni.createCanvasContext('quotationCanvas', this);
             const scale = 1;
@@ -617,25 +643,27 @@ export default {
                                 uni.saveImageToPhotosAlbum({
                                     filePath: res.tempFilePath,
                                     success: () => {
-                                        uni.showToast({ title: '报价单已妥善存储到相册', icon: 'success' });
+                                        that.showToast('报价单已妥善存储到相册', 'success');
                                     },
                                     fail: () => {
-                                        uni.showToast({ title: '请开启相册读写权限', icon: 'none' });
+                                        that.showToast('请开启相册读写权限', 'error');
                                     }
                                 });
                             },
                             fail: (err) => {
                                 console.error(err);
-                                uni.showToast({ title: '高精度渲染失败', icon: 'error' });
+                                that.showToast('高精度渲染失败', 'error');
                             },
-                            complete: () => uni.hideLoading()
+                            complete: () => {
+                                this.showLoading = false;
+                            }
                         });
                     });
                 },
                 fail: (err) => {
                     console.error(err);
-                    uni.showToast({ title: '企业徽标调取失败', icon: 'error' });
-                    uni.hideLoading();
+                    that.showToast('企业徽标调取失败', 'error');
+                    that.showLoading = false;
                 }
             });
         }
@@ -1207,5 +1235,127 @@ page {
 .btn-back {
     background-color: #e2e8f0;
     color: #475569;
+}
+
+.custom-loading-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(13, 21, 38, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+}
+
+.custom-loading-container {
+    background-color: #ffffff;
+    border-radius: 24rpx;
+    padding: 60rpx 80rpx;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.15);
+    min-width: 320rpx;
+}
+
+.loading-spinner {
+    width: 80rpx;
+    height: 80rpx;
+    position: relative;
+    margin-bottom: 32rpx;
+}
+
+.spinner-ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 4rpx solid rgba(13, 21, 38, 0.1);
+    border-radius: 50%;
+    border-top-color: #0d1526;
+    animation: spinner-rotate 1s linear infinite;
+}
+
+.spinner-ring-delay {
+    animation-delay: 0.5s;
+    border-top-color: #c8aa6e;
+}
+
+@keyframes spinner-rotate {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-text {
+    font-size: 28rpx;
+    color: #475569;
+    font-weight: 600;
+    letter-spacing: 2rpx;
+}
+
+.custom-toast-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(13, 21, 38, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    backdrop-filter: blur(2px);
+}
+
+.custom-toast-container {
+    background-color: #ffffff;
+    border-radius: 20rpx;
+    padding: 40rpx 60rpx;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.12);
+    min-width: 280rpx;
+}
+
+.custom-toast-container.success .toast-icon {
+    background-color: #10b981;
+}
+
+.custom-toast-container.error .toast-icon {
+    background-color: #ef4444;
+}
+
+.toast-icon {
+    width: 60rpx;
+    height: 60rpx;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20rpx;
+}
+
+.toast-icon-error {
+    background-color: #ef4444;
+}
+
+.icon-check,
+.icon-x {
+    font-size: 36rpx;
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.toast-text {
+    font-size: 28rpx;
+    color: #475569;
+    font-weight: 600;
+    letter-spacing: 2rpx;
+    text-align: center;
 }
 </style>

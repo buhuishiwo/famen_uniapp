@@ -227,6 +227,9 @@ export const modelSpecApi = {
   create(data) {
     return callCloudFunction({ action: 'createModelSpec', data });
   },
+  batchCreate(data) {
+    return callCloudFunction({ action: 'batchCreateModelSpec', data });
+  },
   update(id, data) {
     return callCloudFunction({ action: 'updateModelSpec', id, data });
   },

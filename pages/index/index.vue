@@ -137,13 +137,20 @@
                     <view class="price-row">
                         <view class="price-col">
                             <text class="price-tag">单　价</text>
-                            <text class="price-amount">¥<text class="price-num">{{ currentPrice }}</text></text>
+                            <view class="price-input-wrap">
+                                <text class="price-prefix">¥</text>
+                                <input class="price-input" type="digit" :value="confirmedPrice" @input="onPriceInput" />
+                            </view>
                         </view>
                         <view class="price-divider-v"></view>
                         <view class="price-col">
                             <text class="price-tag">预估总价</text>
                             <text class="price-amount total-highlight">¥<text class="price-num">{{ totalPreviewPrice }}</text></text>
                         </view>
+                    </view>
+                    <view class="price-tip">
+                        <text class="tip-icon">💡</text>
+                        <text class="tip-text">与报价员协商后可手动修改单价作为最终报价，修改后请在报价单备注中说明</text>
                     </view>
                 </view>
             </view>
@@ -216,6 +223,28 @@
 
             <view class="bottom-safe"></view>
         </scroll-view>
+
+        <view class="custom-loading-mask" v-if="showLoading">
+            <view class="custom-loading-container">
+                <view class="loading-spinner">
+                    <view class="spinner-ring"></view>
+                    <view class="spinner-ring spinner-ring-delay"></view>
+                </view>
+                <text class="loading-text">{{ loadingText }}</text>
+            </view>
+        </view>
+
+        <view class="custom-toast-mask" v-if="showToastDialog">
+            <view class="custom-toast-container" :class="toastType">
+                <view class="toast-icon" v-if="toastType === 'success'">
+                    <text class="icon-check">✓</text>
+                </view>
+                <view class="toast-icon toast-icon-error" v-else-if="toastType === 'error'">
+                    <text class="icon-x">✕</text>
+                </view>
+                <text class="toast-text">{{ toastText }}</text>
+            </view>
+        </view>
     </view>
 </template>
 
@@ -275,7 +304,14 @@ export default {
             quoteItems: [],
             totalPrice: '0.00',
             currentPrice: '0.00',
+            // loading状态
+            showLoading: false,
+            loadingText: '',
+            showToastDialog: false,
+            toastText: '',
+            toastType: 'success',
             totalPreviewPrice: '0.00',
+            confirmedPrice: '0.00',
         };
     },
     onLoad() {
@@ -288,8 +324,17 @@ export default {
         }
     },
     methods: {
+        showToast(text, type = 'success') {
+            this.showToastDialog = true;
+            this.toastText = text;
+            this.toastType = type;
+            setTimeout(() => {
+                this.showToastDialog = false;
+            }, 2000);
+        },
         async loadDataFromBackend() {
-            uni.showLoading({ title: '加载数据中...', mask: true });
+            this.showLoading = true;
+            this.loadingText = '加载数据中...';
             try {
                 const [series, models, rulesRes, materialsRes, diffsRes] = await Promise.all([
                     priceApi.getSeries(),
@@ -326,9 +371,9 @@ export default {
                 this.updateSpecifications();
             } catch (error) {
                 console.error('加载数据失败:', error);
-                uni.showToast({ title: '加载数据失败', icon: 'none' });
+                this.showToast('加载数据失败', 'error');
             } finally {
-                uni.hideLoading();
+                this.showLoading = false;
             }
         },
         setValveTypesBySeries() {
@@ -612,7 +657,14 @@ export default {
         onQuantityChange(e) {
             const newQuantity = parseInt(e.detail.value) || 1;
             this.setData({ quantity: newQuantity });
-            this.updateCurrentPrice();
+            const price = parseFloat(this.confirmedPrice) || parseFloat(this.currentPrice) || 0;
+            this.setData({ totalPreviewPrice: (price * newQuantity).toFixed(2) });
+        },
+        onPriceInput(e) {
+            const newPrice = e.detail.value;
+            this.setData({ confirmedPrice: newPrice });
+            const price = parseFloat(newPrice) || 0;
+            this.setData({ totalPreviewPrice: (price * this.quantity).toFixed(2) });
         },
         getMaterialPriceDiff(seriesName, partName, baseMaterial, targetMaterial, dn) {
             if (!baseMaterial || !targetMaterial || baseMaterial === targetMaterial) return 0;
@@ -670,9 +722,10 @@ export default {
             
             const baseTotal = basePrice + bodyDiff + gatePlateDiff + rodDiff + yokeDiff + brandingFee;
             const total = baseTotal * pricingCoeff * multiplier;
-
+            
             this.setData({
                 currentPrice: total.toFixed(2),
+                confirmedPrice: total.toFixed(2),
                 totalPreviewPrice: (total * this.quantity).toFixed(2)
             });
         },
@@ -721,13 +774,13 @@ export default {
         async calculatePrice() {
             const { selectedValve, selectedSpec, selectedGatePlate, selectedRodMaterial, selectedYokeMaterial, quantity, selectedProductType } = this;
             if (!selectedValve || !selectedSpec || !selectedGatePlate || !selectedRodMaterial) {
-                uni.showToast({ title: '请填写完整信息', icon: 'none' }); return null;
+                this.showToast('请填写完整信息', 'error'); return null;
             }
             const priceItem = this.priceData.find(p => 
                 p.valveName === selectedValve.name && p.size === selectedSpec.name
             );
             if (!priceItem) { 
-                uni.showToast({ title: '该组合不可用', icon: 'none' }); 
+                this.showToast('该组合不可用', 'error'); 
                 return null; 
             }
 
@@ -762,8 +815,9 @@ export default {
                 quantity, hasBranding
             );
             const baseTotal = basePrice + bodyDiff + gatePlateDiff + rodDiff + yokeDiff + brandingFee;
-            const unitPrice = baseTotal * pricingCoeff * multiplier;
-            const totalPrice = unitPrice * quantity;
+            const calculatedUnitPrice = baseTotal * pricingCoeff * multiplier;
+            const finalUnitPrice = parseFloat(this.confirmedPrice) || calculatedUnitPrice;
+            const totalPrice = finalUnitPrice * quantity;
 
             let maxPressure = '', unitWeight = '', laps = '', torque = '';
             try {
@@ -790,7 +844,7 @@ export default {
                 yokeMaterial: selectedYokeMaterial?.name || '',
                 productType: selectedProductType,
                 quantity: quantity,
-                unitPrice: unitPrice.toFixed(2),
+                unitPrice: finalUnitPrice.toFixed(2),
                 totalPrice: totalPrice.toFixed(2),
                 productSeries: seriesName,
                 isMeetMinOrder: isMeetMinOrder,
@@ -804,15 +858,16 @@ export default {
             uni.navigateBack({ delta: 1 });
         },
         async onAddToQuote() {
-            uni.showLoading({ title: '计算中...', mask: true });
+            this.showLoading = true;
+            this.loadingText = '计算中...';
             const item = await this.calculatePrice();
-            uni.hideLoading();
+            this.showLoading = false;
             if (!item) return;
             const newQuoteItems = [...this.quoteItems, item];
             const newTotalPrice = this.calculateTotal(newQuoteItems);
             this.setData({ quoteItems: newQuoteItems, totalPrice: newTotalPrice });
             uni.setStorageSync('quoteItems', newQuoteItems);
-            uni.showToast({ title: '已添加到报价表', icon: 'success' });
+            this.showToast('已添加到报价表', 'success');
             this.resetSelection();
         },
         calculateTotal(items) {
@@ -844,7 +899,7 @@ export default {
         },
         onGenerateQuotation() {
             if (this.quoteItems.length === 0) {
-                uni.showToast({ title: '请先添加阀门到报价表', icon: 'none' }); return;
+                this.showToast('请先添加阀门到报价表', 'error'); return;
             }
             uni.navigateTo({
                 url: '/pages/quotation/quotation?data=' + encodeURIComponent(JSON.stringify(this.quoteItems))
@@ -1101,6 +1156,53 @@ page {
     color: #c8aa6e;
 }
 
+.price-input-wrap {
+    display: flex;
+    align-items: baseline;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8rpx;
+    padding: 8rpx 16rpx;
+    width: fit-content;
+}
+
+.price-prefix {
+    font-size: 22rpx;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.price-input {
+    font-size: 38rpx;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -1rpx;
+    width: 200rpx;
+    text-align: right;
+    background: transparent;
+    border: none;
+}
+
+.price-tip {
+    display: flex;
+    align-items: center;
+    margin-top: 16rpx;
+    padding: 16rpx;
+    background: rgba(239, 68, 68, 0.15);
+    border-radius: 8rpx;
+    border: 1rpx solid rgba(239, 68, 68, 0.3);
+}
+
+.tip-icon {
+    font-size: 24rpx;
+    margin-right: 8rpx;
+}
+
+.tip-text {
+    font-size: 22rpx;
+    color: #ffffff;
+    line-height: 1.5;
+    font-weight: 500;
+}
+
 /* ---- 操作按钮 ---- */
 .action-area {
     display: flex;
@@ -1322,4 +1424,127 @@ page {
 
 /* ---- 底部安全区 ---- */
 .bottom-safe { height: 60rpx; }
+
+/* ---- 自定义Loading弹窗 ---- */
+.custom-loading-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(13, 21, 38, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+}
+
+.custom-loading-container {
+    background-color: #ffffff;
+    border-radius: 24rpx;
+    padding: 60rpx 80rpx;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.15);
+    min-width: 320rpx;
+}
+
+.loading-spinner {
+    width: 80rpx;
+    height: 80rpx;
+    position: relative;
+    margin-bottom: 32rpx;
+}
+
+.spinner-ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 4rpx solid rgba(13, 21, 38, 0.1);
+    border-radius: 50%;
+    border-top-color: #0d1526;
+    animation: spinner-rotate 1s linear infinite;
+}
+
+.spinner-ring-delay {
+    animation-delay: 0.5s;
+    border-top-color: #c8aa6e;
+}
+
+@keyframes spinner-rotate {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-text {
+    font-size: 28rpx;
+    color: #475569;
+    font-weight: 600;
+    letter-spacing: 2rpx;
+}
+
+.custom-toast-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(13, 21, 38, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    backdrop-filter: blur(2px);
+}
+
+.custom-toast-container {
+    background-color: #ffffff;
+    border-radius: 20rpx;
+    padding: 40rpx 60rpx;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.12);
+    min-width: 280rpx;
+}
+
+.custom-toast-container.success .toast-icon {
+    background-color: #10b981;
+}
+
+.custom-toast-container.error .toast-icon {
+    background-color: #ef4444;
+}
+
+.toast-icon {
+    width: 60rpx;
+    height: 60rpx;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20rpx;
+}
+
+.toast-icon-error {
+    background-color: #ef4444;
+}
+
+.icon-check,
+.icon-x {
+    font-size: 36rpx;
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.toast-text {
+    font-size: 28rpx;
+    color: #475569;
+    font-weight: 600;
+    letter-spacing: 2rpx;
+    text-align: center;
+}
 </style>
