@@ -29,7 +29,7 @@
           </template>
         </a-table>
       </template>
-      <a-table v-else :columns="columns" :data-source="filteredData" :pagination="{ pageSize: 10, showSizeChanger: true }" rowKey="id" size="middle" :row-selection="rowSelection">
+      <a-table v-else :columns="columns" :data-source="filteredData" :pagination="pagination" @change="handleTableChange" rowKey="id" size="middle" :row-selection="rowSelection">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'name'">
             <a-tag color="blue">{{ record.name }}</a-tag>
@@ -118,6 +118,11 @@ const searchText = ref('');
 const selectedSalesperson = ref('');
 const salespersonList = ref([]);
 const showModal = ref(false);
+const pagination = ref({
+  current: 1,
+  pageSize: 10,
+  showSizeChanger: true
+});
 const form = ref({
   name: '',
   salespersonId: null,
@@ -141,7 +146,10 @@ const filteredData = computed(() => {
       (item.phone && item.phone.includes(searchText.value))
     );
   }
-  return result;
+  pagination.value.total = result.length;
+  const start = (pagination.value.current - 1) * pagination.value.pageSize;
+  const end = start + pagination.value.pageSize;
+  return result.slice(start, end);
 });
 
 const columns = [
@@ -154,6 +162,11 @@ const columns = [
   { title: '状态', dataIndex: 'status', key: 'status', width: 80 },
   { title: '操作', key: 'action', width: 120 }
 ];
+
+function handleTableChange(paginationInfo) {
+  pagination.value.current = paginationInfo.current;
+  pagination.value.pageSize = paginationInfo.pageSize;
+}
 
 const rowSelection = {
   selectedRowKeys,

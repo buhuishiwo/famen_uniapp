@@ -23,7 +23,7 @@
           </template>
         </a-table>
       </template>
-      <a-table v-else :columns="columns" :data-source="filteredData" :pagination="{ pageSize: 10, showSizeChanger: true }" rowKey="id" size="middle" :row-selection="rowSelection">
+      <a-table v-else :columns="columns" :data-source="filteredData" :pagination="pagination" @change="handleTableChange" rowKey="id" size="middle" :row-selection="rowSelection">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'name'">
             <a-tag color="blue">{{ record.name }}</a-tag>
@@ -97,14 +97,25 @@ const form = ref({ name: '', image: '', imageFileID: '' });
 const editId = ref(null);
 const loading = ref(true);
 const selectedRowKeys = ref([]);
+const pagination = ref({
+  current: 1,
+  pageSize: 10,
+  showSizeChanger: true
+});
 
 const skeletonData = computed(() => {
   return Array.from({ length: 5 }, (_, i) => ({ key: i }));
 });
 
 const filteredData = computed(() => {
-  if (!searchText.value) return data.value;
-  return data.value.filter(item => item.name && item.name.includes(searchText.value));
+  let result = data.value;
+  if (searchText.value) {
+    result = result.filter(item => item.name && item.name.includes(searchText.value));
+  }
+  pagination.value.total = result.length;
+  const start = (pagination.value.current - 1) * pagination.value.pageSize;
+  const end = start + pagination.value.pageSize;
+  return result.slice(start, end);
 });
 
 const columns = [
@@ -140,6 +151,11 @@ async function loadData() {
 }
 
 function filterData() {}
+
+function handleTableChange(paginationInfo) {
+  pagination.value.current = paginationInfo.current;
+  pagination.value.pageSize = paginationInfo.pageSize;
+}
 
 function triggerUpload() {
   document.querySelector('.image-upload-input')?.click();

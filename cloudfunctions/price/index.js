@@ -299,6 +299,7 @@ async function getPricingRules() {
           productName: r.product_name || '',
           dnMin: r.dn_min,
           dnMax: r.dn_max,
+          minOrderQty: Number(r.min_order_qty) || 50,
           moqMetOemCoeff: Number(r.moq_met_oem_coeff),
           moqMetOriginalCoeff: Number(r.moq_met_original_coeff),
           moqUnmetOemCoeff: Number(r.moq_unmet_oem_coeff),

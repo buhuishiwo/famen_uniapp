@@ -505,40 +505,21 @@ export default {
                 selectedYokeMaterial: yokeMat || null
             });
         },
-        setQWStandard() { this.setMaterialStandard(this.selectedValve?.name); },
-        setQUStandard() { this.setMaterialStandard(this.selectedValve?.name); },
-        setQVStandard() { this.setMaterialStandard(this.selectedValve?.name); },
-        setQZStandard() { this.setMaterialStandard(this.selectedValve?.name); },
-        setQBStandard() { this.setMaterialStandard(this.selectedValve?.name); },
-        setQCStandard() { this.setMaterialStandard(this.selectedValve?.name); },
-        setQHStandard() { this.setMaterialStandard(this.selectedValve?.name); },
-        setQCAStandard() { this.setMaterialStandard(this.selectedValve?.name); },
-        setQCBStandard() { this.setMaterialStandard(this.selectedValve?.name); },
-        setQCGStandard() { this.setMaterialStandard(this.selectedValve?.name); },
-        setQMBStandard() { this.setMaterialStandard(this.selectedValve?.name); },
-        setQMDYStandard() { this.setMaterialStandard(this.selectedValve?.name); },
-        setQMGStandard() { this.setMaterialStandard(this.selectedValve?.name); },
-        setQUPStandard() { this.setMaterialStandard(this.selectedValve?.name); },
-        setQWFStandard() { this.setMaterialStandard(this.selectedValve?.name); },
-        setQWLYStandard() { this.setMaterialStandard(this.selectedValve?.name); },
-        setQYAStandard() { this.setMaterialStandard(this.selectedValve?.name); },
-        setQYStandard() { this.setMaterialStandard(this.selectedValve?.name); },
-        setQJStandard() { this.setMaterialStandard(this.selectedValve?.name); },
-        setQMGStandard() { this.setMaterialStandard(this.selectedValve?.name); },
         /**
          * 获取指定系列+DN规格的起订量
          * 优先查报价系数规则表，其次查价格表
          */
         getMinOrderQuantity(specSize) {
-            // 1. 优先从报价系数规则获取
+            const dnSize = parseInt(String(specSize).replace(/[^\d]/g, '')) || 0;
+            
             if (this.pricingRules && this.pricingRules.length > 0) {
                 var seriesName = this.currentProductSeries;
                 var rule = this.pricingRules.find(function(r) {
-                    return r.seriesName === seriesName && specSize >= r.dnMin && specSize <= r.dnMax;
+                    return r.seriesName === seriesName && dnSize >= r.dnMin && dnSize <= r.dnMax;
                 });
                 if (rule && rule.minOrderQty) return rule.minOrderQty;
             }
-            // 2. 其次从 priceData 获取
+            
             if (this.selectedValve && this.priceData) {
                 var priceItem = this.priceData.find(function(p) {
                     return p.valveName === this.selectedValve.name && p.size === specSize;
@@ -554,23 +535,34 @@ export default {
          * 返回最终单价应乘的系数
          */
         getPricingCoefficient(seriesName, valveName, specSize, quantity, hasBranding) {
-            if (!this.pricingRules || this.pricingRules.length === 0) return 1.0;
+            if (!this.pricingRules || this.pricingRules.length === 0) {
+                console.log('[index] 无报价系数规则');
+                return 1.0;
+            }
 
-            // 查找匹配规则：先精确匹配产品名，再匹配空产品名（全系列通用）
             var findRule = function(productName) {
                 return this.pricingRules.find(function(r) {
-                    return r.seriesName === seriesName
+                    const match = r.seriesName === seriesName
                         && (r.productName || '') === (productName || '')
                         && specSize >= r.dnMin
                         && specSize <= r.dnMax;
+                    if (match) {
+                        console.log('[index] 匹配规则:', r);
+                    }
+                    return match;
                 });
             }.bind(this);
 
             var rule = findRule(valveName) || findRule('');
 
-            if (!rule) return 1.0; // 无规则匹配 → 原价
+            if (!rule) {
+                console.log('[index] 无匹配规则: seriesName=' + seriesName + ', valveName=' + valveName + ', specSize=' + specSize);
+                return 1.0;
+            }
 
             var moqMet = quantity >= rule.minOrderQty;
+            console.log('[index] 报价系数计算: quantity=' + quantity + ', minOrderQty=' + rule.minOrderQty + ', moqMet=' + moqMet);
+            
             if (moqMet && hasBranding)  return rule.moqMetOemCoeff;
             if (moqMet && !hasBranding) return rule.moqMetOriginalCoeff;
             if (!moqMet && hasBranding)  return rule.moqUnmetOemCoeff;
@@ -584,53 +576,14 @@ export default {
         onSelectValve(e) {
             this.setData({ selectedValve: this.valveTypes[e.detail.value] });
             this.updateSpecifications();
-            if (this.currentProductSeries === 'QW系列' && this.selectedSpec) {
-                this.setQWStandard();
-            }
             this.updateCurrentPrice();
         },
         onSelectSpec(e) {
             this.setData({ selectedSpec: this.specifications[e.detail.value] });
             const minQty = this.getMinOrderQuantity(this.selectedSpec.name);
             this.setData({ quantity: minQty });
-            if (this.currentProductSeries === 'QW系列' && this.selectedValve) {
-                this.setQWStandard();
-            } else if (this.currentProductSeries === 'QU系列' && this.selectedValve) {
-                this.setQUStandard();
-            } else if (this.currentProductSeries === 'QV系列' && this.selectedValve) {
-                this.setQVStandard();
-            } else if (this.currentProductSeries === 'QZ系列' && this.selectedValve) {
-                this.setQZStandard();
-            } else if (this.currentProductSeries === 'QB系列' && this.selectedValve) {
-                this.setQBStandard();
-            } else if (this.currentProductSeries === 'QC系列' && this.selectedValve) {
-                this.setQCStandard();
-            } else if (this.currentProductSeries === 'QH系列' && this.selectedValve) {
-                this.setQHStandard();
-            } else if (this.currentProductSeries === 'QCA系列' && this.selectedValve) {
-                this.setQCAStandard();
-            } else if (this.currentProductSeries === 'QCB系列' && this.selectedValve) {
-                this.setQCBStandard();
-            } else if (this.currentProductSeries === 'QCG系列' && this.selectedValve) {
-                this.setQCGStandard();
-            } else if (this.currentProductSeries === 'QMB系列' && this.selectedValve) {
-                this.setQMBStandard();
-            } else if (this.currentProductSeries === 'QMG系列' && this.selectedValve) {
-                this.setQMGStandard();
-            } else if (this.currentProductSeries === 'QMDY系列' && this.selectedValve) {
-                this.setQMDYStandard();
-            } else if (this.currentProductSeries === 'QUP系列' && this.selectedValve) {
-                this.setQUPStandard();
-            } else if (this.currentProductSeries === 'QWF系列' && this.selectedValve) {
-                this.setQWFStandard();
-            } else if (this.currentProductSeries === 'QWLY系列' && this.selectedValve) {
-                this.setQWLYStandard();
-            } else if (this.currentProductSeries === 'QY系列' && this.selectedValve) {
-                this.setQYStandard();
-            } else if (this.currentProductSeries === 'QYA系列' && this.selectedValve) {
-                this.setQYAStandard();
-            } else if (this.currentProductSeries === 'QJ系列' && this.selectedValve) {
-                this.setQJStandard();
+            if (this.selectedValve) {
+                this.setMaterialStandard(this.selectedValve.name);
             }
             this.updateCurrentPrice();
         },
@@ -657,8 +610,7 @@ export default {
         onQuantityChange(e) {
             const newQuantity = parseInt(e.detail.value) || 1;
             this.setData({ quantity: newQuantity });
-            const price = parseFloat(this.confirmedPrice) || parseFloat(this.currentPrice) || 0;
-            this.setData({ totalPreviewPrice: (price * newQuantity).toFixed(2) });
+            this.updateCurrentPrice();
         },
         onPriceInput(e) {
             const newPrice = e.detail.value;
@@ -696,7 +648,8 @@ export default {
             const type = selectedValve.type;
             let basePrice = this.getPriceByType(priceItem, type);
             
-            const specSize = selectedSpec.name;
+            const specSizeStr = String(selectedSpec.name);
+            const specSize = parseInt(specSizeStr.replace(/[^\d]/g, '')) || 0;
             const seriesName = this.currentProductSeries;
 
             const bodyDiff = this.getMaterialPriceDiff(seriesName, 'body', 
@@ -788,7 +741,8 @@ export default {
             const type = selectedValve.type;
             let basePrice = this.getPriceByType(priceItem, type);
             
-            const specSize = selectedSpec.name;
+            const specSizeStr = String(selectedSpec.name);
+            const specSize = parseInt(specSizeStr.replace(/[^\d]/g, '')) || 0;
             const seriesName = this.currentProductSeries;
 
             const bodyDiff = this.getMaterialPriceDiff(seriesName, 'body', 

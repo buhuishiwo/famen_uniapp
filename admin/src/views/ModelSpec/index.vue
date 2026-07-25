@@ -7,17 +7,19 @@
       <template #extra>
         <a-space>
           <span class="filter-label">系列：</span>
-          <a-select v-model:value="selectedSeries" placeholder="请选择" style="width: 120px" allowClear @change="loadData">
+          <a-select v-model:value="selectedSeries" placeholder="请选择" style="width: 120px" allowClear @change="onSeriesSelectChange">
             <a-select-option v-for="s in seriesList" :key="s.name" :value="s.name">
               {{ s.name }}
             </a-select-option>
           </a-select>
           <span class="filter-label">型号：</span>
-          <a-select v-model:value="selectedModel" placeholder="请选择" style="width: 150px" allowClear @change="loadData">
+          <a-select v-model:value="selectedModel" placeholder="请选择" style="width: 150px" allowClear @change="filterData">
             <a-select-option v-for="m in modelList" :key="m.name" :value="m.name">
               {{ m.name }}
             </a-select-option>
           </a-select>
+          <span class="filter-label">搜索：</span>
+          <a-input-search v-model:value="searchText" placeholder="型号/规格" style="width: 150px" allowClear @search="filterData" />
           <a-button type="primary" @click="addSpec">
             <PlusOutlined /> 新增规格参数
           </a-button>
@@ -37,7 +39,7 @@
           </template>
         </a-table>
       </template>
-      <a-table v-else :columns="columns" :data-source="data" :pagination="{ pageSize: 20, showSizeChanger: true }" rowKey="id" size="middle" :row-selection="rowSelection">
+      <a-table v-else :columns="columns" :data-source="filteredData" :pagination="pagination" @change="handleTableChange" rowKey="id" size="middle" :row-selection="rowSelection">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'seriesName'">
             <a-tag color="blue">{{ record.seriesName }}</a-tag>
@@ -132,7 +134,13 @@ const modelList = ref([]);
 const sizeList = ref([]);
 const selectedSeries = ref('');
 const selectedModel = ref('');
+const searchText = ref('');
 const showModal = ref(false);
+const pagination = ref({
+  current: 1,
+  pageSize: 10,
+  showSizeChanger: true
+});
 const form = ref({ seriesName: '', valveName: '', size: null, maxPressure: null, unitWeight: null, laps: null, torque: null });
 const editId = ref(null);
 const loading = ref(true);
@@ -160,6 +168,36 @@ const skeletonData = computed(() => {
   return Array.from({ length: 5 }, (_, i) => ({ key: i }));
 });
 
+const filteredData = computed(() => {
+  let result = data.value;
+  if (selectedSeries.value) {
+    result = result.filter(item => item.seriesName === selectedSeries.value);
+  }
+  if (selectedModel.value) {
+    result = result.filter(item => item.valveName === selectedModel.value);
+  }
+  if (searchText.value) {
+    const keyword = searchText.value.toLowerCase();
+    result = result.filter(item => 
+      (item.valveName || '').toLowerCase().includes(keyword) ||
+      String(item.size || '').includes(keyword)
+    );
+  }
+  pagination.value.total = result.length;
+  const start = (pagination.value.current - 1) * pagination.value.pageSize;
+  const end = start + pagination.value.pageSize;
+  return result.slice(start, end);
+});
+
+const filterData = () => {
+  // 筛选逻辑由 computed 自动处理
+};
+
+function handleTableChange(paginationInfo) {
+  pagination.value.current = paginationInfo.current;
+  pagination.value.pageSize = paginationInfo.pageSize;
+}
+
 const modalTitle = ref('新增规格参数');
 
 onMounted(() => {
@@ -173,6 +211,19 @@ async function loadSeries() {
     seriesList.value = result;
   } catch (e) {
     message.error('加载系列失败');
+  }
+}
+
+async function onSeriesSelectChange(seriesName) {
+  selectedModel.value = '';
+  modelList.value = [];
+  if (seriesName) {
+    try {
+      const models = await modelApi.getBySeries(seriesName);
+      modelList.value = models;
+    } catch (e) {
+      message.error('加载型号失败');
+    }
   }
 }
 

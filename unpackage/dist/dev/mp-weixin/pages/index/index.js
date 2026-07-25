@@ -158,12 +158,10 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/regenerator */ 55));
-var _defineProperty2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/defineProperty */ 11));
 var _toConsumableArray2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/toConsumableArray */ 18));
 var _slicedToArray2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/slicedToArray */ 5));
 var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/asyncToGenerator */ 57));
 var _cloudApi = __webpack_require__(/*! @/utils/cloud-api */ 58);
-var _methods;
 function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
@@ -238,7 +236,7 @@ var _default = {
       this.calculateTotalPrice();
     }
   },
-  methods: (_methods = {
+  methods: {
     showToast: function showToast(text) {
       var _this = this;
       var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'success';
@@ -531,508 +529,429 @@ var _default = {
         selectedYokeMaterial: yokeMat || null
       });
     },
-    setQWStandard: function setQWStandard() {
-      var _this$selectedValve;
-      this.setMaterialStandard((_this$selectedValve = this.selectedValve) === null || _this$selectedValve === void 0 ? void 0 : _this$selectedValve.name);
+    /**
+     * 获取指定系列+DN规格的起订量
+     * 优先查报价系数规则表，其次查价格表
+     */
+    getMinOrderQuantity: function getMinOrderQuantity(specSize) {
+      var dnSize = parseInt(String(specSize).replace(/[^\d]/g, '')) || 0;
+      if (this.pricingRules && this.pricingRules.length > 0) {
+        var seriesName = this.currentProductSeries;
+        var rule = this.pricingRules.find(function (r) {
+          return r.seriesName === seriesName && dnSize >= r.dnMin && dnSize <= r.dnMax;
+        });
+        if (rule && rule.minOrderQty) return rule.minOrderQty;
+      }
+      if (this.selectedValve && this.priceData) {
+        var priceItem = this.priceData.find(function (p) {
+          return p.valveName === this.selectedValve.name && p.size === specSize;
+        }, this);
+        if (priceItem && priceItem.minOrderQty) return priceItem.minOrderQty;
+      }
+      // 3. 兜底：50
+      return 50;
     },
-    setQUStandard: function setQUStandard() {
-      var _this$selectedValve2;
-      this.setMaterialStandard((_this$selectedValve2 = this.selectedValve) === null || _this$selectedValve2 === void 0 ? void 0 : _this$selectedValve2.name);
+    /**
+     * 获取报价系数：根据系列、DN、数量、是否磨标
+     * 返回最终单价应乘的系数
+     */
+    getPricingCoefficient: function getPricingCoefficient(seriesName, valveName, specSize, quantity, hasBranding) {
+      if (!this.pricingRules || this.pricingRules.length === 0) {
+        console.log('[index] 无报价系数规则');
+        return 1.0;
+      }
+      var findRule = function (productName) {
+        return this.pricingRules.find(function (r) {
+          var match = r.seriesName === seriesName && (r.productName || '') === (productName || '') && specSize >= r.dnMin && specSize <= r.dnMax;
+          if (match) {
+            console.log('[index] 匹配规则:', r);
+          }
+          return match;
+        });
+      }.bind(this);
+      var rule = findRule(valveName) || findRule('');
+      if (!rule) {
+        console.log('[index] 无匹配规则: seriesName=' + seriesName + ', valveName=' + valveName + ', specSize=' + specSize);
+        return 1.0;
+      }
+      var moqMet = quantity >= rule.minOrderQty;
+      console.log('[index] 报价系数计算: quantity=' + quantity + ', minOrderQty=' + rule.minOrderQty + ', moqMet=' + moqMet);
+      if (moqMet && hasBranding) return rule.moqMetOemCoeff;
+      if (moqMet && !hasBranding) return rule.moqMetOriginalCoeff;
+      if (!moqMet && hasBranding) return rule.moqUnmetOemCoeff;
+      if (!moqMet && !hasBranding) return rule.moqUnmetOriginalCoeff;
+      return 1.0;
     },
-    setQVStandard: function setQVStandard() {
-      var _this$selectedValve3;
-      this.setMaterialStandard((_this$selectedValve3 = this.selectedValve) === null || _this$selectedValve3 === void 0 ? void 0 : _this$selectedValve3.name);
-    },
-    setQZStandard: function setQZStandard() {
-      var _this$selectedValve4;
-      this.setMaterialStandard((_this$selectedValve4 = this.selectedValve) === null || _this$selectedValve4 === void 0 ? void 0 : _this$selectedValve4.name);
-    },
-    setQBStandard: function setQBStandard() {
-      var _this$selectedValve5;
-      this.setMaterialStandard((_this$selectedValve5 = this.selectedValve) === null || _this$selectedValve5 === void 0 ? void 0 : _this$selectedValve5.name);
-    },
-    setQCStandard: function setQCStandard() {
-      var _this$selectedValve6;
-      this.setMaterialStandard((_this$selectedValve6 = this.selectedValve) === null || _this$selectedValve6 === void 0 ? void 0 : _this$selectedValve6.name);
-    },
-    setQHStandard: function setQHStandard() {
-      var _this$selectedValve7;
-      this.setMaterialStandard((_this$selectedValve7 = this.selectedValve) === null || _this$selectedValve7 === void 0 ? void 0 : _this$selectedValve7.name);
-    },
-    setQCAStandard: function setQCAStandard() {
-      var _this$selectedValve8;
-      this.setMaterialStandard((_this$selectedValve8 = this.selectedValve) === null || _this$selectedValve8 === void 0 ? void 0 : _this$selectedValve8.name);
-    },
-    setQCBStandard: function setQCBStandard() {
-      var _this$selectedValve9;
-      this.setMaterialStandard((_this$selectedValve9 = this.selectedValve) === null || _this$selectedValve9 === void 0 ? void 0 : _this$selectedValve9.name);
-    },
-    setQCGStandard: function setQCGStandard() {
-      var _this$selectedValve10;
-      this.setMaterialStandard((_this$selectedValve10 = this.selectedValve) === null || _this$selectedValve10 === void 0 ? void 0 : _this$selectedValve10.name);
-    },
-    setQMBStandard: function setQMBStandard() {
-      var _this$selectedValve11;
-      this.setMaterialStandard((_this$selectedValve11 = this.selectedValve) === null || _this$selectedValve11 === void 0 ? void 0 : _this$selectedValve11.name);
-    },
-    setQMDYStandard: function setQMDYStandard() {
-      var _this$selectedValve12;
-      this.setMaterialStandard((_this$selectedValve12 = this.selectedValve) === null || _this$selectedValve12 === void 0 ? void 0 : _this$selectedValve12.name);
-    },
-    setQMGStandard: function setQMGStandard() {
-      var _this$selectedValve13;
-      this.setMaterialStandard((_this$selectedValve13 = this.selectedValve) === null || _this$selectedValve13 === void 0 ? void 0 : _this$selectedValve13.name);
-    },
-    setQUPStandard: function setQUPStandard() {
-      var _this$selectedValve14;
-      this.setMaterialStandard((_this$selectedValve14 = this.selectedValve) === null || _this$selectedValve14 === void 0 ? void 0 : _this$selectedValve14.name);
-    },
-    setQWFStandard: function setQWFStandard() {
-      var _this$selectedValve15;
-      this.setMaterialStandard((_this$selectedValve15 = this.selectedValve) === null || _this$selectedValve15 === void 0 ? void 0 : _this$selectedValve15.name);
-    },
-    setQWLYStandard: function setQWLYStandard() {
-      var _this$selectedValve16;
-      this.setMaterialStandard((_this$selectedValve16 = this.selectedValve) === null || _this$selectedValve16 === void 0 ? void 0 : _this$selectedValve16.name);
-    },
-    setQYAStandard: function setQYAStandard() {
-      var _this$selectedValve17;
-      this.setMaterialStandard((_this$selectedValve17 = this.selectedValve) === null || _this$selectedValve17 === void 0 ? void 0 : _this$selectedValve17.name);
-    },
-    setQYStandard: function setQYStandard() {
-      var _this$selectedValve18;
-      this.setMaterialStandard((_this$selectedValve18 = this.selectedValve) === null || _this$selectedValve18 === void 0 ? void 0 : _this$selectedValve18.name);
-    },
-    setQJStandard: function setQJStandard() {
-      var _this$selectedValve19;
-      this.setMaterialStandard((_this$selectedValve19 = this.selectedValve) === null || _this$selectedValve19 === void 0 ? void 0 : _this$selectedValve19.name);
-    }
-  }, (0, _defineProperty2.default)(_methods, "setQMGStandard", function setQMGStandard() {
-    var _this$selectedValve20;
-    this.setMaterialStandard((_this$selectedValve20 = this.selectedValve) === null || _this$selectedValve20 === void 0 ? void 0 : _this$selectedValve20.name);
-  }), (0, _defineProperty2.default)(_methods, "getMinOrderQuantity", function getMinOrderQuantity(specSize) {
-    // 1. 优先从报价系数规则获取
-    if (this.pricingRules && this.pricingRules.length > 0) {
-      var seriesName = this.currentProductSeries;
-      var rule = this.pricingRules.find(function (r) {
-        return r.seriesName === seriesName && specSize >= r.dnMin && specSize <= r.dnMax;
+    onSelectValveBody: function onSelectValveBody(e) {
+      this.setData({
+        SelectValveBody: this.valveBodyTypes[e.detail.value]
       });
-      if (rule && rule.minOrderQty) return rule.minOrderQty;
-    }
-    // 2. 其次从 priceData 获取
-    if (this.selectedValve && this.priceData) {
+      this.updateCurrentPrice();
+    },
+    onSelectValve: function onSelectValve(e) {
+      this.setData({
+        selectedValve: this.valveTypes[e.detail.value]
+      });
+      this.updateSpecifications();
+      this.updateCurrentPrice();
+    },
+    onSelectSpec: function onSelectSpec(e) {
+      this.setData({
+        selectedSpec: this.specifications[e.detail.value]
+      });
+      var minQty = this.getMinOrderQuantity(this.selectedSpec.name);
+      this.setData({
+        quantity: minQty
+      });
+      if (this.selectedValve) {
+        this.setMaterialStandard(this.selectedValve.name);
+      }
+      this.updateCurrentPrice();
+    },
+    onSelectGatePlate: function onSelectGatePlate(e) {
+      this.setData({
+        selectedGatePlate: this.gatePlateTypes[e.detail.value]
+      });
+      this.updateCurrentPrice();
+    },
+    onSelectRodMaterial: function onSelectRodMaterial(e) {
+      this.setData({
+        selectedRodMaterial: this.rodMaterials[e.detail.value]
+      });
+      this.updateCurrentPrice();
+    },
+    onSelectYokeMaterial: function onSelectYokeMaterial(e) {
+      this.setData({
+        selectedYokeMaterial: this.yokeMaterials[e.detail.value]
+      });
+      this.updateCurrentPrice();
+    },
+    onSelectProductType: function onSelectProductType(e) {
+      this.setData({
+        selectedProductType: this.productTypeOptions[e.detail.value]
+      });
+      this.updateCurrentPrice();
+    },
+    onSelectBranding: function onSelectBranding(value) {
+      this.setData({
+        selectedBranding: value
+      });
+      this.updateCurrentPrice();
+    },
+    onQuantityChange: function onQuantityChange(e) {
+      var newQuantity = parseInt(e.detail.value) || 1;
+      this.setData({
+        quantity: newQuantity
+      });
+      this.updateCurrentPrice();
+    },
+    onPriceInput: function onPriceInput(e) {
+      var newPrice = e.detail.value;
+      this.setData({
+        confirmedPrice: newPrice
+      });
+      var price = parseFloat(newPrice) || 0;
+      this.setData({
+        totalPreviewPrice: (price * this.quantity).toFixed(2)
+      });
+    },
+    getMaterialPriceDiff: function getMaterialPriceDiff(seriesName, partName, baseMaterial, targetMaterial, dn) {
+      if (!baseMaterial || !targetMaterial || baseMaterial === targetMaterial) return 0;
+      var matched = this.materialDiffs.find(function (d) {
+        return d.seriesName === seriesName && d.partName === partName && d.baseMaterial === baseMaterial && d.targetMaterial === targetMaterial && dn >= d.dnMin && dn <= d.dnMax;
+      });
+      return matched ? matched.priceDiff : 0;
+    },
+    updateCurrentPrice: function updateCurrentPrice() {
+      var _this$SelectValveBody;
+      var selectedValve = this.selectedValve,
+        selectedSpec = this.selectedSpec,
+        selectedGatePlate = this.selectedGatePlate,
+        selectedRodMaterial = this.selectedRodMaterial,
+        selectedYokeMaterial = this.selectedYokeMaterial,
+        selectedProductType = this.selectedProductType;
+      if (!selectedValve || !selectedSpec || !selectedGatePlate || !selectedRodMaterial) {
+        this.setData({
+          currentPrice: '0.00'
+        });
+        return;
+      }
       var priceItem = this.priceData.find(function (p) {
-        return p.valveName === this.selectedValve.name && p.size === specSize;
-      }, this);
-      if (priceItem && priceItem.minOrderQty) return priceItem.minOrderQty;
-    }
-    // 3. 兜底：50
-    return 50;
-  }), (0, _defineProperty2.default)(_methods, "getPricingCoefficient", function getPricingCoefficient(seriesName, valveName, specSize, quantity, hasBranding) {
-    if (!this.pricingRules || this.pricingRules.length === 0) return 1.0;
-
-    // 查找匹配规则：先精确匹配产品名，再匹配空产品名（全系列通用）
-    var findRule = function (productName) {
-      return this.pricingRules.find(function (r) {
-        return r.seriesName === seriesName && (r.productName || '') === (productName || '') && specSize >= r.dnMin && specSize <= r.dnMax;
+        return p.valveName === selectedValve.name && p.size === selectedSpec.name;
       });
-    }.bind(this);
-    var rule = findRule(valveName) || findRule('');
-    if (!rule) return 1.0; // 无规则匹配 → 原价
-
-    var moqMet = quantity >= rule.minOrderQty;
-    if (moqMet && hasBranding) return rule.moqMetOemCoeff;
-    if (moqMet && !hasBranding) return rule.moqMetOriginalCoeff;
-    if (!moqMet && hasBranding) return rule.moqUnmetOemCoeff;
-    if (!moqMet && !hasBranding) return rule.moqUnmetOriginalCoeff;
-    return 1.0;
-  }), (0, _defineProperty2.default)(_methods, "onSelectValveBody", function onSelectValveBody(e) {
-    this.setData({
-      SelectValveBody: this.valveBodyTypes[e.detail.value]
-    });
-    this.updateCurrentPrice();
-  }), (0, _defineProperty2.default)(_methods, "onSelectValve", function onSelectValve(e) {
-    this.setData({
-      selectedValve: this.valveTypes[e.detail.value]
-    });
-    this.updateSpecifications();
-    if (this.currentProductSeries === 'QW系列' && this.selectedSpec) {
-      this.setQWStandard();
-    }
-    this.updateCurrentPrice();
-  }), (0, _defineProperty2.default)(_methods, "onSelectSpec", function onSelectSpec(e) {
-    this.setData({
-      selectedSpec: this.specifications[e.detail.value]
-    });
-    var minQty = this.getMinOrderQuantity(this.selectedSpec.name);
-    this.setData({
-      quantity: minQty
-    });
-    if (this.currentProductSeries === 'QW系列' && this.selectedValve) {
-      this.setQWStandard();
-    } else if (this.currentProductSeries === 'QU系列' && this.selectedValve) {
-      this.setQUStandard();
-    } else if (this.currentProductSeries === 'QV系列' && this.selectedValve) {
-      this.setQVStandard();
-    } else if (this.currentProductSeries === 'QZ系列' && this.selectedValve) {
-      this.setQZStandard();
-    } else if (this.currentProductSeries === 'QB系列' && this.selectedValve) {
-      this.setQBStandard();
-    } else if (this.currentProductSeries === 'QC系列' && this.selectedValve) {
-      this.setQCStandard();
-    } else if (this.currentProductSeries === 'QH系列' && this.selectedValve) {
-      this.setQHStandard();
-    } else if (this.currentProductSeries === 'QCA系列' && this.selectedValve) {
-      this.setQCAStandard();
-    } else if (this.currentProductSeries === 'QCB系列' && this.selectedValve) {
-      this.setQCBStandard();
-    } else if (this.currentProductSeries === 'QCG系列' && this.selectedValve) {
-      this.setQCGStandard();
-    } else if (this.currentProductSeries === 'QMB系列' && this.selectedValve) {
-      this.setQMBStandard();
-    } else if (this.currentProductSeries === 'QMG系列' && this.selectedValve) {
-      this.setQMGStandard();
-    } else if (this.currentProductSeries === 'QMDY系列' && this.selectedValve) {
-      this.setQMDYStandard();
-    } else if (this.currentProductSeries === 'QUP系列' && this.selectedValve) {
-      this.setQUPStandard();
-    } else if (this.currentProductSeries === 'QWF系列' && this.selectedValve) {
-      this.setQWFStandard();
-    } else if (this.currentProductSeries === 'QWLY系列' && this.selectedValve) {
-      this.setQWLYStandard();
-    } else if (this.currentProductSeries === 'QY系列' && this.selectedValve) {
-      this.setQYStandard();
-    } else if (this.currentProductSeries === 'QYA系列' && this.selectedValve) {
-      this.setQYAStandard();
-    } else if (this.currentProductSeries === 'QJ系列' && this.selectedValve) {
-      this.setQJStandard();
-    }
-    this.updateCurrentPrice();
-  }), (0, _defineProperty2.default)(_methods, "onSelectGatePlate", function onSelectGatePlate(e) {
-    this.setData({
-      selectedGatePlate: this.gatePlateTypes[e.detail.value]
-    });
-    this.updateCurrentPrice();
-  }), (0, _defineProperty2.default)(_methods, "onSelectRodMaterial", function onSelectRodMaterial(e) {
-    this.setData({
-      selectedRodMaterial: this.rodMaterials[e.detail.value]
-    });
-    this.updateCurrentPrice();
-  }), (0, _defineProperty2.default)(_methods, "onSelectYokeMaterial", function onSelectYokeMaterial(e) {
-    this.setData({
-      selectedYokeMaterial: this.yokeMaterials[e.detail.value]
-    });
-    this.updateCurrentPrice();
-  }), (0, _defineProperty2.default)(_methods, "onSelectProductType", function onSelectProductType(e) {
-    this.setData({
-      selectedProductType: this.productTypeOptions[e.detail.value]
-    });
-    this.updateCurrentPrice();
-  }), (0, _defineProperty2.default)(_methods, "onSelectBranding", function onSelectBranding(value) {
-    this.setData({
-      selectedBranding: value
-    });
-    this.updateCurrentPrice();
-  }), (0, _defineProperty2.default)(_methods, "onQuantityChange", function onQuantityChange(e) {
-    var newQuantity = parseInt(e.detail.value) || 1;
-    this.setData({
-      quantity: newQuantity
-    });
-    var price = parseFloat(this.confirmedPrice) || parseFloat(this.currentPrice) || 0;
-    this.setData({
-      totalPreviewPrice: (price * newQuantity).toFixed(2)
-    });
-  }), (0, _defineProperty2.default)(_methods, "onPriceInput", function onPriceInput(e) {
-    var newPrice = e.detail.value;
-    this.setData({
-      confirmedPrice: newPrice
-    });
-    var price = parseFloat(newPrice) || 0;
-    this.setData({
-      totalPreviewPrice: (price * this.quantity).toFixed(2)
-    });
-  }), (0, _defineProperty2.default)(_methods, "getMaterialPriceDiff", function getMaterialPriceDiff(seriesName, partName, baseMaterial, targetMaterial, dn) {
-    if (!baseMaterial || !targetMaterial || baseMaterial === targetMaterial) return 0;
-    var matched = this.materialDiffs.find(function (d) {
-      return d.seriesName === seriesName && d.partName === partName && d.baseMaterial === baseMaterial && d.targetMaterial === targetMaterial && dn >= d.dnMin && dn <= d.dnMax;
-    });
-    return matched ? matched.priceDiff : 0;
-  }), (0, _defineProperty2.default)(_methods, "updateCurrentPrice", function updateCurrentPrice() {
-    var _this$SelectValveBody;
-    var selectedValve = this.selectedValve,
-      selectedSpec = this.selectedSpec,
-      selectedGatePlate = this.selectedGatePlate,
-      selectedRodMaterial = this.selectedRodMaterial,
-      selectedYokeMaterial = this.selectedYokeMaterial,
-      selectedProductType = this.selectedProductType;
-    if (!selectedValve || !selectedSpec || !selectedGatePlate || !selectedRodMaterial) {
+      if (!priceItem) {
+        this.setData({
+          currentPrice: '0.00'
+        });
+        return;
+      }
+      var material = this.getMaterialByValveName(selectedValve.name);
+      var type = selectedValve.type;
+      var basePrice = this.getPriceByType(priceItem, type);
+      var specSizeStr = String(selectedSpec.name);
+      var specSize = parseInt(specSizeStr.replace(/[^\d]/g, '')) || 0;
+      var seriesName = this.currentProductSeries;
+      var bodyDiff = this.getMaterialPriceDiff(seriesName, 'body', (material === null || material === void 0 ? void 0 : material.bodyMaterial) || '', ((_this$SelectValveBody = this.SelectValveBody) === null || _this$SelectValveBody === void 0 ? void 0 : _this$SelectValveBody.name) || '', specSize);
+      var gatePlateDiff = this.getMaterialPriceDiff(seriesName, 'gate_plate', (material === null || material === void 0 ? void 0 : material.gatePlateMaterial) || '', (selectedGatePlate === null || selectedGatePlate === void 0 ? void 0 : selectedGatePlate.name) || '', specSize);
+      var rodDiff = this.getMaterialPriceDiff(seriesName, 'stem', (material === null || material === void 0 ? void 0 : material.stemMaterial) || '', (selectedRodMaterial === null || selectedRodMaterial === void 0 ? void 0 : selectedRodMaterial.name) || '', specSize);
+      var yokeDiff = this.getMaterialPriceDiff(seriesName, 'yoke', (material === null || material === void 0 ? void 0 : material.yokeMaterial) || '', (selectedYokeMaterial === null || selectedYokeMaterial === void 0 ? void 0 : selectedYokeMaterial.name) || '', specSize);
+      var multiplier = this.priceTable.productTypeMultiplier[selectedProductType];
+      var hasBranding = this.selectedBranding;
+      var brandingFee = hasBranding ? priceItem.brandingFee || 0 : 0;
+      var pricingCoeff = this.getPricingCoefficient(seriesName, selectedValve.name, specSize, this.quantity, hasBranding);
+      var baseTotal = basePrice + bodyDiff + gatePlateDiff + rodDiff + yokeDiff + brandingFee;
+      var total = baseTotal * pricingCoeff * multiplier;
       this.setData({
-        currentPrice: '0.00'
+        currentPrice: total.toFixed(2),
+        confirmedPrice: total.toFixed(2),
+        totalPreviewPrice: (total * this.quantity).toFixed(2)
       });
-      return;
-    }
-    var priceItem = this.priceData.find(function (p) {
-      return p.valveName === selectedValve.name && p.size === selectedSpec.name;
-    });
-    if (!priceItem) {
-      this.setData({
-        currentPrice: '0.00'
-      });
-      return;
-    }
-    var material = this.getMaterialByValveName(selectedValve.name);
-    var type = selectedValve.type;
-    var basePrice = this.getPriceByType(priceItem, type);
-    var specSize = selectedSpec.name;
-    var seriesName = this.currentProductSeries;
-    var bodyDiff = this.getMaterialPriceDiff(seriesName, 'body', (material === null || material === void 0 ? void 0 : material.bodyMaterial) || '', ((_this$SelectValveBody = this.SelectValveBody) === null || _this$SelectValveBody === void 0 ? void 0 : _this$SelectValveBody.name) || '', specSize);
-    var gatePlateDiff = this.getMaterialPriceDiff(seriesName, 'gate_plate', (material === null || material === void 0 ? void 0 : material.gatePlateMaterial) || '', (selectedGatePlate === null || selectedGatePlate === void 0 ? void 0 : selectedGatePlate.name) || '', specSize);
-    var rodDiff = this.getMaterialPriceDiff(seriesName, 'stem', (material === null || material === void 0 ? void 0 : material.stemMaterial) || '', (selectedRodMaterial === null || selectedRodMaterial === void 0 ? void 0 : selectedRodMaterial.name) || '', specSize);
-    var yokeDiff = this.getMaterialPriceDiff(seriesName, 'yoke', (material === null || material === void 0 ? void 0 : material.yokeMaterial) || '', (selectedYokeMaterial === null || selectedYokeMaterial === void 0 ? void 0 : selectedYokeMaterial.name) || '', specSize);
-    var multiplier = this.priceTable.productTypeMultiplier[selectedProductType];
-    var hasBranding = this.selectedBranding;
-    var brandingFee = hasBranding ? priceItem.brandingFee || 0 : 0;
-    var pricingCoeff = this.getPricingCoefficient(seriesName, selectedValve.name, specSize, this.quantity, hasBranding);
-    var baseTotal = basePrice + bodyDiff + gatePlateDiff + rodDiff + yokeDiff + brandingFee;
-    var total = baseTotal * pricingCoeff * multiplier;
-    this.setData({
-      currentPrice: total.toFixed(2),
-      confirmedPrice: total.toFixed(2),
-      totalPreviewPrice: (total * this.quantity).toFixed(2)
-    });
-  }), (0, _defineProperty2.default)(_methods, "getBrandingFee", function getBrandingFee(size) {
-    // 磨商标价格映射表
-    var brandingFeeMap = {
-      50: 25,
-      65: 25,
-      80: 25,
-      100: 25,
-      125: 25,
-      150: 25,
-      200: 30,
-      250: 50,
-      300: 60,
-      350: 70,
-      400: 80,
-      450: 100,
-      500: 150,
-      600: 250,
-      700: 450,
-      800: 650,
-      900: 900,
-      1000: 1000
-    };
-    return brandingFeeMap[size] || 0;
-  }), (0, _defineProperty2.default)(_methods, "updateSpecifications", function updateSpecifications() {
-    var _this4 = this;
-    // 根据选中的阀门型号，从已加载的价格数据中提取可用规格
-    // 清除之前选的规格（不同型号的可用规格不同）
-    this.selectedSpec = null;
-    if (!this.selectedValve) {
-      // 无选中型号时，显示当前系列下所有规格
-      var allSizes = (0, _toConsumableArray2.default)(new Set(this.priceData.map(function (p) {
+    },
+    getBrandingFee: function getBrandingFee(size) {
+      // 磨商标价格映射表
+      var brandingFeeMap = {
+        50: 25,
+        65: 25,
+        80: 25,
+        100: 25,
+        125: 25,
+        150: 25,
+        200: 30,
+        250: 50,
+        300: 60,
+        350: 70,
+        400: 80,
+        450: 100,
+        500: 150,
+        600: 250,
+        700: 450,
+        800: 650,
+        900: 900,
+        1000: 1000
+      };
+      return brandingFeeMap[size] || 0;
+    },
+    updateSpecifications: function updateSpecifications() {
+      var _this4 = this;
+      // 根据选中的阀门型号，从已加载的价格数据中提取可用规格
+      // 清除之前选的规格（不同型号的可用规格不同）
+      this.selectedSpec = null;
+      if (!this.selectedValve) {
+        // 无选中型号时，显示当前系列下所有规格
+        var allSizes = (0, _toConsumableArray2.default)(new Set(this.priceData.map(function (p) {
+          return p.size;
+        }))).sort(function (a, b) {
+          return a - b;
+        });
+        this.specifications = allSizes.map(function (s) {
+          return {
+            name: s
+          };
+        });
+        return;
+      }
+      var sizes = this.priceData.filter(function (p) {
+        return p.valveName === _this4.selectedValve.name;
+      }).map(function (p) {
         return p.size;
-      }))).sort(function (a, b) {
+      }).sort(function (a, b) {
         return a - b;
       });
-      this.specifications = allSizes.map(function (s) {
+      var uniqueSizes = (0, _toConsumableArray2.default)(new Set(sizes));
+      this.specifications = uniqueSizes.map(function (s) {
         return {
           name: s
         };
       });
-      return;
-    }
-    var sizes = this.priceData.filter(function (p) {
-      return p.valveName === _this4.selectedValve.name;
-    }).map(function (p) {
-      return p.size;
-    }).sort(function (a, b) {
-      return a - b;
-    });
-    var uniqueSizes = (0, _toConsumableArray2.default)(new Set(sizes));
-    this.specifications = uniqueSizes.map(function (s) {
-      return {
-        name: s
-      };
-    });
-    if (uniqueSizes.length === 0) {
-      console.warn('该型号无可用规格: ' + this.selectedValve.name);
-    }
-  }), (0, _defineProperty2.default)(_methods, "getPriceByType", function getPriceByType(priceItem, type) {
-    return priceItem.price || 0;
-  }), (0, _defineProperty2.default)(_methods, "calculatePrice", function calculatePrice() {
-    var _this5 = this;
-    return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
-      var _this5$SelectValveBod, _this5$SelectValveBod2;
-      var selectedValve, selectedSpec, selectedGatePlate, selectedRodMaterial, selectedYokeMaterial, quantity, selectedProductType, priceItem, material, type, basePrice, specSize, seriesName, bodyDiff, gatePlateDiff, rodDiff, yokeDiff, multiplier, minQty, isMeetMinOrder, hasBranding, brandingFee, pricingCoeff, baseTotal, calculatedUnitPrice, finalUnitPrice, totalPrice, maxPressure, unitWeight, laps, torque, specResult, spec;
-      return _regenerator.default.wrap(function _callee3$(_context3) {
-        while (1) {
-          switch (_context3.prev = _context3.next) {
-            case 0:
-              selectedValve = _this5.selectedValve, selectedSpec = _this5.selectedSpec, selectedGatePlate = _this5.selectedGatePlate, selectedRodMaterial = _this5.selectedRodMaterial, selectedYokeMaterial = _this5.selectedYokeMaterial, quantity = _this5.quantity, selectedProductType = _this5.selectedProductType;
-              if (!(!selectedValve || !selectedSpec || !selectedGatePlate || !selectedRodMaterial)) {
-                _context3.next = 4;
+      if (uniqueSizes.length === 0) {
+        console.warn('该型号无可用规格: ' + this.selectedValve.name);
+      }
+    },
+    getPriceByType: function getPriceByType(priceItem, type) {
+      return priceItem.price || 0;
+    },
+    calculatePrice: function calculatePrice() {
+      var _this5 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
+        var _this5$SelectValveBod, _this5$SelectValveBod2;
+        var selectedValve, selectedSpec, selectedGatePlate, selectedRodMaterial, selectedYokeMaterial, quantity, selectedProductType, priceItem, material, type, basePrice, specSizeStr, specSize, seriesName, bodyDiff, gatePlateDiff, rodDiff, yokeDiff, multiplier, minQty, isMeetMinOrder, hasBranding, brandingFee, pricingCoeff, baseTotal, calculatedUnitPrice, finalUnitPrice, totalPrice, maxPressure, unitWeight, laps, torque, specResult, spec;
+        return _regenerator.default.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                selectedValve = _this5.selectedValve, selectedSpec = _this5.selectedSpec, selectedGatePlate = _this5.selectedGatePlate, selectedRodMaterial = _this5.selectedRodMaterial, selectedYokeMaterial = _this5.selectedYokeMaterial, quantity = _this5.quantity, selectedProductType = _this5.selectedProductType;
+                if (!(!selectedValve || !selectedSpec || !selectedGatePlate || !selectedRodMaterial)) {
+                  _context3.next = 4;
+                  break;
+                }
+                _this5.showToast('请填写完整信息', 'error');
+                return _context3.abrupt("return", null);
+              case 4:
+                priceItem = _this5.priceData.find(function (p) {
+                  return p.valveName === selectedValve.name && p.size === selectedSpec.name;
+                });
+                if (priceItem) {
+                  _context3.next = 8;
+                  break;
+                }
+                _this5.showToast('该组合不可用', 'error');
+                return _context3.abrupt("return", null);
+              case 8:
+                material = _this5.getMaterialByValveName(selectedValve.name);
+                type = selectedValve.type;
+                basePrice = _this5.getPriceByType(priceItem, type);
+                specSizeStr = String(selectedSpec.name);
+                specSize = parseInt(specSizeStr.replace(/[^\d]/g, '')) || 0;
+                seriesName = _this5.currentProductSeries;
+                bodyDiff = _this5.getMaterialPriceDiff(seriesName, 'body', (material === null || material === void 0 ? void 0 : material.bodyMaterial) || '', ((_this5$SelectValveBod = _this5.SelectValveBody) === null || _this5$SelectValveBod === void 0 ? void 0 : _this5$SelectValveBod.name) || '', specSize);
+                gatePlateDiff = _this5.getMaterialPriceDiff(seriesName, 'gate_plate', (material === null || material === void 0 ? void 0 : material.gatePlateMaterial) || '', (selectedGatePlate === null || selectedGatePlate === void 0 ? void 0 : selectedGatePlate.name) || '', specSize);
+                rodDiff = _this5.getMaterialPriceDiff(seriesName, 'stem', (material === null || material === void 0 ? void 0 : material.stemMaterial) || '', (selectedRodMaterial === null || selectedRodMaterial === void 0 ? void 0 : selectedRodMaterial.name) || '', specSize);
+                yokeDiff = _this5.getMaterialPriceDiff(seriesName, 'yoke', (material === null || material === void 0 ? void 0 : material.yokeMaterial) || '', (selectedYokeMaterial === null || selectedYokeMaterial === void 0 ? void 0 : selectedYokeMaterial.name) || '', specSize);
+                multiplier = _this5.priceTable.productTypeMultiplier[selectedProductType];
+                minQty = _this5.getMinOrderQuantity(specSize);
+                isMeetMinOrder = quantity >= minQty;
+                hasBranding = _this5.selectedBranding;
+                brandingFee = hasBranding ? priceItem.brandingFee || 0 : 0;
+                pricingCoeff = _this5.getPricingCoefficient(seriesName, selectedValve.name, specSize, quantity, hasBranding);
+                baseTotal = basePrice + bodyDiff + gatePlateDiff + rodDiff + yokeDiff + brandingFee;
+                calculatedUnitPrice = baseTotal * pricingCoeff * multiplier;
+                finalUnitPrice = parseFloat(_this5.confirmedPrice) || calculatedUnitPrice;
+                totalPrice = finalUnitPrice * quantity;
+                maxPressure = '', unitWeight = '', laps = '', torque = '';
+                _context3.prev = 29;
+                _context3.next = 32;
+                return _cloudApi.priceApi.getModelSpecs(selectedValve.name, specSize);
+              case 32:
+                specResult = _context3.sent;
+                if (specResult && specResult.data) {
+                  spec = specResult.data;
+                  maxPressure = spec.maxPressure || '';
+                  unitWeight = spec.unitWeight || '';
+                  laps = spec.laps || '';
+                  torque = spec.torque || '';
+                }
+                _context3.next = 39;
                 break;
-              }
-              _this5.showToast('请填写完整信息', 'error');
-              return _context3.abrupt("return", null);
-            case 4:
-              priceItem = _this5.priceData.find(function (p) {
-                return p.valveName === selectedValve.name && p.size === selectedSpec.name;
-              });
-              if (priceItem) {
-                _context3.next = 8;
-                break;
-              }
-              _this5.showToast('该组合不可用', 'error');
-              return _context3.abrupt("return", null);
-            case 8:
-              material = _this5.getMaterialByValveName(selectedValve.name);
-              type = selectedValve.type;
-              basePrice = _this5.getPriceByType(priceItem, type);
-              specSize = selectedSpec.name;
-              seriesName = _this5.currentProductSeries;
-              bodyDiff = _this5.getMaterialPriceDiff(seriesName, 'body', (material === null || material === void 0 ? void 0 : material.bodyMaterial) || '', ((_this5$SelectValveBod = _this5.SelectValveBody) === null || _this5$SelectValveBod === void 0 ? void 0 : _this5$SelectValveBod.name) || '', specSize);
-              gatePlateDiff = _this5.getMaterialPriceDiff(seriesName, 'gate_plate', (material === null || material === void 0 ? void 0 : material.gatePlateMaterial) || '', (selectedGatePlate === null || selectedGatePlate === void 0 ? void 0 : selectedGatePlate.name) || '', specSize);
-              rodDiff = _this5.getMaterialPriceDiff(seriesName, 'stem', (material === null || material === void 0 ? void 0 : material.stemMaterial) || '', (selectedRodMaterial === null || selectedRodMaterial === void 0 ? void 0 : selectedRodMaterial.name) || '', specSize);
-              yokeDiff = _this5.getMaterialPriceDiff(seriesName, 'yoke', (material === null || material === void 0 ? void 0 : material.yokeMaterial) || '', (selectedYokeMaterial === null || selectedYokeMaterial === void 0 ? void 0 : selectedYokeMaterial.name) || '', specSize);
-              multiplier = _this5.priceTable.productTypeMultiplier[selectedProductType];
-              minQty = _this5.getMinOrderQuantity(specSize);
-              isMeetMinOrder = quantity >= minQty;
-              hasBranding = _this5.selectedBranding;
-              brandingFee = hasBranding ? priceItem.brandingFee || 0 : 0;
-              pricingCoeff = _this5.getPricingCoefficient(seriesName, selectedValve.name, specSize, quantity, hasBranding);
-              baseTotal = basePrice + bodyDiff + gatePlateDiff + rodDiff + yokeDiff + brandingFee;
-              calculatedUnitPrice = baseTotal * pricingCoeff * multiplier;
-              finalUnitPrice = parseFloat(_this5.confirmedPrice) || calculatedUnitPrice;
-              totalPrice = finalUnitPrice * quantity;
-              maxPressure = '', unitWeight = '', laps = '', torque = '';
-              _context3.prev = 28;
-              _context3.next = 31;
-              return _cloudApi.priceApi.getModelSpecs(selectedValve.name, specSize);
-            case 31:
-              specResult = _context3.sent;
-              if (specResult && specResult.data) {
-                spec = specResult.data;
-                maxPressure = spec.maxPressure || '';
-                unitWeight = spec.unitWeight || '';
-                laps = spec.laps || '';
-                torque = spec.torque || '';
-              }
-              _context3.next = 38;
-              break;
-            case 35:
-              _context3.prev = 35;
-              _context3.t0 = _context3["catch"](28);
-              console.log('获取规格参数失败:', _context3.t0);
-            case 38:
-              return _context3.abrupt("return", {
-                valveName: selectedValve.name,
-                spec: selectedSpec.name,
-                brandingFee: brandingFee,
-                hasBranding: hasBranding,
-                bodyMaterial: ((_this5$SelectValveBod2 = _this5.SelectValveBody) === null || _this5$SelectValveBod2 === void 0 ? void 0 : _this5$SelectValveBod2.name) || '',
-                gatePlate: selectedGatePlate.name,
-                rodMaterial: selectedRodMaterial.name,
-                yokeMaterial: (selectedYokeMaterial === null || selectedYokeMaterial === void 0 ? void 0 : selectedYokeMaterial.name) || '',
-                productType: selectedProductType,
-                quantity: quantity,
-                unitPrice: finalUnitPrice.toFixed(2),
-                totalPrice: totalPrice.toFixed(2),
-                productSeries: seriesName,
-                isMeetMinOrder: isMeetMinOrder,
-                maxPressure: maxPressure,
-                unitWeight: unitWeight,
-                laps: laps,
-                torque: torque
-              });
-            case 39:
-            case "end":
-              return _context3.stop();
+              case 36:
+                _context3.prev = 36;
+                _context3.t0 = _context3["catch"](29);
+                console.log('获取规格参数失败:', _context3.t0);
+              case 39:
+                return _context3.abrupt("return", {
+                  valveName: selectedValve.name,
+                  spec: selectedSpec.name,
+                  brandingFee: brandingFee,
+                  hasBranding: hasBranding,
+                  bodyMaterial: ((_this5$SelectValveBod2 = _this5.SelectValveBody) === null || _this5$SelectValveBod2 === void 0 ? void 0 : _this5$SelectValveBod2.name) || '',
+                  gatePlate: selectedGatePlate.name,
+                  rodMaterial: selectedRodMaterial.name,
+                  yokeMaterial: (selectedYokeMaterial === null || selectedYokeMaterial === void 0 ? void 0 : selectedYokeMaterial.name) || '',
+                  productType: selectedProductType,
+                  quantity: quantity,
+                  unitPrice: finalUnitPrice.toFixed(2),
+                  totalPrice: totalPrice.toFixed(2),
+                  productSeries: seriesName,
+                  isMeetMinOrder: isMeetMinOrder,
+                  maxPressure: maxPressure,
+                  unitWeight: unitWeight,
+                  laps: laps,
+                  torque: torque
+                });
+              case 40:
+              case "end":
+                return _context3.stop();
+            }
           }
-        }
-      }, _callee3, null, [[28, 35]]);
-    }))();
-  }), (0, _defineProperty2.default)(_methods, "onBackToCategory", function onBackToCategory() {
-    uni.navigateBack({
-      delta: 1
-    });
-  }), (0, _defineProperty2.default)(_methods, "onAddToQuote", function onAddToQuote() {
-    var _this6 = this;
-    return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee4() {
-      var item, newQuoteItems, newTotalPrice;
-      return _regenerator.default.wrap(function _callee4$(_context4) {
-        while (1) {
-          switch (_context4.prev = _context4.next) {
-            case 0:
-              _this6.showLoading = true;
-              _this6.loadingText = '计算中...';
-              _context4.next = 4;
-              return _this6.calculatePrice();
-            case 4:
-              item = _context4.sent;
-              _this6.showLoading = false;
-              if (item) {
-                _context4.next = 8;
-                break;
-              }
-              return _context4.abrupt("return");
-            case 8:
-              newQuoteItems = [].concat((0, _toConsumableArray2.default)(_this6.quoteItems), [item]);
-              newTotalPrice = _this6.calculateTotal(newQuoteItems);
-              _this6.setData({
-                quoteItems: newQuoteItems,
-                totalPrice: newTotalPrice
-              });
-              uni.setStorageSync('quoteItems', newQuoteItems);
-              _this6.showToast('已添加到报价表', 'success');
-              _this6.resetSelection();
-            case 14:
-            case "end":
-              return _context4.stop();
+        }, _callee3, null, [[29, 36]]);
+      }))();
+    },
+    onBackToCategory: function onBackToCategory() {
+      uni.navigateBack({
+        delta: 1
+      });
+    },
+    onAddToQuote: function onAddToQuote() {
+      var _this6 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee4() {
+        var item, newQuoteItems, newTotalPrice;
+        return _regenerator.default.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                _this6.showLoading = true;
+                _this6.loadingText = '计算中...';
+                _context4.next = 4;
+                return _this6.calculatePrice();
+              case 4:
+                item = _context4.sent;
+                _this6.showLoading = false;
+                if (item) {
+                  _context4.next = 8;
+                  break;
+                }
+                return _context4.abrupt("return");
+              case 8:
+                newQuoteItems = [].concat((0, _toConsumableArray2.default)(_this6.quoteItems), [item]);
+                newTotalPrice = _this6.calculateTotal(newQuoteItems);
+                _this6.setData({
+                  quoteItems: newQuoteItems,
+                  totalPrice: newTotalPrice
+                });
+                uni.setStorageSync('quoteItems', newQuoteItems);
+                _this6.showToast('已添加到报价表', 'success');
+                _this6.resetSelection();
+              case 14:
+              case "end":
+                return _context4.stop();
+            }
           }
-        }
-      }, _callee4);
-    }))();
-  }), (0, _defineProperty2.default)(_methods, "calculateTotal", function calculateTotal(items) {
-    var total = items.reduce(function (sum, item) {
-      return sum + parseFloat(item.totalPrice);
-    }, 0);
-    return total.toFixed(2);
-  }), (0, _defineProperty2.default)(_methods, "calculateTotalPrice", function calculateTotalPrice() {
-    this.totalPrice = this.calculateTotal(this.quoteItems);
-  }), (0, _defineProperty2.default)(_methods, "resetSelection", function resetSelection() {
-    this.setData({
-      selectedValve: null,
-      selectedSpec: null,
-      selectedGatePlate: null,
-      selectedRodMaterial: null,
-      selectedProductType: '常规品',
-      selectedBranding: false,
-      quantity: 50,
-      currentPrice: '0.00',
-      totalPreviewPrice: '0.00'
-    });
-  }), (0, _defineProperty2.default)(_methods, "onDeleteItem", function onDeleteItem(e) {
-    var index = e.currentTarget.dataset.index;
-    var newQuoteItems = this.quoteItems.filter(function (_, i) {
-      return i !== index;
-    });
-    var newTotalPrice = this.calculateTotal(newQuoteItems);
-    this.setData({
-      quoteItems: newQuoteItems,
-      totalPrice: newTotalPrice
-    });
-    uni.setStorageSync('quoteItems', newQuoteItems);
-  }), (0, _defineProperty2.default)(_methods, "onGenerateQuotation", function onGenerateQuotation() {
-    if (this.quoteItems.length === 0) {
-      this.showToast('请先添加阀门到报价表', 'error');
-      return;
+        }, _callee4);
+      }))();
+    },
+    calculateTotal: function calculateTotal(items) {
+      var total = items.reduce(function (sum, item) {
+        return sum + parseFloat(item.totalPrice);
+      }, 0);
+      return total.toFixed(2);
+    },
+    calculateTotalPrice: function calculateTotalPrice() {
+      this.totalPrice = this.calculateTotal(this.quoteItems);
+    },
+    resetSelection: function resetSelection() {
+      this.setData({
+        selectedValve: null,
+        selectedSpec: null,
+        selectedGatePlate: null,
+        selectedRodMaterial: null,
+        selectedProductType: '常规品',
+        selectedBranding: false,
+        quantity: 50,
+        currentPrice: '0.00',
+        totalPreviewPrice: '0.00'
+      });
+    },
+    onDeleteItem: function onDeleteItem(e) {
+      var index = e.currentTarget.dataset.index;
+      var newQuoteItems = this.quoteItems.filter(function (_, i) {
+        return i !== index;
+      });
+      var newTotalPrice = this.calculateTotal(newQuoteItems);
+      this.setData({
+        quoteItems: newQuoteItems,
+        totalPrice: newTotalPrice
+      });
+      uni.setStorageSync('quoteItems', newQuoteItems);
+    },
+    onGenerateQuotation: function onGenerateQuotation() {
+      if (this.quoteItems.length === 0) {
+        this.showToast('请先添加阀门到报价表', 'error');
+        return;
+      }
+      uni.navigateTo({
+        url: '/pages/quotation/quotation?data=' + encodeURIComponent(JSON.stringify(this.quoteItems))
+      });
     }
-    uni.navigateTo({
-      url: '/pages/quotation/quotation?data=' + encodeURIComponent(JSON.stringify(this.quoteItems))
-    });
-  }), _methods)
+  }
 };
 exports.default = _default;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))
