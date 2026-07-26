@@ -507,11 +507,23 @@ export default {
         },
         /**
          * 获取指定系列+DN规格的起订量
-         * 优先查报价系数规则表，其次查价格表
+         * 优先查价格表中配置的起订量，其次查报价系数规则表
          */
         getMinOrderQuantity(specSize) {
             const dnSize = parseInt(String(specSize).replace(/[^\d]/g, '')) || 0;
             
+            // 1. 优先从价格表中获取该产品具体配置的起订量
+            if (this.selectedValve && this.priceData && this.priceData.length > 0) {
+                var priceItem = this.priceData.find(function(p) {
+                    const pSize = parseInt(String(p.size).replace(/[^\d]/g, '')) || 0;
+                    return p.valveName === this.selectedValve.name && pSize === dnSize;
+                }, this);
+                if (priceItem && priceItem.minOrderQty && priceItem.minOrderQty > 0) {
+                    return parseInt(priceItem.minOrderQty) || 50;
+                }
+            }
+            
+            // 2. 其次查报价系数规则表
             if (this.pricingRules && this.pricingRules.length > 0) {
                 var seriesName = this.currentProductSeries;
                 var rule = this.pricingRules.find(function(r) {
@@ -520,12 +532,6 @@ export default {
                 if (rule && rule.minOrderQty) return rule.minOrderQty;
             }
             
-            if (this.selectedValve && this.priceData) {
-                var priceItem = this.priceData.find(function(p) {
-                    return p.valveName === this.selectedValve.name && p.size === specSize;
-                }, this);
-                if (priceItem && priceItem.minOrderQty) return priceItem.minOrderQty;
-            }
             // 3. 兜底：50
             return 50;
         },
@@ -533,6 +539,7 @@ export default {
         /**
          * 获取报价系数：根据系列、DN、数量、是否磨标
          * 返回最终单价应乘的系数
+         * 起订量阈值优先从价格表获取，系数从报价系数规则表获取
          */
         getPricingCoefficient(seriesName, valveName, specSize, quantity, hasBranding) {
             if (!this.pricingRules || this.pricingRules.length === 0) {
@@ -560,8 +567,20 @@ export default {
                 return 1.0;
             }
 
-            var moqMet = quantity >= rule.minOrderQty;
-            console.log('[index] 报价系数计算: quantity=' + quantity + ', minOrderQty=' + rule.minOrderQty + ', moqMet=' + moqMet);
+            // 起订量阈值：优先从价格表获取该产品的具体配置，其次用规则表中的
+            var minOrderQty = rule.minOrderQty;
+            if (this.priceData && this.priceData.length > 0 && valveName) {
+                var priceItem = this.priceData.find(function(p) {
+                    const pSize = parseInt(String(p.size).replace(/[^\d]/g, '')) || 0;
+                    return p.valveName === valveName && pSize === specSize;
+                }, this);
+                if (priceItem && priceItem.minOrderQty && priceItem.minOrderQty > 0) {
+                    minOrderQty = parseInt(priceItem.minOrderQty) || rule.minOrderQty;
+                }
+            }
+
+            var moqMet = quantity >= minOrderQty;
+            console.log('[index] 报价系数计算: quantity=' + quantity + ', minOrderQty=' + minOrderQty + ', moqMet=' + moqMet);
             
             if (moqMet && hasBranding)  return rule.moqMetOemCoeff;
             if (moqMet && !hasBranding) return rule.moqMetOriginalCoeff;
@@ -636,9 +655,12 @@ export default {
                 this.setData({ currentPrice: '0.00' });
                 return;
             }
-            const priceItem = this.priceData.find(p => 
-                p.valveName === selectedValve.name && p.size === selectedSpec.name
-            );
+            const specSizeStr = String(selectedSpec.name);
+            const specSize = parseInt(specSizeStr.replace(/[^\d]/g, '')) || 0;
+            const priceItem = this.priceData.find(p => {
+                const pSize = parseInt(String(p.size).replace(/[^\d]/g, '')) || 0;
+                return p.valveName === selectedValve.name && pSize === specSize;
+            });
             if (!priceItem) { 
                 this.setData({ currentPrice: '0.00' }); 
                 return; 
@@ -648,8 +670,6 @@ export default {
             const type = selectedValve.type;
             let basePrice = this.getPriceByType(priceItem, type);
             
-            const specSizeStr = String(selectedSpec.name);
-            const specSize = parseInt(specSizeStr.replace(/[^\d]/g, '')) || 0;
             const seriesName = this.currentProductSeries;
 
             const bodyDiff = this.getMaterialPriceDiff(seriesName, 'body', 
@@ -729,9 +749,12 @@ export default {
             if (!selectedValve || !selectedSpec || !selectedGatePlate || !selectedRodMaterial) {
                 this.showToast('请填写完整信息', 'error'); return null;
             }
-            const priceItem = this.priceData.find(p => 
-                p.valveName === selectedValve.name && p.size === selectedSpec.name
-            );
+            const specSizeStr = String(selectedSpec.name);
+            const specSize = parseInt(specSizeStr.replace(/[^\d]/g, '')) || 0;
+            const priceItem = this.priceData.find(p => {
+                const pSize = parseInt(String(p.size).replace(/[^\d]/g, '')) || 0;
+                return p.valveName === selectedValve.name && pSize === specSize;
+            });
             if (!priceItem) { 
                 this.showToast('该组合不可用', 'error'); 
                 return null; 
@@ -741,8 +764,6 @@ export default {
             const type = selectedValve.type;
             let basePrice = this.getPriceByType(priceItem, type);
             
-            const specSizeStr = String(selectedSpec.name);
-            const specSize = parseInt(specSizeStr.replace(/[^\d]/g, '')) || 0;
             const seriesName = this.currentProductSeries;
 
             const bodyDiff = this.getMaterialPriceDiff(seriesName, 'body', 
