@@ -348,7 +348,8 @@ export default {
                     rodMaterial: item.stemMaterial,
                     quantity: item.quantity,
                     branding: item.brandingFee > 0,
-                    productType: item.productType || 'regular'
+                    productType: item.productType || 'regular',
+                    finalUnitPrice: parseFloat(item.unitPrice) || 0
                 }))
             };
 

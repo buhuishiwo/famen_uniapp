@@ -14,6 +14,7 @@ exports.main = async (event, context) => {
       case 'getQuotationDetail': return await getQuotationDetail(event);
       case 'updateQuotation':   return await updateQuotation(event);
       case 'deleteQuotation':   return await deleteQuotation(event);
+      case 'getOrderStats':     return await getOrderStats(event);
       default: return { success: false, message: '未知操作: ' + action };
     }
   } catch (error) {
@@ -114,7 +115,7 @@ function genId() { return Date.now().toString(36) + Math.random().toString(36).s
 // ========== CRUD ==========
 
 async function createQuotation(event) {
-  const { customerName, note, paymentMethod, packaging, quoter, quoterPhone, validity, items } = event;
+  const { customerName, note, paymentMethod, packaging, quoter, quoterPhone, validity, finalPrice, items } = event;
   if (!items || items.length === 0) return { success: false, message: '报价明细不能为空' };
 
   const input = items.map(i => ({
@@ -127,6 +128,7 @@ async function createQuotation(event) {
 
   const qid = genId();
   const safeTotal = isNaN(totalAmount) ? 0 : totalAmount;
+  const safeFinalPrice = finalPrice !== undefined ? (isNaN(Number(finalPrice)) ? safeTotal : Number(finalPrice)) : safeTotal;
   const openid = 'q-' + qid;
 
   const { error: qErr } = await rdb.from('quotations').insert({
@@ -140,6 +142,7 @@ async function createQuotation(event) {
     quoter_phone: quoterPhone || '',
     validity: validity || '',
     total_amount: safeTotal,
+    final_price: safeFinalPrice,
     status: 'draft'
   });
   if (qErr) return { success: false, message: '保存报价单失败: ' + qErr.message };
@@ -147,6 +150,11 @@ async function createQuotation(event) {
   for (const r of results) {
     const { data: models } = await rdb.from('valve_models').select('id').eq('name', r.valveName);
     const modelId = models?.[0]?.id || null;
+    const originalItem = items.find(i => i.valveName === r.valveName);
+    const finalUnitPrice = originalItem?.finalUnitPrice !== undefined 
+      ? (isNaN(Number(originalItem.finalUnitPrice)) ? r.unitPrice : Number(originalItem.finalUnitPrice))
+      : r.unitPrice;
+    
     await rdb.from('quotation_items').insert({
       _openid: openid,
       quotation_id: qid,
@@ -155,26 +163,28 @@ async function createQuotation(event) {
       size: r.spec,
       gate_plate: r.gatePlate,
       rod_material: r.rodMaterial,
-      product_type: items.find(i => i.valveName === r.valveName)?.productType || 'regular',
+      product_type: originalItem?.productType || 'regular',
       quantity: r.quantity,
       min_order_qty: r.minOrderQty,
       branding: r.branding,
       branding_fee: r.brandingFee,
       unit_price: r.unitPrice,
+      final_unit_price: finalUnitPrice,
       total_price: r.totalPrice
     });
   }
 
-  return { success: true, data: { id: qid, customerName: customerName || '', totalAmount: safeTotal, itemCount: results.length, status: 'draft' } };
+  return { success: true, data: { id: qid, customerName: customerName || '', totalAmount: safeTotal, finalPrice: safeFinalPrice, itemCount: results.length, status: 'draft' } };
 }
 
 async function getQuotationList(event) {
   const page = parseInt(event.page) || 1;
   const limit = parseInt(event.limit) || 10;
-  const { status } = event;
+  const { status, keyword } = event;
 
   let query = rdb.from('quotations').select('*', { count: 'exact' });
   if (status) query = query.eq('status', status);
+  if (keyword) query = query.contains('customer_name', keyword);
   query = query.order('created_at', { ascending: false }).range((page - 1) * limit, page * limit - 1);
 
   const { data, count, error } = await query;
@@ -184,8 +194,10 @@ async function getQuotationList(event) {
     success: true,
     data: {
       list: (data || []).map(q => ({
-        id: q.id, customerName: q.customer_name, totalAmount: q.total_amount,
-        itemCount: 0, status: q.status, createdAt: q.created_at
+        id: q.id, customerName: q.customer_name || '未命名客户', totalAmount: q.total_amount || 0,
+        finalPrice: q.final_price || 0, status: q.status || 'draft', 
+        createdAt: q.created_at, quoter: q.quoter || '',
+        paymentMethod: q.payment_method || '', validity: q.validity || ''
       })),
       pagination: { page, limit, total: count || 0 }
     }
@@ -207,24 +219,25 @@ async function getQuotationDetail(event) {
   return {
     success: true,
     data: {
-      id: q.id, customerName: q.customer_name, note: q.note,
-      paymentMethod: q.payment_method, packaging: q.packaging,
-      quoter: q.quoter, quoterPhone: q.quoter_phone, validity: q.validity,
-      totalAmount: q.total_amount, status: q.status,
+      id: q.id, customerName: q.customer_name || '未命名客户', note: q.note || '',
+      paymentMethod: q.payment_method || '', packaging: q.packaging || '',
+      quoter: q.quoter || '', quoterPhone: q.quoter_phone || '', validity: q.validity || '',
+      totalAmount: q.total_amount || 0, finalPrice: q.final_price || 0, status: q.status || 'draft',
       createdAt: q.created_at, updatedAt: q.updated_at,
       items: (items || []).map(i => ({
-        id: i.id, valveName: i.valve_name, spec: i.size,
-        gatePlate: i.gate_plate, rodMaterial: i.rod_material,
-        productType: i.product_type || 'regular', quantity: i.quantity,
-        minOrderQty: i.min_order_qty, branding: i.branding,
-        brandingFee: i.branding_fee, unitPrice: i.unit_price, totalPrice: i.total_price
+        id: i.id, valveName: i.valve_name || '', spec: i.size,
+        gatePlate: i.gate_plate || '', rodMaterial: i.rod_material || '',
+        productType: i.product_type || 'regular', quantity: i.quantity || 0,
+        minOrderQty: i.min_order_qty || 1, branding: i.branding || false,
+        brandingFee: i.branding_fee || 0, unitPrice: i.unit_price || 0,
+        finalUnitPrice: i.final_unit_price || 0, totalPrice: i.total_price || 0
       }))
     }
   };
 }
 
 async function updateQuotation(event) {
-  const { id, customerName, note, paymentMethod, packaging, quoter, quoterPhone, validity, status } = event;
+  const { id, customerName, note, paymentMethod, packaging, quoter, quoterPhone, validity, status, finalPrice } = event;
   if (!id) return { success: false, message: '报价单ID不能为空' };
 
   const { data: qs, error: qErr } = await rdb.from('quotations').select('id').eq('id', id);
@@ -240,6 +253,7 @@ async function updateQuotation(event) {
   if (quoterPhone !== undefined) updateData.quoter_phone = quoterPhone;
   if (validity !== undefined) updateData.validity = validity;
   if (status !== undefined) updateData.status = status;
+  if (finalPrice !== undefined) updateData.final_price = Number(finalPrice);
 
   if (Object.keys(updateData).length > 0) {
     const { error: upErr } = await rdb.from('quotations').update(updateData).eq('id', id);
@@ -248,7 +262,7 @@ async function updateQuotation(event) {
 
   const { data: updated } = await rdb.from('quotations').select('*').eq('id', id);
   const q = updated[0];
-  return { success: true, data: { id: q.id, customerName: q.customer_name, status: q.status, updatedAt: q.updated_at } };
+  return { success: true, data: { id: q.id, customerName: q.customer_name, status: q.status, finalPrice: q.final_price, updatedAt: q.updated_at } };
 }
 
 async function deleteQuotation(event) {
@@ -259,4 +273,73 @@ async function deleteQuotation(event) {
   await rdb.from('quotations').delete().eq('id', id);
 
   return { success: true, message: '删除成功' };
+}
+
+async function getOrderStats(event) {
+  const { data: allQuotes, error } = await rdb.from('quotations').select('*');
+  if (error) return { success: false, message: '查询失败: ' + error.message };
+
+  const quotes = allQuotes || [];
+  
+  const totalOrders = quotes.length;
+  const pendingCount = quotes.filter(q => q.status === 'draft').length;
+  const confirmedCount = quotes.filter(q => q.status === 'confirmed').length;
+  const completedCount = quotes.filter(q => q.status === 'completed').length;
+  const totalAmount = quotes.reduce((sum, q) => sum + (Number(q.final_price) || Number(q.total_amount) || 0), 0);
+
+  const statusDistribution = [
+    { status: '未审核', count: pendingCount, color: '#faad14' },
+    { status: '已确认', count: confirmedCount, color: '#1677ff' },
+    { status: '已完成', count: completedCount, color: '#52c41a' }
+  ];
+
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  
+  const trendMap = {};
+  for (let i = 29; i >= 0; i--) {
+    const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+    const dateStr = date.toISOString().split('T')[0];
+    trendMap[dateStr] = { date: dateStr, count: 0, amount: 0 };
+  }
+
+  quotes.forEach(q => {
+    if (q.created_at) {
+      const createdDate = new Date(q.created_at);
+      const dateStr = createdDate.toISOString().split('T')[0];
+      if (trendMap[dateStr]) {
+        trendMap[dateStr].count++;
+        trendMap[dateStr].amount += Number(q.final_price) || Number(q.total_amount) || 0;
+      }
+    }
+  });
+
+  const orderTrend = Object.values(trendMap);
+
+  const recentOrders = quotes
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 5)
+    .map(q => ({
+      id: q.id,
+      customerName: q.customer_name || '未命名客户',
+      finalPrice: Number(q.final_price) || Number(q.total_amount) || 0,
+      status: q.status || 'draft',
+      createdAt: q.created_at
+    }));
+
+  return {
+    success: true,
+    data: {
+      summary: {
+        totalOrders,
+        pendingCount,
+        confirmedCount,
+        completedCount,
+        totalAmount: Number(totalAmount.toFixed(2))
+      },
+      statusDistribution,
+      orderTrend,
+      recentOrders
+    }
+  };
 }

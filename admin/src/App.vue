@@ -61,6 +61,10 @@
             <TeamOutlined />
             <span>客户管理</span>
           </a-menu-item>
+          <a-menu-item key="order">
+            <FileTextOutlined />
+            <span>订单管理</span>
+          </a-menu-item>
         </a-menu>
       </a-layout-sider>
 
@@ -110,6 +114,7 @@ import {
   GroupOutlined,
   UserOutlined,
   TeamOutlined,
+  FileTextOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined
 } from '@ant-design/icons-vue';
@@ -133,7 +138,8 @@ const pageTitles = {
   'material-lib': '材质库',
   'material-combo': '材质组合',
   salesperson: '营销员管理',
-  customer: '客户管理'
+  customer: '客户管理',
+  order: '订单管理'
 };
 
 const currentPageTitle = computed(() => pageTitles[selectedKey.value] || '');

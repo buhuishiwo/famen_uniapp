@@ -271,6 +271,94 @@ export const customerApi = {
 export const statsApi = {
   getDashboardStats() {
     return callCloudFunction({ action: 'getDashboardStats' });
+  },
+  async getOrderStats() {
+    try {
+      await ensureAuth();
+      const result = await app.callFunction({
+        name: 'quotation',
+        data: { action: 'getOrderStats' }
+      });
+      const res = result.result;
+      if (res.success) {
+        return res.data;
+      }
+      throw new Error(res.message || '请求失败');
+    } catch (error) {
+      console.error('Order Stats Error:', error);
+      throw error;
+    }
+  }
+};
+
+export const orderApi = {
+  async getList(params = {}) {
+    try {
+      await ensureAuth();
+      const result = await app.callFunction({
+        name: 'quotation',
+        data: { action: 'getQuotationList', ...params }
+      });
+      const res = result.result;
+      if (res.success) {
+        return res.data;
+      }
+      throw new Error(res.message || '请求失败');
+    } catch (error) {
+      console.error('Quotation Cloud Function Error:', error);
+      throw error;
+    }
+  },
+  async getDetail(id) {
+    try {
+      await ensureAuth();
+      const result = await app.callFunction({
+        name: 'quotation',
+        data: { action: 'getQuotationDetail', id }
+      });
+      const res = result.result;
+      if (res.success) {
+        return res.data;
+      }
+      throw new Error(res.message || '请求失败');
+    } catch (error) {
+      console.error('Quotation Cloud Function Error:', error);
+      throw error;
+    }
+  },
+  async update(id, data) {
+    try {
+      await ensureAuth();
+      const result = await app.callFunction({
+        name: 'quotation',
+        data: { action: 'updateQuotation', id, ...data }
+      });
+      const res = result.result;
+      if (res.success) {
+        return res.data;
+      }
+      throw new Error(res.message || '请求失败');
+    } catch (error) {
+      console.error('Quotation Cloud Function Error:', error);
+      throw error;
+    }
+  },
+  async delete(id) {
+    try {
+      await ensureAuth();
+      const result = await app.callFunction({
+        name: 'quotation',
+        data: { action: 'deleteQuotation', id }
+      });
+      const res = result.result;
+      if (res.success) {
+        return res.data;
+      }
+      throw new Error(res.message || '请求失败');
+    } catch (error) {
+      console.error('Quotation Cloud Function Error:', error);
+      throw error;
+    }
   }
 };
 
