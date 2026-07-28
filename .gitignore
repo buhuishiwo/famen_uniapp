@@ -1,9 +1,11 @@
 node_modules/
 dist/
 build/
+unpackage/
 .DS_Store
 *.xlsx
 *.xls
 *.xlsm
 *.xltx
 *.xltm
+.hbuilderx/
