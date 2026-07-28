@@ -1,36 +1,38 @@
 <template>
     <view class="page-root">
-        <navigation-bar title="登录" :back="true" color="white"
+        <navigation-bar :title="$t('login.title')" :back="true" color="white"
             background="linear-gradient(135deg, #1a2236 0%, #0d1526 100%);"></navigation-bar>
+
+        <language-switch></language-switch>
 
         <scroll-view scroll-y class="scroll-wrap">
             <view class="login-container">
                 <!-- Logo区域 -->
                 <view class="logo-section">
                     <view class="logo-icon">⚙️</view>
-                    <text class="logo-title">阀门报价系统</text>
-                    <text class="logo-subtitle">VALVE QUOTATION SYSTEM</text>
+                    <text class="logo-title">{{ $t('login.systemTitle') }}</text>
+                    <text class="logo-subtitle">{{ $t('login.systemSubtitle') }}</text>
                 </view>
 
                 <!-- 登录表单 -->
                 <view class="form-card">
                     <view class="form-header">
                         <view class="header-line"></view>
-                        <text class="header-title">用户登录</text>
+                        <text class="header-title">{{ $t('login.userLogin') }}</text>
                     </view>
 
                     <view class="form-body">
                         <!-- 用户名输入 -->
                         <view class="input-group">
                             <view class="input-label">
-                                <text class="label-icon">�</text>
-                                <text class="label-text">用户名</text>
+                                <text class="label-icon">👤</text>
+                                <text class="label-text">{{ $t('login.username') }}</text>
                             </view>
                             <view class="input-wrapper" :class="{ active: usernameFocus }">
                                 <input 
                                     v-model="username" 
                                     class="input-field" 
-                                    placeholder="请输入用户名" 
+                                    :placeholder="$t('login.usernamePlaceholder')" 
                                     placeholder-class="placeholder"
                                     @focus="usernameFocus = true"
                                     @blur="usernameFocus = false; validateUsername()"
@@ -43,14 +45,14 @@
                         <view class="input-group">
                             <view class="input-label">
                                 <text class="label-icon">🔒</text>
-                                <text class="label-text">密码</text>
+                                <text class="label-text">{{ $t('login.password') }}</text>
                             </view>
                             <view class="input-wrapper" :class="{ active: passwordFocus }">
                                 <input 
                                     v-model="password" 
                                     class="input-field" 
                                     type="password"
-                                    placeholder="请输入密码" 
+                                    :placeholder="$t('login.passwordPlaceholder')" 
                                     placeholder-class="placeholder"
                                     @focus="passwordFocus = true"
                                     @blur="passwordFocus = false; validatePassword()"
@@ -65,25 +67,20 @@
                                 <view class="checkbox" :class="{ checked: rememberMe }">
                                     <text v-if="rememberMe" class="check-mark">✓</text>
                                 </view>
-                                <text class="checkbox-label">记住登录状态</text>
+                                <text class="checkbox-label">{{ $t('login.rememberLogin') }}</text>
                             </view>
                         </view>
 
                         <!-- 登录按钮 -->
                         <button class="login-button" :class="{ disabled: isLoading }" @tap="handleLogin">
-                            <text class="button-text">{{ isLoading ? '登录中...' : '登 录' }}</text>
+                            <text class="button-text">{{ isLoading ? $t('login.loggingIn') : $t('login.loginBtn') }}</text>
                         </button>
-
-                        <!-- 提示信息 -->
-                        <!-- <view class="tips-section">
-                            <text class="tips-text">默认账号：admin | 密码：admin123</text>
-                        </view> -->
                     </view>
                 </view>
 
                 <!-- 底部信息 -->
                 <view class="footer-section">
-                    <text class="footer-text">如有疑问请联系系统管理员</text>
+                    <text class="footer-text">{{ $t('login.contactAdmin') }}</text>
                 </view>
             </view>
         </scroll-view>
@@ -124,7 +121,7 @@ export default {
 
         validateUsername() {
             if (!this.username.trim()) {
-                this.errors.username = '请输入用户名';
+                this.errors.username = this.$t('login.usernameRequired');
             } else {
                 this.errors.username = '';
             }
@@ -132,9 +129,9 @@ export default {
 
         validatePassword() {
             if (!this.password.trim()) {
-                this.errors.password = '请输入密码';
+                this.errors.password = this.$t('login.passwordRequired');
             } else if (this.password.length < 6) {
-                this.errors.password = '密码长度不能少于6位';
+                this.errors.password = this.$t('login.passwordMinLength');
             } else {
                 this.errors.password = '';
             }
@@ -156,7 +153,7 @@ export default {
                 storage.saveUser(result);
                 
                 uni.showToast({
-                    title: '登录成功',
+                    title: this.$t('login.loginSuccess'),
                     icon: 'success',
                     duration: 1500
                 });
@@ -169,7 +166,7 @@ export default {
             } catch (error) {
                 console.error('登录失败:', error);
                 uni.showToast({
-                    title: error.message || '登录失败，请检查账号密码',
+                    title: error.message || this.$t('login.loginFail'),
                     icon: 'none',
                     duration: 2000
                 });
@@ -392,21 +389,6 @@ export default {
     font-size: 32rpx;
     font-weight: 600;
     letter-spacing: 4rpx;
-}
-
-/* 提示信息 */
-.tips-section {
-    margin-top: 24rpx;
-    text-align: center;
-}
-
-.tips-text {
-    font-size: 24rpx;
-    color: #a0aec0;
-    background: #f8fafc;
-    padding: 12rpx 24rpx;
-    border-radius: 8rpx;
-    display: inline-block;
 }
 
 /* 底部信息 */

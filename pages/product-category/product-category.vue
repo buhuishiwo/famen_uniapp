@@ -1,7 +1,9 @@
 <template>
     <view class="page-root">
-        <navigation-bar title="产品分类" :back="false" color="white"
+        <navigation-bar :title="$t('product.category')" :back="false" color="white"
             background="linear-gradient(135deg, #1a2236 0%, #0d1526 100%);"></navigation-bar>
+
+        <language-switch></language-switch>
 
         <scroll-view scroll-y class="scroll-wrap">
 
@@ -11,8 +13,8 @@
                     <text class="hero-dot"></text>
                     <text class="hero-label-text">PRODUCT SERIES</text>
                 </view>
-                <text class="hero-title">阀门产品系列</text>
-                <text class="hero-sub">选择产品系列，进入规格配置与报价</text>
+                <text class="hero-title">{{ $t('product.title') }}</text>
+                <text class="hero-sub">{{ $t('product.subtitle') }}</text>
 
                 <!-- 搜索框 -->
                 <view class="search-wrap">
@@ -20,7 +22,7 @@
                     <input
                         class="search-input"
                         type="text"
-                        placeholder="搜索产品系列…"
+                        :placeholder="$t('product.searchPlaceholder')"
                         placeholder-class="search-placeholder"
                         v-model="searchKeyword"
                     />
@@ -32,7 +34,7 @@
 
             <!-- 结果计数 -->
             <view class="result-bar">
-                <text class="result-count">共 {{ filteredProducts.length }} 个系列</text>
+                <text class="result-count">{{ $t('product.totalSeries', { count: filteredProducts.length }) }}</text>
                 <view class="result-line"></view>
             </view>
 
@@ -68,8 +70,8 @@
             <!-- 空状态 -->
             <view class="empty-state" v-if="filteredProducts.length === 0">
                 <text class="empty-icon">🔍</text>
-                <text class="empty-text">未找到匹配的系列</text>
-                <text class="empty-sub">尝试搜索 "QB" 或 "QW" 等关键词</text>
+                <text class="empty-text">{{ $t('product.noResult') }}</text>
+                <text class="empty-sub">{{ $t('product.noResultSub') }}</text>
             </view>
 
             <view class="bottom-safe"></view>
@@ -113,7 +115,7 @@ export default {
                 }));
             } catch (e) {
                 console.error('加载产品系列失败:', e);
-                uni.showToast({ title: '加载失败', icon: 'none' });
+                uni.showToast({ title: this.$t('common.loadFail'), icon: 'none' });
             } finally {
                 this.loading = false;
             }

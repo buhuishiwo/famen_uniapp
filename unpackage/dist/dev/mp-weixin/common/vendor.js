@@ -11908,9 +11908,9 @@ module.exports = Array.isArray || function (arr) {
 
 /***/ }),
 /* 30 */
-/*!****************************************************************!*\
-  !*** /Users/meonsaber/Desktop/Project/famen_uniapp/pages.json ***!
-  \****************************************************************/
+/*!**********************************************!*\
+  !*** D:/Code/famen_minip_uni_new/pages.json ***!
+  \**********************************************/
 /*! no static exports found */
 /***/ (function(module, exports) {
 
@@ -12054,9 +12054,9 @@ function normalizeComponent (
 
 /***/ }),
 /* 37 */
-/*!************************************************************************************!*\
-  !*** /Users/meonsaber/Desktop/Project/famen_uniapp/uni_modules/zp-mixins/index.js ***!
-  \************************************************************************************/
+/*!******************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/index.js ***!
+  \******************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12102,9 +12102,9 @@ exports.default = _default;
 
 /***/ }),
 /* 38 */
-/*!******************************************************************************************************!*\
-  !*** /Users/meonsaber/Desktop/Project/famen_uniapp/uni_modules/zp-mixins/lifecycle/pageLifetimes.js ***!
-  \******************************************************************************************************/
+/*!************************************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/lifecycle/pageLifetimes.js ***!
+  \************************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12149,9 +12149,9 @@ exports.pageLifetimes = pageLifetimes;
 
 /***/ }),
 /* 39 */
-/*!********************************************************************************************!*\
-  !*** /Users/meonsaber/Desktop/Project/famen_uniapp/uni_modules/zp-mixins/methods/clone.js ***!
-  \********************************************************************************************/
+/*!**************************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/clone.js ***!
+  \**************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12175,9 +12175,9 @@ function clone(target) {
 
 /***/ }),
 /* 40 */
-/*!**********************************************************************************************!*\
-  !*** /Users/meonsaber/Desktop/Project/famen_uniapp/uni_modules/zp-mixins/methods/dataset.js ***!
-  \**********************************************************************************************/
+/*!****************************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/dataset.js ***!
+  \****************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12213,9 +12213,9 @@ function handleDataset(event) {
 
 /***/ }),
 /* 41 */
-/*!*********************************************************************************************!*\
-  !*** /Users/meonsaber/Desktop/Project/famen_uniapp/uni_modules/zp-mixins/methods/escape.js ***!
-  \*********************************************************************************************/
+/*!***************************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/escape.js ***!
+  \***************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12265,9 +12265,9 @@ function html2Escape(sHtml) {
 
 /***/ }),
 /* 42 */
-/*!********************************************************************************************!*\
-  !*** /Users/meonsaber/Desktop/Project/famen_uniapp/uni_modules/zp-mixins/methods/event.js ***!
-  \********************************************************************************************/
+/*!**************************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/event.js ***!
+  \**************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12291,9 +12291,9 @@ function parseEventDynamicCode(e, exp) {
 
 /***/ }),
 /* 43 */
-/*!************************************************************************************************!*\
-  !*** /Users/meonsaber/Desktop/Project/famen_uniapp/uni_modules/zp-mixins/methods/getTabBar.js ***!
-  \************************************************************************************************/
+/*!******************************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/getTabBar.js ***!
+  \******************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12326,9 +12326,9 @@ function getTabBar() {
 
 /***/ }),
 /* 44 */
-/*!***********************************************************************************************!*\
-  !*** /Users/meonsaber/Desktop/Project/famen_uniapp/uni_modules/zp-mixins/methods/relation.js ***!
-  \***********************************************************************************************/
+/*!*****************************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/relation.js ***!
+  \*****************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12352,9 +12352,9 @@ function getRelationNodes(name) {
 
 /***/ }),
 /* 45 */
-/*!******************************************************************************************************!*\
-  !*** /Users/meonsaber/Desktop/Project/famen_uniapp/uni_modules/zp-mixins/methods/selectComponent.js ***!
-  \******************************************************************************************************/
+/*!************************************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/selectComponent.js ***!
+  \************************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12570,9 +12570,9 @@ function selectAllComponents(args) {
 
 /***/ }),
 /* 46 */
-/*!**********************************************************************************************!*\
-  !*** /Users/meonsaber/Desktop/Project/famen_uniapp/uni_modules/zp-mixins/methods/setData.js ***!
-  \**********************************************************************************************/
+/*!****************************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/setData.js ***!
+  \****************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12676,9 +12676,9 @@ function setData(obj) {
 
 /***/ }),
 /* 47 */
-/*!*****************************************************************************************!*\
-  !*** /Users/meonsaber/Desktop/Project/famen_uniapp/uni_modules/zp-mixins/utils/_set.js ***!
-  \*****************************************************************************************/
+/*!***********************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/utils/_set.js ***!
+  \***********************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12720,9 +12720,9 @@ exports.default = _default;
 
 /***/ }),
 /* 48 */
-/*!*********************************************************************************************!*\
-  !*** /Users/meonsaber/Desktop/Project/famen_uniapp/uni_modules/zp-mixins/utils/debounce.js ***!
-  \*********************************************************************************************/
+/*!***************************************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/utils/debounce.js ***!
+  \***************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12752,13 +12752,544 @@ var _default = debounce;
 exports.default = _default;
 
 /***/ }),
-/* 49 */,
+/* 49 */
+/*!***************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/locale/index.js ***!
+  \***************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(uni) {
+
+var _interopRequireDefault = __webpack_require__(/*! @babel/runtime/helpers/interopRequireDefault */ 4);
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.translate = exports.toggleLanguage = exports.setLanguage = exports.onChange = exports.mixin = exports.getCurrentLanguage = exports.default = void 0;
+var _typeof2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/typeof */ 13));
+var _zhCN = _interopRequireDefault(__webpack_require__(/*! ./zh-CN.js */ 51));
+var _enUS = _interopRequireDefault(__webpack_require__(/*! ./en-US.js */ 52));
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+var LOCALE_STORAGE_KEY = 'app-language';
+var messages = {
+  'zh-CN': _zhCN.default,
+  'en-US': _enUS.default
+};
+var currentLocale = 'zh-CN';
+var listeners = [];
+var getSystemLanguage = function getSystemLanguage() {
+  try {
+    var sysInfo = uni.getSystemInfoSync();
+    var lang = sysInfo.language || 'zh-CN';
+    return lang.startsWith('zh') ? 'zh-CN' : 'en-US';
+  } catch (e) {
+    return 'zh-CN';
+  }
+};
+var initLocale = function initLocale() {
+  var savedLang = uni.getStorageSync(LOCALE_STORAGE_KEY) || getSystemLanguage();
+  currentLocale = savedLang;
+};
+initLocale();
+var translate = function translate(key, params) {
+  var keys = key.split('.');
+  var value = messages[currentLocale];
+  var _iterator = _createForOfIteratorHelper(keys),
+    _step;
+  try {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      var k = _step.value;
+      if (value && (0, _typeof2.default)(value) === 'object' && value[k] !== undefined) {
+        value = value[k];
+      } else {
+        return key;
+      }
+    }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
+  }
+  if (typeof value === 'string' && params) {
+    return value.replace(/\{(\w+)\}/g, function (match, paramKey) {
+      return params[paramKey] !== undefined ? params[paramKey] : match;
+    });
+  }
+  return value;
+};
+exports.translate = translate;
+var setLanguage = function setLanguage(lang) {
+  if (messages[lang]) {
+    currentLocale = lang;
+    uni.setStorageSync(LOCALE_STORAGE_KEY, lang);
+    listeners.forEach(function (fn) {
+      try {
+        fn(lang);
+      } catch (e) {}
+    });
+  }
+};
+exports.setLanguage = setLanguage;
+var getCurrentLanguage = function getCurrentLanguage() {
+  return currentLocale;
+};
+exports.getCurrentLanguage = getCurrentLanguage;
+var toggleLanguage = function toggleLanguage() {
+  var newLang = currentLocale === 'zh-CN' ? 'en-US' : 'zh-CN';
+  setLanguage(newLang);
+  return newLang;
+};
+exports.toggleLanguage = toggleLanguage;
+var onChange = function onChange(fn) {
+  listeners.push(fn);
+  return function () {
+    var idx = listeners.indexOf(fn);
+    if (idx > -1) listeners.splice(idx, 1);
+  };
+};
+exports.onChange = onChange;
+var mixin = {
+  data: function data() {
+    return {};
+  },
+  created: function created() {
+    var _this = this;
+    this._i18nUnsubscribe = onChange(function () {
+      _this.$forceUpdate();
+    });
+  },
+  beforeDestroy: function beforeDestroy() {
+    if (this._i18nUnsubscribe) {
+      this._i18nUnsubscribe();
+    }
+  },
+  methods: {
+    $t: function $t(key, params) {
+      return translate(key, params);
+    },
+    $localeOn: function $localeOn(fn) {
+      return onChange(fn);
+    }
+  }
+};
+exports.mixin = mixin;
+var _default = {
+  translate: translate,
+  setLanguage: setLanguage,
+  getCurrentLanguage: getCurrentLanguage,
+  toggleLanguage: toggleLanguage,
+  onChange: onChange,
+  mixin: mixin
+};
+exports.default = _default;
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))
+
+/***/ }),
 /* 50 */,
-/* 51 */,
-/* 52 */,
+/* 51 */
+/*!***************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/locale/zh-CN.js ***!
+  \***************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+var _default = {
+  common: {
+    confirm: '确认',
+    cancel: '取消',
+    loading: '加载中...',
+    loadFail: '加载失败',
+    saveSuccess: '保存成功',
+    saveFail: '保存失败',
+    search: '搜索',
+    copy: '复制',
+    close: '关闭',
+    submit: '提交',
+    delete: '删除',
+    edit: '编辑',
+    confirmAction: '确认操作'
+  },
+  nav: {
+    back: '返回',
+    home: '首页'
+  },
+  login: {
+    title: '登录',
+    systemTitle: '阀门报价系统',
+    systemSubtitle: 'VALVE QUOTATION SYSTEM',
+    userLogin: '用户登录',
+    username: '用户名',
+    password: '密码',
+    usernamePlaceholder: '请输入用户名',
+    passwordPlaceholder: '请输入密码',
+    usernameRequired: '请输入用户名',
+    passwordRequired: '请输入密码',
+    passwordMinLength: '密码长度不能少于6位',
+    rememberLogin: '记住登录状态',
+    loginBtn: '登 录',
+    loggingIn: '登录中...',
+    loginSuccess: '登录成功',
+    loginFail: '登录失败，请检查账号密码',
+    contactAdmin: '如有疑问请联系系统管理员'
+  },
+  product: {
+    category: '产品分类',
+    title: '阀门产品系列',
+    subtitle: '选择产品系列，进入规格配置与报价',
+    searchPlaceholder: '搜索产品系列…',
+    searchPlaceholderEn: 'Search product series…',
+    totalSeries: '共 {count} 个系列',
+    noResult: '未找到匹配的系列',
+    noResultSub: '尝试搜索 "QB" 或 "QW" 等关键词',
+    noSeriesData: '暂无数据',
+    noSeriesDataMsg: '{series} 暂未录入产品数据，请先导入价格后再试。'
+  },
+  index: {
+    valveSelection: '阀门选择',
+    configQuote: '配置报价',
+    configTitle: '请依次选择以下参数生成报价',
+    productConfig: '产品配置',
+    valveModel: '阀门型号',
+    selectValveModel: '请选择阀门型号',
+    specSize: '规格尺寸 (DN)',
+    selectSpecSize: '请选择规格尺寸',
+    bodyMaterial: '阀体材质',
+    selectBodyMaterial: '请选择阀体材质',
+    gateMaterial: '闸板材质',
+    selectGateMaterial: '请选择闸板材质',
+    stemMaterial: '阀杆材质',
+    selectStemMaterial: '请选择阀杆材质',
+    yokeMaterial: '支架材质',
+    selectYokeMaterial: '请选择支架材质',
+    productType: '产品类型',
+    quantity: '数量',
+    inputQuantity: '请输入数量',
+    branding: '磨商标',
+    yes: '是',
+    no: '否',
+    unitPrice: '单　价',
+    estimatedTotal: '预估总价',
+    priceTip: '与报价员协商后可手动修改单价作为最终报价，修改后请在报价单备注中说明',
+    addToQuote: '添加到报价表',
+    generateQuote: '生成报价表',
+    quoteDetails: '报价明细',
+    totalItems: '{count} 项',
+    totalAmount: '合计金额',
+    noQuoteItems: '暂无报价项目',
+    noQuoteItemsSub: '配置好参数后点击「添加到报价表」',
+    loadingData: '加载数据中...',
+    calculating: '计算中...',
+    dataLoadFail: '加载数据失败',
+    addSuccess: '已添加到报价表',
+    fillCompleteInfo: '请填写完整信息',
+    comboNotAvailable: '该组合不可用',
+    addFirst: '请先添加阀门到报价表',
+    regular: '常规品',
+    newProduct: '新品',
+    moqMetOEM: '达到起订量-OEM',
+    moqMetOriginal: '达到起订量-原标',
+    moqUnmetOEM: '未达起订量-OEM',
+    moqUnmetOriginal: '未达起订量-原标'
+  },
+  quotation: {
+    title: '报 价 单',
+    generateAndSave: '生成并保存报价表',
+    shareQuotation: '分享报价表',
+    backToAdd: '返回继续添加',
+    salePerson: '报价员',
+    salePersonPlaceholder: '请输入报价员姓名',
+    customerName: '客户名称',
+    customerPlaceholder: '请输入客户名称',
+    productName: '产品名称',
+    modelSpec: '型号规格',
+    gateMaterialCol: '闸板材质',
+    stemMaterialCol: '阀杆材质',
+    quantityCol: '数量',
+    unitPriceCol: '单价',
+    brandingFeeCol: '磨标费',
+    totalPriceCol: '总价',
+    selectedProducts: '选购产品信息',
+    spec: '规格',
+    productTypeCol: '产品类型',
+    bodyMaterialCol: '阀体材质',
+    yokeMaterialCol: '支架材质',
+    pieces: '件',
+    totalAmount: '合计金额',
+    finalPrice: '确认报价金额',
+    finalPricePlaceholder: '请输入最终报价金额',
+    remark: '备注信息',
+    remarkPlaceholder: '请输入备注信息',
+    paymentMethod: '付款方式',
+    paymentMethodPlaceholder: '请输入付款方式',
+    packaging: '包装方式',
+    packagingPlaceholder: '请输入包装方式',
+    quoter: '报 价 人',
+    quoterPlaceholder: '请输入报价人',
+    contactPhone: '联系手机',
+    contactPhonePlaceholder: '请输入手机号码',
+    validity: '报有效期',
+    validityPlaceholder: '请输入有效期',
+    quoteDate: '报价日期',
+    companyName: '奇胜阀门有限公司',
+    companyNameEn: 'CHISUN VALVE CO., LTD.',
+    companyWebsite: '官网：www.chisun.cn / www.qishengvalve.com',
+    companyEmail: '邮箱：qs@chisun.cn',
+    companyAddress: '地址：浙江省温州市空港新区兴业路8号 邮编：325013',
+    companyPhone: '电话：15777828587',
+    priceGenerating: '正在制作报价表...',
+    saveSuccess: '报价数据已保存',
+    saveFail: '保存失败，请检查网络',
+    savedToAlbum: '报价单已妥善存储到相册',
+    needAlbumPermission: '请开启相册读写权限',
+    renderFail: '高精度渲染失败',
+    logoLoadFail: '企业徽标调取失败',
+    shareTitle: '您的特约报价单',
+    pricingInfo: '规格参数：',
+    maxPressure: '最高承压',
+    unitWeight: '单重',
+    laps: '圈数',
+    torque: '扭矩',
+    remarkAndTech: '备注及技术要求：',
+    confirmAmount: '确认报价金额：',
+    quoterSign: '报价制单人：',
+    quoterPhoneLabel: '联系电话：',
+    validityLabel: '报价有效期：',
+    issueDate: '发布日期：',
+    defaultPayment: '预定定金30%，付清余款发货。',
+    defaultPackaging: '木箱包装。可以提供产品使用说明，产品材质报告，产品检测报告。',
+    defaultQuoter: '童惠业',
+    defaultQuoterPhone: '13957713583',
+    defaultValidity: '15天',
+    noSalePerson: '未指定报价员',
+    noCustomer: '未指定客户',
+    weightUnit: 'KG',
+    torqueUnit: 'N.M',
+    dateFormat: 'YYYY年MM月DD日'
+  },
+  language: {
+    switchLang: '切换语言',
+    currentLang: '中文',
+    switchSuccess: '已切换为中文',
+    switchSuccessEn: 'Switched to English'
+  }
+};
+exports.default = _default;
+
+/***/ }),
+/* 52 */
+/*!***************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/locale/en-US.js ***!
+  \***************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+var _default = {
+  common: {
+    confirm: 'Confirm',
+    cancel: 'Cancel',
+    loading: 'Loading...',
+    loadFail: 'Loading failed',
+    saveSuccess: 'Saved successfully',
+    saveFail: 'Save failed',
+    search: 'Search',
+    copy: 'Copy',
+    close: 'Close',
+    submit: 'Submit',
+    delete: 'Delete',
+    edit: 'Edit',
+    confirmAction: 'Confirm Action'
+  },
+  nav: {
+    back: 'Back',
+    home: 'Home'
+  },
+  login: {
+    title: 'Login',
+    systemTitle: 'Valve Quotation System',
+    systemSubtitle: '阀门报价系统',
+    userLogin: 'User Login',
+    username: 'Username',
+    password: 'Password',
+    usernamePlaceholder: 'Enter username',
+    passwordPlaceholder: 'Enter password',
+    usernameRequired: 'Please enter username',
+    passwordRequired: 'Please enter password',
+    passwordMinLength: 'Password must be at least 6 characters',
+    rememberLogin: 'Remember login',
+    loginBtn: 'LOGIN',
+    loggingIn: 'Logging in...',
+    loginSuccess: 'Login successful',
+    loginFail: 'Login failed, please check your credentials',
+    contactAdmin: 'Contact system administrator if you have any questions'
+  },
+  product: {
+    category: 'Products',
+    title: 'Valve Product Series',
+    subtitle: 'Select a product series to configure specifications and generate quotations',
+    searchPlaceholder: 'Search product series...',
+    searchPlaceholderEn: 'Search product series...',
+    totalSeries: '{count} series total',
+    noResult: 'No matching series found',
+    noResultSub: 'Try searching for "QB" or "QW"',
+    noSeriesData: 'No Data',
+    noSeriesDataMsg: 'No product data entered for {series}, please import prices first.'
+  },
+  index: {
+    valveSelection: 'Valve Selection',
+    configQuote: 'Configure Quotation',
+    configTitle: 'Select the following parameters to generate a quotation',
+    productConfig: 'Product Configuration',
+    valveModel: 'Valve Model',
+    selectValveModel: 'Please select valve model',
+    specSize: 'Size (DN)',
+    selectSpecSize: 'Please select size',
+    bodyMaterial: 'Body Material',
+    selectBodyMaterial: 'Please select body material',
+    gateMaterial: 'Gate Material',
+    selectGateMaterial: 'Please select gate material',
+    stemMaterial: 'Stem Material',
+    selectStemMaterial: 'Please select stem material',
+    yokeMaterial: 'Yoke Material',
+    selectYokeMaterial: 'Please select yoke material',
+    productType: 'Product Type',
+    quantity: 'Quantity',
+    inputQuantity: 'Enter quantity',
+    branding: 'Branding',
+    yes: 'Yes',
+    no: 'No',
+    unitPrice: 'Unit Price',
+    estimatedTotal: 'Estimated Total',
+    priceTip: 'You can manually modify the unit price after negotiation with the salesperson. Please note in quotation remarks after modification.',
+    addToQuote: 'Add to Quotation',
+    generateQuote: 'Generate Quotation',
+    quoteDetails: 'Quotation Details',
+    totalItems: '{count} items',
+    totalAmount: 'Total Amount',
+    noQuoteItems: 'No quotation items',
+    noQuoteItemsSub: 'Configure parameters and click "Add to Quotation"',
+    loadingData: 'Loading data...',
+    calculating: 'Calculating...',
+    dataLoadFail: 'Failed to load data',
+    addSuccess: 'Added to quotation',
+    fillCompleteInfo: 'Please fill in complete information',
+    comboNotAvailable: 'This combination is not available',
+    addFirst: 'Please add valves to quotation first',
+    regular: 'Regular',
+    newProduct: 'New',
+    moqMetOEM: 'MOQ Met - OEM',
+    moqMetOriginal: 'MOQ Met - Original',
+    moqUnmetOEM: 'Below MOQ - OEM',
+    moqUnmetOriginal: 'Below MOQ - Original'
+  },
+  quotation: {
+    title: 'QUOTATION',
+    generateAndSave: 'Generate & Save Quotation',
+    shareQuotation: 'Share Quotation',
+    backToAdd: 'Back to Add',
+    salePerson: 'Salesperson',
+    salePersonPlaceholder: 'Enter salesperson name',
+    customerName: 'Customer Name',
+    customerPlaceholder: 'Enter customer name',
+    productName: 'Product Name',
+    modelSpec: 'Model/Spec',
+    gateMaterialCol: 'Gate Material',
+    stemMaterialCol: 'Stem Material',
+    quantityCol: 'Quantity',
+    unitPriceCol: 'Unit Price',
+    brandingFeeCol: 'Branding Fee',
+    totalPriceCol: 'Total Price',
+    selectedProducts: 'Selected Products',
+    spec: 'Size',
+    productTypeCol: 'Product Type',
+    bodyMaterialCol: 'Body Material',
+    yokeMaterialCol: 'Yoke Material',
+    pieces: ' pcs',
+    totalAmount: 'Total Amount',
+    finalPrice: 'Confirmed Amount',
+    finalPricePlaceholder: 'Enter final quotation amount',
+    remark: 'Remarks',
+    remarkPlaceholder: 'Enter remarks',
+    paymentMethod: 'Payment Method',
+    paymentMethodPlaceholder: 'Enter payment method',
+    packaging: 'Packaging',
+    packagingPlaceholder: 'Enter packaging method',
+    quoter: 'Quotation By',
+    quoterPlaceholder: 'Enter quoter name',
+    contactPhone: 'Contact Phone',
+    contactPhonePlaceholder: 'Enter phone number',
+    validity: 'Validity',
+    validityPlaceholder: 'Enter validity period',
+    quoteDate: 'Quotation Date',
+    companyName: 'CHISUN VALVE CO., LTD.',
+    companyNameEn: '奇胜阀门有限公司',
+    companyWebsite: 'Website: www.chisun.cn / www.qishengvalve.com',
+    companyEmail: 'Email: qs@chisun.cn',
+    companyAddress: 'Address: No.8 Xingye Road, Airport New District, Wenzhou, Zhejiang, China 325013',
+    companyPhone: 'Tel: +86-15777828587',
+    priceGenerating: 'Generating quotation...',
+    saveSuccess: 'Quotation data saved',
+    saveFail: 'Save failed, please check network',
+    savedToAlbum: 'Quotation saved to album',
+    needAlbumPermission: 'Please enable album access permission',
+    renderFail: 'High-precision rendering failed',
+    logoLoadFail: 'Failed to load company logo',
+    shareTitle: 'Your Special Quotation',
+    pricingInfo: 'Specs:',
+    maxPressure: 'Max Pressure',
+    unitWeight: 'Unit Weight',
+    laps: 'Laps',
+    torque: 'Torque',
+    remarkAndTech: 'Remarks & Technical Requirements:',
+    confirmAmount: 'Confirmed Amount:',
+    quoterSign: 'Quotation By:',
+    quoterPhoneLabel: 'Contact Phone:',
+    validityLabel: 'Validity:',
+    issueDate: 'Issue Date:',
+    defaultPayment: '30% deposit in advance, balance paid before delivery.',
+    defaultPackaging: 'Wooden box packaging. Product manual, material report, and inspection report available.',
+    defaultQuoter: 'Tong Huiye',
+    defaultQuoterPhone: '+86-13957713583',
+    defaultValidity: '15 Days',
+    noSalePerson: 'Unspecified',
+    noCustomer: 'Unspecified',
+    weightUnit: 'KG',
+    torqueUnit: 'N.M',
+    dateFormat: 'YYYY-MM-DD'
+  },
+  language: {
+    switchLang: 'Switch Language',
+    currentLang: 'English',
+    switchSuccess: 'Switched to Chinese',
+    switchSuccessEn: '已切换为英文'
+  }
+};
+exports.default = _default;
+
+/***/ }),
 /* 53 */,
 /* 54 */,
-/* 55 */
+/* 55 */,
+/* 56 */,
+/* 57 */,
+/* 58 */,
+/* 59 */
 /*!************************************************************************************************!*\
   !*** ./node_modules/@dcloudio/vue-cli-plugin-uni/packages/@babel/runtime/regenerator/index.js ***!
   \************************************************************************************************/
@@ -12767,11 +13298,11 @@ exports.default = _default;
 
 // TODO(Babel 8): Remove this file.
 
-var runtime = __webpack_require__(/*! @babel/runtime/helpers/regeneratorRuntime */ 56)();
+var runtime = __webpack_require__(/*! @babel/runtime/helpers/regeneratorRuntime */ 60)();
 module.exports = runtime;
 
 /***/ }),
-/* 56 */
+/* 60 */
 /*!*******************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/regeneratorRuntime.js ***!
   \*******************************************************************/
@@ -13092,7 +13623,7 @@ function _regeneratorRuntime() {
 module.exports = _regeneratorRuntime, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
 /***/ }),
-/* 57 */
+/* 61 */
 /*!*****************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/asyncToGenerator.js ***!
   \*****************************************************************/
@@ -13132,10 +13663,10 @@ function _asyncToGenerator(fn) {
 module.exports = _asyncToGenerator, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
 /***/ }),
-/* 58 */
-/*!************************************************************************!*\
-  !*** /Users/meonsaber/Desktop/Project/famen_uniapp/utils/cloud-api.js ***!
-  \************************************************************************/
+/* 62 */
+/*!******************************************************!*\
+  !*** D:/Code/famen_minip_uni_new/utils/cloud-api.js ***!
+  \******************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -13147,9 +13678,9 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.userApi = exports.storage = exports.quotationApi = exports.priceApi = exports.default = void 0;
-var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/regenerator */ 55));
+var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/regenerator */ 59));
 var _defineProperty2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/defineProperty */ 11));
-var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/asyncToGenerator */ 57));
+var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/asyncToGenerator */ 61));
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { (0, _defineProperty2.default)(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 // 微信云开发 API 封装

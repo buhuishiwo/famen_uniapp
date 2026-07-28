@@ -1,40 +1,42 @@
 <template>
     <view class="page-root">
-        <navigation-bar title="报价表" :back="true" color="white"
+        <navigation-bar :title="$t('quotation.title')" :back="true" color="white"
             background="linear-gradient(135deg, #0d1526 0%, #1e293b 100%)"></navigation-bar>
+
+        <language-switch></language-switch>
 
         <scroll-view class="scrollarea" scroll-y>
             <view class="container">
                 
                 <view class="company-header">
                     <view class="company-logo">
-                        <text class="logo-text">奇胜阀门有限公司</text>
-                        <text class="logo-en">CHISUN VALVE CO., LTD.</text>
+                        <text class="logo-text">{{ $t('quotation.companyName') }}</text>
+                        <text class="logo-en">{{ $t('quotation.companyNameEn') }}</text>
                     </view>
                     <view class="company-info">
-                        <text class="info-item">官网：www.chisun.cn / www.qishengvalve.com</text>
-                        <text class="info-item">邮箱：qs@chisun.cn</text>
-                        <text class="info-item">地址：浙江省温州市空港新区兴业路8号 邮编：325013</text>
-                        <text class="info-item">电话：15777828587</text>
+                        <text class="info-item">{{ $t('quotation.companyWebsite') }}</text>
+                        <text class="info-item">{{ $t('quotation.companyEmail') }}</text>
+                        <text class="info-item">{{ $t('quotation.companyAddress') }}</text>
+                        <text class="info-item">{{ $t('quotation.companyPhone') }}</text>
                     </view>
                 </view>
 
                 <view class="quotation-title-wrap">
                     <view class="title-line"></view>
-                    <text class="quotation-title">报 价 单</text>
+                    <text class="quotation-title">{{ $t('quotation.title') }}</text>
                     <view class="title-line"></view>
                 </view>
 
                 <view class="card">
                     <view class="info-row">
-                        <text class="info-label">报价员</text>
-                        <input class="info-input" placeholder="请输入报价员姓名" placeholder-class="placeholder-style" @input="onSalespersonInput"
+                        <text class="info-label">{{ $t('quotation.salePerson') }}</text>
+                        <input class="info-input" :placeholder="$t('quotation.salePersonPlaceholder')" placeholder-class="placeholder-style" @input="onSalespersonInput"
                             :value="salesperson" />
                     </view>
                     <view class="divider-line"></view>
                     <view class="info-row">
-                        <text class="info-label">客户名称</text>
-                        <input class="info-input" placeholder="请输入客户名称" placeholder-class="placeholder-style" @input="onCustomerNameInput"
+                        <text class="info-label">{{ $t('quotation.customerName') }}</text>
+                        <input class="info-input" :placeholder="$t('quotation.customerPlaceholder')" placeholder-class="placeholder-style" @input="onCustomerNameInput"
                             :value="customerName" />
                     </view>
                 </view>
@@ -43,19 +45,19 @@
                     <scroll-view scroll-x class="table-scroll">
                         <view class="table-wrap">
                             <view class="table-header">
-                                <view class="header-cell cell-product">产品名称</view>
-                                <view class="header-cell cell-model">型号规格</view>
-                                <view class="header-cell cell-material">闸板材质</view>
-                                <view class="header-cell cell-seal">阀杆材质</view>
-                                <view class="header-cell cell-quantity">数量</view>
-                                <view class="header-cell cell-price">单价</view>
-                                <view class="header-cell cell-branding">磨标费</view>
-                                <view class="header-cell cell-total">总价</view>
+                                <view class="header-cell cell-product">{{ $t('quotation.productName') }}</view>
+                                <view class="header-cell cell-model">{{ $t('quotation.modelSpec') }}</view>
+                                <view class="header-cell cell-material">{{ $t('quotation.gateMaterialCol') }}</view>
+                                <view class="header-cell cell-seal">{{ $t('quotation.stemMaterialCol') }}</view>
+                                <view class="header-cell cell-quantity">{{ $t('quotation.quantityCol') }}</view>
+                                <view class="header-cell cell-price">{{ $t('quotation.unitPriceCol') }}</view>
+                                <view class="header-cell cell-branding">{{ $t('quotation.brandingFeeCol') }}</view>
+                                <view class="header-cell cell-total">{{ $t('quotation.totalPriceCol') }}</view>
                             </view>
 
                             <view class="table-body">
                                 <view class="table-row" v-for="(item, index) in quoteData" :key="index" :class="{ 'row-odd': index % 2 === 1 }">
-                                    <view class="table-cell cell-product">{{ item.productType }}</view>
+                                    <view class="table-cell cell-product">{{ translateProductType(item.productType) }}</view>
                                     <view class="table-cell cell-model">{{ item.productName + '-DN' + item.model }}</view>
                                     <view class="table-cell cell-material">{{ item.gateMaterial }}</view>
                                     <view class="table-cell cell-seal">{{ item.stemMaterial }}</view>
@@ -71,7 +73,7 @@
 
                 <!-- 选购产品信息预览 -->
                 <view class="card preview-card">
-                    <text class="card-inner-title">选购产品信息</text>
+                    <text class="card-inner-title">{{ $t('quotation.selectedProducts') }}</text>
                     <view class="preview-list">
                         <view class="preview-product" v-for="(item, index) in quoteData" :key="index">
                             <view class="preview-product-header">
@@ -86,38 +88,38 @@
 
                             <view class="preview-detail-grid">
                                 <view class="detail-cell">
-                                    <text class="detail-label">规格</text>
+                                    <text class="detail-label">{{ $t('quotation.spec') }}</text>
                                     <text class="detail-value">DN{{ item.model }}</text>
                                 </view>
                                 <view class="detail-cell">
-                                    <text class="detail-label">产品类型</text>
-                                    <text class="detail-value">{{ item.productType }}</text>
+                                    <text class="detail-label">{{ $t('quotation.productTypeCol') }}</text>
+                                    <text class="detail-value">{{ translateProductType(item.productType) }}</text>
                                 </view>
                                 <view class="detail-cell">
-                                    <text class="detail-label">阀体材质</text>
+                                    <text class="detail-label">{{ $t('quotation.bodyMaterialCol') }}</text>
                                     <text class="detail-value">{{ item.bodyMaterial }}</text>
                                 </view>
                                 <view class="detail-cell">
-                                    <text class="detail-label">闸板材质</text>
+                                    <text class="detail-label">{{ $t('quotation.gateMaterialCol') }}</text>
                                     <text class="detail-value">{{ item.gateMaterial }}</text>
                                 </view>
                                 <view class="detail-cell">
-                                    <text class="detail-label">阀杆材质</text>
+                                    <text class="detail-label">{{ $t('quotation.stemMaterialCol') }}</text>
                                     <text class="detail-value">{{ item.stemMaterial }}</text>
                                 </view>
                                 <view class="detail-cell" v-if="item.yokeMaterial">
-                                    <text class="detail-label">支架材质</text>
+                                    <text class="detail-label">{{ $t('quotation.yokeMaterialCol') }}</text>
                                     <text class="detail-value">{{ item.yokeMaterial }}</text>
                                 </view>
                             </view>
 
                             <view class="preview-product-footer">
                                 <view class="footer-left">
-                                    <text class="footer-qty">× {{ item.quantity }} 件</text>
-                                    <text class="footer-branding" v-if="item.hasBranding">磨标 ¥{{ item.brandingFee }}/件</text>
+                                    <text class="footer-qty">× {{ item.quantity }}{{ $t('quotation.pieces') }}</text>
+                                    <text class="footer-branding" v-if="item.hasBranding">磨标 ¥{{ item.brandingFee }}/{{ $t('quotation.pieces') }}</text>
                                 </view>
                                 <view class="footer-right">
-                                    <text class="footer-unit">¥{{ item.unitPrice }}/件</text>
+                                    <text class="footer-unit">¥{{ item.unitPrice }}/{{ $t('quotation.pieces') }}</text>
                                     <text class="footer-total">¥{{ item.totalPrice }}</text>
                                 </view>
                             </view>
@@ -125,68 +127,68 @@
                     </view>
 
                     <view class="preview-summary-bar">
-                        <text class="summary-label">合计金额</text>
+                        <text class="summary-label">{{ $t('quotation.totalAmount') }}</text>
                         <text class="summary-value">¥{{ totalAmount }}</text>
                     </view>
                     <view class="final-price-row">
-                        <text class="final-price-label">确认报价金额</text>
+                        <text class="final-price-label">{{ $t('quotation.finalPrice') }}</text>
                         <view class="final-price-input-wrap">
                             <text class="final-price-prefix">¥</text>
-                            <input class="final-price-input" type="digit" placeholder="请输入最终报价金额" placeholder-class="placeholder-style"
+                            <input class="final-price-input" type="digit" :placeholder="$t('quotation.finalPricePlaceholder')" placeholder-class="placeholder-style"
                                 :value="finalPrice" @input="onFinalPriceInput" />
                         </view>
                     </view>
                 </view>
 
                 <view class="card">
-                    <text class="card-inner-title">备注信息</text>
+                    <text class="card-inner-title">{{ $t('quotation.remark') }}</text>
                     <view class="textarea-box">
-                        <textarea class="note-input" placeholder="请输入备注信息" placeholder-class="placeholder-style" :auto-height="true" @input="onNoteInput" :value="note" maxlength="-1" />
+                        <textarea class="note-input" :placeholder="$t('quotation.remarkPlaceholder')" placeholder-class="placeholder-style" :auto-height="true" @input="onNoteInput" :value="note" maxlength="-1" />
                     </view>
                 </view>
 
                 <view class="card">
                     <view class="info-row">
-                        <text class="info-label">付款方式</text>
-                        <input class="info-input" placeholder="请输入付款方式" placeholder-class="placeholder-style" @input="onPaymentMethodInput"
+                        <text class="info-label">{{ $t('quotation.paymentMethod') }}</text>
+                        <input class="info-input" :placeholder="$t('quotation.paymentMethodPlaceholder')" placeholder-class="placeholder-style" @input="onPaymentMethodInput"
                             :value="paymentMethod" />
                     </view>
                     <view class="divider-line"></view>
                     <view class="info-row">
-                        <text class="info-label">包装方式</text>
-                        <input class="info-input" placeholder="请输入包装方式" placeholder-class="placeholder-style" @input="onPackagingInput" :value="packaging" />
+                        <text class="info-label">{{ $t('quotation.packaging') }}</text>
+                        <input class="info-input" :placeholder="$t('quotation.packagingPlaceholder')" placeholder-class="placeholder-style" @input="onPackagingInput" :value="packaging" />
                     </view>
                 </view>
 
                 <view class="card">
                     <view class="info-row">
-                        <text class="info-label">报 价 人</text>
-                        <input class="info-input" placeholder="请输入报价人" placeholder-class="placeholder-style" @input="onQuoterInput"
+                        <text class="info-label">{{ $t('quotation.quoter') }}</text>
+                        <input class="info-input" :placeholder="$t('quotation.quoterPlaceholder')" placeholder-class="placeholder-style" @input="onQuoterInput"
                             :value="quoter" />
                     </view>
                     <view class="divider-line"></view>
                     <view class="info-row">
-                        <text class="info-label">联系手机</text>
-                        <input class="info-input" placeholder="请输入手机号码" placeholder-class="placeholder-style" @input="onQuoterPhoneInput"
+                        <text class="info-label">{{ $t('quotation.contactPhone') }}</text>
+                        <input class="info-input" :placeholder="$t('quotation.contactPhonePlaceholder')" placeholder-class="placeholder-style" @input="onQuoterPhoneInput"
                             :value="quoterPhone" />
                     </view>
                     <view class="divider-line"></view>
                     <view class="info-row">
-                        <text class="info-label">报有效期</text>
-                        <input class="info-input" placeholder="请输入有效期" placeholder-class="placeholder-style" @input="onValidityInput"
+                        <text class="info-label">{{ $t('quotation.validity') }}</text>
+                        <input class="info-input" :placeholder="$t('quotation.validityPlaceholder')" placeholder-class="placeholder-style" @input="onValidityInput"
                             :value="validity" />
                     </view>
                     <view class="divider-line"></view>
                     <view class="info-row">
-                        <text class="info-label">报价日期</text>
+                        <text class="info-label">{{ $t('quotation.quoteDate') }}</text>
                         <text class="info-value date-highlight">{{ currentDate }}</text>
                     </view>
                 </view>
 
                 <view class="button-group">
-                    <button class="btn btn-primary" @tap="generateQuotation">生成并保存报价表</button>
-                    <button class="btn btn-secondary" open-type="share">分享报价表</button>
-                    <button class="btn btn-back" @tap="onBack">返回继续添加</button>
+                    <button class="btn btn-primary" @tap="generateQuotation">{{ $t('quotation.generateAndSave') }}</button>
+                    <button class="btn btn-secondary" open-type="share">{{ $t('quotation.shareQuotation') }}</button>
+                    <button class="btn btn-back" @tap="onBack">{{ $t('quotation.backToAdd') }}</button>
                 </view>
             </view>
         </scroll-view>
@@ -221,6 +223,7 @@
 <script>
 import navigationBar from '@/components/navigation-bar/navigation-bar';
 import { quotationApi, priceApi } from '@/utils/cloud-api.js';
+import i18n from '@/locale';
 
 export default {
     components: {
@@ -233,11 +236,11 @@ export default {
             customerName: '',
             salesperson: '',
             note: '',
-            paymentMethod: '预定定金30%，付清余款发货。',
-            packaging: '木箱包装。可以提供产品使用说明，产品材质报告，产品检测报告。',
-            quoter: '童惠业',
-            quoterPhone: '13957713583',
-            validity: '15天',
+            paymentMethod: '',
+            packaging: '',
+            quoter: '',
+            quoterPhone: '',
+            validity: '',
             finalPrice: '',
             showLoading: false,
             loadingText: '',
@@ -263,11 +266,22 @@ export default {
             }
         }
     },
+    created() {
+        this.initI18nDefaults();
+        this._i18nUnsubscribe = this.$localeOn(() => {
+            this.initI18nDefaults();
+        });
+    },
+    beforeDestroy() {
+        if (this._i18nUnsubscribe) {
+            this._i18nUnsubscribe();
+        }
+    },
     onLoad(options) {
         if (options.data) {
             const quoteData = JSON.parse(decodeURIComponent(options.data));
             const formattedData = quoteData.map((item) => ({
-                    productType: item.productType || '常规品',
+                    productType: this.translateProductType(item.productType || '常规品'),
                     productName: item.productName || item.valveName,
                     model: item.model || item.spec || '',
                     bodyMaterial: item.bodyMaterial || 'WCB',
@@ -292,16 +306,44 @@ export default {
     },
     onShareAppMessage() {
         return {
-            title: '您的特约报价单',
+            title: this.$t('quotation.shareTitle'),
             path: '/pages/quotation/quotation'
         };
     },
     methods: {
+        initI18nDefaults() {
+            this.paymentMethod = this.$t('quotation.defaultPayment');
+            this.packaging = this.$t('quotation.defaultPackaging');
+            this.quoter = this.$t('quotation.defaultQuoter');
+            this.quoterPhone = this.$t('quotation.defaultQuoterPhone');
+            this.validity = this.$t('quotation.defaultValidity');
+            this.currentDate = this.formatDate(new Date());
+        },
+        translateProductType(type) {
+            if (!type) return this.$t('index.regular');
+            const regular = this.$t('index.regular');
+            const newProduct = this.$t('index.newProduct');
+            if (type === regular || type === newProduct) {
+                return type;
+            }
+            if (type === '常规品' || type === 'regular' || type === 'Regular') {
+                return regular;
+            }
+            if (type === '新品' || type === 'new' || type === 'New') {
+                return newProduct;
+            }
+            return type;
+        },
+
         formatDate(date) {
+            const format = this.$t('quotation.dateFormat');
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
-            return `${year}年${month}月${day}日`;
+            return format
+                .replace('YYYY', year)
+                .replace('MM', month)
+                .replace('DD', day);
         },
 
         showToast(text, type = 'success') {
@@ -313,10 +355,8 @@ export default {
             }, 2000);
         },
 
-        // 输入框双向绑定函数（统一采用Vue直接赋值模式，拒绝混合setData导致的错误）
         onCustomerNameInput(e) { this.customerName = e.detail.value; },
         onSalespersonInput(e) { this.salesperson = e.detail.value; },
-
 
         onNoteInput(e) { this.note = e.detail.value; },
         onPaymentMethodInput(e) { this.paymentMethod = e.detail.value; },
@@ -330,7 +370,6 @@ export default {
             uni.navigateBack();
         },
 
-        // 保存报价数据到数据库
         async saveQuotationToDatabase() {
             const quotationData = {
                 customerName: this.customerName,
@@ -356,16 +395,15 @@ export default {
             try {
                 const result = await quotationApi.create(quotationData);
                 console.log('报价数据保存成功:', result);
-                this.showToast('报价数据已保存', 'success');
+                this.showToast(this.$t('quotation.saveSuccess'), 'success');
                 return result;
             } catch (error) {
                 console.error('保存报价数据失败:', error);
-                this.showToast('保存失败，请检查网络', 'error');
+                this.showToast(this.$t('quotation.saveFail'), 'error');
                 throw error;
             }
         },
 
-        // 自动换行绘制函数
         drawText(ctx, text, x, y, maxWidth, lineHeight, fontSize) {
             if (!text) return y;
             ctx.setFontSize(fontSize);
@@ -386,10 +424,9 @@ export default {
             return y + lines.length * lineHeight;
         },
 
-        // 生成报价表图片并保存至本地
         async generateQuotation() {
             this.showLoading = true;
-            this.loadingText = '正在制作报价表...';
+            this.loadingText = this.$t('quotation.priceGenerating');
 
             const that = this;
 
@@ -404,7 +441,6 @@ export default {
             const width = 750;
             let y = 30 * scale;
 
-            // 填充高端卡片白背景
             ctx.setFillStyle('#FFFFFF');
             ctx.fillRect(0, 0, width, 5000);
             ctx.setFillStyle('#0d1526');
@@ -425,24 +461,26 @@ export default {
                     const infoX = logoX + logoWidth + 24;
                     let infoY = logoY;
 
-                    // 绘制工业级页头
+                    const companyName = this.$t('quotation.companyName');
+                    const companyNameEn = this.$t('quotation.companyNameEn');
+                    const companyInfo = [
+                        this.$t('quotation.companyWebsite'),
+                        this.$t('quotation.companyEmail'),
+                        this.$t('quotation.companyAddress'),
+                        this.$t('quotation.companyPhone')
+                    ];
+
                     ctx.setFontSize(26);
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText('奇胜阀门有限公司', infoX, infoY + 26);
+                    ctx.fillText(companyName, infoX, infoY + 26);
                     
                     ctx.setFontSize(14);
                     ctx.setFillStyle('#c8aa6e');
-                    ctx.fillText('CHISUN VALVE CO., LTD.', infoX, infoY + 48);
+                    ctx.fillText(companyNameEn, infoX, infoY + 48);
 
                     infoY += 70;
                     ctx.setFontSize(13);
                     ctx.setFillStyle('#64748b');
-                    const companyInfo = [
-                        '官网：www.chisun.cn / www.qishengvalve.com',
-                        '邮箱：qs@chisun.cn',
-                        '地址：浙江省温州市空港新区兴业路8号 邮编：325013',
-                        '电话：15777828587'
-                    ];
 
                     companyInfo.forEach(line => {
                         ctx.fillText(line, infoX, infoY);
@@ -451,7 +489,6 @@ export default {
 
                     y = Math.max(logoY + logoHeight + 40, infoY + 20);
 
-                    // 绘制标题装饰线
                     ctx.setStrokeStyle('#e2e8f0');
                     ctx.setLineWidth(1);
                     ctx.beginPath();
@@ -461,39 +498,47 @@ export default {
                     ctx.lineTo(720, y + 15);
                     ctx.stroke();
 
-                    // 标题
                     ctx.setFontSize(24);
                     ctx.setFillStyle('#0d1526');
                     ctx.setTextAlign('center');
-                    ctx.fillText('报 价 单', 375, y + 24);
+                    ctx.fillText(this.$t('quotation.title'), 375, y + 24);
                     ctx.setTextAlign('left');
                     y += 60 * scale;
 
-                    // 报价员
                     ctx.setFontSize(15);
                     ctx.setFillStyle('#475569');
-                    ctx.fillText('报价员：', 30, y);
+                    const salesLabel = this.$t('quotation.salePerson') + '：';
+                    ctx.fillText(salesLabel, 30, y);
+                    const salesLabelWidth = ctx.measureText(salesLabel).width;
                     ctx.setFontSize(15);
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(this.salesperson || '未指定报价员', 110, y);
+                    ctx.fillText(this.salesperson || this.$t('quotation.noSalePerson'), 30 + salesLabelWidth + 8, y);
                     y += 35 * scale;
 
-                    // 客户名称
                     ctx.setFontSize(15);
                     ctx.setFillStyle('#475569');
-                    ctx.fillText('客户名称：', 30, y);
+                    const customerLabel = this.$t('quotation.customerName') + '：';
+                    ctx.fillText(customerLabel, 30, y);
+                    const customerLabelWidth = ctx.measureText(customerLabel).width;
                     ctx.setFontSize(15);
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(this.customerName || '未指定客户', 110, y);
+                    ctx.fillText(this.customerName || this.$t('quotation.noCustomer'), 30 + customerLabelWidth + 8, y);
                     y += 35 * scale;
 
-                    // 绘制核心表格明细
                     const totalWidth = 690;
                     const startX = 30;
-                    const headers = ['产品名称', '型号规格', '闸板材质', '阀杆材质', '数量', '单价', '总价'];
-                    const cellWidths = [130, 170, 80, 80, 50, 90, 110];
+                    const headers = [
+                        this.$t('quotation.productName'),
+                        this.$t('quotation.modelSpec'),
+                        this.$t('quotation.gateMaterialCol'),
+                        this.$t('quotation.stemMaterialCol'),
+                        this.$t('quotation.quantityCol'),
+                        this.$t('quotation.unitPriceCol'),
+                        this.$t('quotation.totalPriceCol')
+                    ];
+                    const cellWidths = [110, 120, 100, 100, 65, 85, 90];
+                    const totalCellWidth = cellWidths.reduce((a, b) => a + b, 0);
 
-                    // 表头背景色更改为深蓝钢铁色
                     ctx.setFillStyle('#0d1526');
                     ctx.fillRect(startX, y, totalWidth, 36);
                     ctx.setFillStyle('#FFFFFF');
@@ -501,18 +546,27 @@ export default {
                     
                     let x = startX + 8;
                     headers.forEach((h, i) => {
-                        ctx.fillText(h, x, y + 23);
+                        const maxWidth = cellWidths[i] - 8;
+                        let displayText = h;
+                        const textWidth = ctx.measureText(h).width;
+                        if (textWidth > maxWidth) {
+                            let truncated = h;
+                            while (ctx.measureText(truncated + '...').width > maxWidth && truncated.length > 1) {
+                                truncated = truncated.slice(0, -1);
+                            }
+                            displayText = truncated + '...';
+                        }
+                        ctx.fillText(displayText, x, y + 23);
                         x += cellWidths[i];
                     });
                     y += 36 * scale;
 
-                    // 循环生成行
                     const rowHeight = 38;
                     const specRowHeight = 28;
                     this.quoteData.forEach((item, idx) => {
                         x = startX + 8;
                         const values = [
-                            item.productType,
+                            this.translateProductType(item.productType),
                             item.productName + '-DN' + item.model,
                             item.gateMaterial || '',
                             item.stemMaterial || '',
@@ -529,28 +583,42 @@ export default {
                         values.forEach((val, i) => {
                             if (i === 6) ctx.setFillStyle('#dc2626');
                             else ctx.setFillStyle('#1e293b');
-                            ctx.fillText(val || '', x, y + 24);
+                            const maxWidth = cellWidths[i] - 8;
+                            let displayVal = val || '';
+                            if (val) {
+                                const textWidth = ctx.measureText(val).width;
+                                if (textWidth > maxWidth) {
+                                    let truncated = val;
+                                    while (ctx.measureText(truncated + '...').width > maxWidth && truncated.length > 1) {
+                                        truncated = truncated.slice(0, -1);
+                                    }
+                                    displayVal = truncated + '...';
+                                }
+                            }
+                            ctx.fillText(displayVal, x, y + 24);
                             x += cellWidths[i];
                         });
 
                         y += rowHeight * scale;
 
-                        // 绘制规格参数行（跨列显示）
                         ctx.setFontSize(11);
                         ctx.setFillStyle('#64748b');
-                        ctx.fillText('规格参数：', startX + 8, y + 18);
+                        ctx.fillText(this.$t('quotation.pricingInfo'), startX + 8, y + 18);
                         
                         x = startX + 60;
+                        const isEn = i18n.getCurrentLanguage() === 'en-US';
                         const specs = [
-                            { label: '最高承压', en: 'Max Pressure', value: item.maxPressure, unit: 'BAR' },
-                            { label: '单重', en: 'Unit Weight', value: item.unitWeight, unit: 'KG' },
-                            { label: '圈数', en: 'Laps', value: item.laps, unit: '' },
-                            { label: '扭矩', en: 'Torque', value: item.torque, unit: 'N.M' }
+                            { label: this.$t('quotation.maxPressure'), en: 'Max Pressure', value: item.maxPressure, unit: 'BAR' },
+                            { label: this.$t('quotation.unitWeight'), en: 'Unit Weight', value: item.unitWeight, unit: this.$t('quotation.weightUnit') },
+                            { label: this.$t('quotation.laps'), en: 'Laps', value: item.laps, unit: '' },
+                            { label: this.$t('quotation.torque'), en: 'Torque', value: item.torque, unit: this.$t('quotation.torqueUnit') }
                         ];
 
                         specs.forEach((spec, i) => {
                             if (spec.value) {
-                                const labelText = `${spec.label}(${spec.en}): ${spec.value}${spec.unit}`;
+                                const labelText = isEn
+                                    ? `${spec.label}: ${spec.value}${spec.unit}`
+                                    : `${spec.label}(${spec.en}): ${spec.value}${spec.unit}`;
                                 const labelWidth = ctx.measureText(labelText).width;
                                 if (x + labelWidth <= startX + totalWidth - 10) {
                                     ctx.setFillStyle('#475569');
@@ -570,36 +638,40 @@ export default {
                         ctx.setFontSize(13);
                     });
 
-                    // 绘制条款与备注段落
                     y += 30 * scale;
                     ctx.setFontSize(15);
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText('备注及技术要求：', 30, y);
+                    ctx.fillText(this.$t('quotation.remarkAndTech'), 30, y);
                     y += 24 * scale;
                     y = this.drawText(ctx, this.note, 30, y, 690, 22, 13) + 15;
 
                     ctx.setFontSize(14);
                     ctx.setFillStyle('#475569');
-                    ctx.fillText('付款方式：', 30, y);
+                    const paymentLabel = this.$t('quotation.paymentMethod') + '：';
+                    ctx.fillText(paymentLabel, 30, y);
+                    const paymentLabelWidth = ctx.measureText(paymentLabel).width;
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(this.paymentMethod, 105, y);
+                    ctx.fillText(this.paymentMethod, 30 + paymentLabelWidth + 6, y);
                     y += 26 * scale;
 
                     ctx.setFillStyle('#475569');
-                    ctx.fillText('包装方式：', 30, y);
+                    const packagingLabel = this.$t('quotation.packaging') + '：';
+                    ctx.fillText(packagingLabel, 30, y);
+                    const packagingLabelWidth = ctx.measureText(packagingLabel).width;
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(this.packaging, 105, y);
+                    ctx.fillText(this.packaging, 30 + packagingLabelWidth + 6, y);
                     y += 26 * scale;
 
                     ctx.setFillStyle('#475569');
-                    ctx.fillText('确认报价金额：', 30, y);
+                    const confirmLabel = this.$t('quotation.confirmAmount');
+                    ctx.fillText(confirmLabel, 30, y);
+                    const confirmLabelWidth = ctx.measureText(confirmLabel).width;
                     ctx.setFillStyle('#dc2626');
                     ctx.setFontSize(16);
-                    ctx.fillText('¥' + (this.finalPrice || this.totalAmount), 130, y);
+                    ctx.fillText('¥' + (this.finalPrice || this.totalAmount), 30 + confirmLabelWidth + 8, y);
                     ctx.setFontSize(14);
                     y += 35 * scale;
 
-                    // 底部边栏与签章区
                     ctx.setStrokeStyle('#e2e8f0');
                     ctx.beginPath();
                     ctx.moveTo(30, y);
@@ -609,29 +681,35 @@ export default {
 
                     ctx.setFontSize(14);
                     ctx.setFillStyle('#475569');
-                    ctx.fillText('报价制单人：', 30, y);
-                    ctx.getActions;
+                    const signLabel = this.$t('quotation.quoterSign');
+                    ctx.fillText(signLabel, 30, y);
+                    const signLabelWidth = ctx.measureText(signLabel).width;
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(this.quoter, 115, y);
+                    ctx.fillText(this.quoter, 30 + signLabelWidth + 6, y);
 
                     ctx.setFillStyle('#475569');
-                    ctx.fillText('联系电话：', 280, y);
+                    const phoneLabel = this.$t('quotation.quoterPhoneLabel');
+                    ctx.fillText(phoneLabel, 400, y);
+                    const phoneLabelWidth = ctx.measureText(phoneLabel).width;
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(this.quoterPhone, 350, y);
+                    ctx.fillText(this.quoterPhone, 400 + phoneLabelWidth + 6, y);
                     y += 26 * scale;
 
                     ctx.setFillStyle('#475569');
-                    ctx.fillText('报价有效期：', 30, y);
-                    ctx.setFillStyle('#c8aa6e'); // 强调色高亮
-                    ctx.fillText(this.validity, 115, y);
+                    const validityLabel = this.$t('quotation.validityLabel');
+                    ctx.fillText(validityLabel, 30, y);
+                    const validityLabelWidth = ctx.measureText(validityLabel).width;
+                    ctx.setFillStyle('#c8aa6e');
+                    ctx.fillText(this.validity, 30 + validityLabelWidth + 6, y);
 
                     ctx.setFillStyle('#475569');
-                    ctx.fillText('发布日期：', 280, y);
+                    const dateLabel = this.$t('quotation.issueDate');
+                    ctx.fillText(dateLabel, 400, y);
+                    const dateLabelWidth = ctx.measureText(dateLabel).width;
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(this.currentDate, 350, y);
+                    ctx.fillText(this.currentDate, 400 + dateLabelWidth + 6, y);
                     y += 60 * scale;
 
-                    // 渲染并保存至用户手机本地相册
                     ctx.draw(false, () => {
                         const finalHeight = Math.ceil(y);
                         uni.canvasToTempFilePath({
@@ -644,16 +722,16 @@ export default {
                                 uni.saveImageToPhotosAlbum({
                                     filePath: res.tempFilePath,
                                     success: () => {
-                                        that.showToast('报价单已妥善存储到相册', 'success');
+                                        that.showToast(this.$t('quotation.savedToAlbum'), 'success');
                                     },
                                     fail: () => {
-                                        that.showToast('请开启相册读写权限', 'error');
+                                        that.showToast(this.$t('quotation.needAlbumPermission'), 'error');
                                     }
                                 });
                             },
                             fail: (err) => {
                                 console.error(err);
-                                that.showToast('高精度渲染失败', 'error');
+                                that.showToast(this.$t('quotation.renderFail'), 'error');
                             },
                             complete: () => {
                                 this.showLoading = false;
@@ -663,7 +741,7 @@ export default {
                 },
                 fail: (err) => {
                     console.error(err);
-                    that.showToast('企业徽标调取失败', 'error');
+                    that.showToast(this.$t('quotation.logoLoadFail'), 'error');
                     that.showLoading = false;
                 }
             });
@@ -883,7 +961,7 @@ page {
     display: block;
     font-size: 26rpx;
     color: #0d1526;
-    width: 100% !important; /* 深度覆写，拒绝单列挤压 */
+    width: 100% !important;
     min-height: 160rpx;
     line-height: 1.6;
     box-sizing: border-box;
@@ -912,7 +990,7 @@ page {
 }
 
 .table-wrap {
-    min-width: 890rpx; /* 给予字段足够的横向平铺空间 */
+    min-width: 890rpx;
 }
 
 .table-header {
@@ -962,7 +1040,7 @@ page {
 }
 
 .row-odd {
-    background-color: #f8fafc; /* 交替斑马纹隔行变色 */
+    background-color: #f8fafc;
 }
 
 .table-cell {

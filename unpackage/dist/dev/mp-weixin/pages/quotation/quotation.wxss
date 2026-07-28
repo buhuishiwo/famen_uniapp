@@ -672,6 +672,85 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* 根页面样式 */
 page {
     background-color: #f1f5f9;
@@ -856,7 +935,7 @@ page {
     display: block;
     font-size: 26rpx;
     color: #0d1526;
-    width: 100% !important; /* 深度覆写，拒绝单列挤压 */
+    width: 100% !important;
     min-height: 160rpx;
     line-height: 1.6;
     box-sizing: border-box;
@@ -881,7 +960,7 @@ page {
     width: 100%;
 }
 .table-wrap {
-    min-width: 890rpx; /* 给予字段足够的横向平铺空间 */
+    min-width: 890rpx;
 }
 .table-header {
     display: flex;
@@ -931,7 +1010,7 @@ page {
     border-bottom: none;
 }
 .row-odd {
-    background-color: #f8fafc; /* 交替斑马纹隔行变色 */
+    background-color: #f8fafc;
 }
 .table-cell {
     font-size: 24rpx;

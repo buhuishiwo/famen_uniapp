@@ -16,5 +16,7 @@
     }
   },
   "plugins": {},
-  "usingComponents": {}
+  "usingComponents": {
+    "language-switch": "/components/language-switch/language-switch"
+  }
 }

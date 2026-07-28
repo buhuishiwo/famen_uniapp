@@ -49,7 +49,6 @@ async function calcItemPrice(item) {
 
   // 从价格表获取起订量
   const minQty = Number(p.min_order_qty) || 50;
-  if (item.quantity < minQty) throw new Error('起订量不足，需要≥' + minQty);
 
   const basePrice = calcBasePrice(item, p);
   const bf = item.branding ? (Number(p.branding_fee) || 0) : 0;

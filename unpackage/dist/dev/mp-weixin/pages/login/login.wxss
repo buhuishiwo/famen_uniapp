@@ -206,19 +206,6 @@
   font-weight: 600;
   letter-spacing: 4rpx;
 }
-/* 提示信息 */
-.tips-section {
-  margin-top: 24rpx;
-  text-align: center;
-}
-.tips-text {
-  font-size: 24rpx;
-  color: #a0aec0;
-  background: #f8fafc;
-  padding: 12rpx 24rpx;
-  border-radius: 8rpx;
-  display: inline-block;
-}
 /* 底部信息 */
 .footer-section {
   margin-top: 50rpx;

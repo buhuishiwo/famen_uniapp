@@ -1,7 +1,9 @@
 <template>
     <view>
-        <navigation-bar :title="currentProductSeries || '阀门选择'" :back="true" color="white"
+        <navigation-bar :title="currentProductSeries || $t('index.valveSelection')" :back="true" color="white"
             background="linear-gradient(135deg, #1a2236 0%, #0d1526 100%);" @back="onBackToCategory"></navigation-bar>
+
+        <language-switch></language-switch>
 
         <scroll-view class="scroll-content" scroll-y>
 
@@ -9,24 +11,24 @@
             <view class="page-header">
                 <view class="header-badge">
                     <text class="badge-dot"></text>
-                    <text class="badge-text">配置报价</text>
+                    <text class="badge-text">{{ $t('index.configQuote') }}</text>
                 </view>
-                <text class="page-title">{{ currentProductSeries || '阀门选择' }}</text>
-                <text class="page-subtitle">请依次选择以下参数生成报价</text>
+                <text class="page-title">{{ currentProductSeries || $t('index.valveSelection') }}</text>
+                <text class="page-subtitle">{{ $t('index.configTitle') }}</text>
             </view>
 
             <!-- 表单部分 -->
             <view class="form-section">
                 <view class="form-section-label">
                     <text class="section-icon">⚙</text>
-                    <text class="section-name">产品配置</text>
+                    <text class="section-name">{{ $t('index.productConfig') }}</text>
                 </view>
 
                 <view class="form-item">
-                    <text class="label">阀门型号</text>
+                    <text class="label">{{ $t('index.valveModel') }}</text>
                     <picker class="picker" mode="selector" :range="valveTypes" range-key="name" @change="onSelectValve">
                         <view class="picker-box" :class="{ filled: selectedValve }">
-                            <text class="picker-text">{{ selectedValve ? selectedValve.name : '请选择阀门型号' }}</text>
+                            <text class="picker-text">{{ selectedValve ? selectedValve.name : $t('index.selectValveModel') }}</text>
                             <text class="picker-arrow">›</text>
                         </view>
                     </picker>
@@ -35,10 +37,10 @@
                 <view class="form-divider"></view>
 
                 <view class="form-item">
-                    <text class="label">规格尺寸 (DN)</text>
+                    <text class="label">{{ $t('index.specSize') }}</text>
                     <picker class="picker" mode="selector" :range="specifications" range-key="name" @change="onSelectSpec">
                         <view class="picker-box" :class="{ filled: selectedSpec }">
-                            <text class="picker-text">{{ selectedSpec ? selectedSpec.name : '请选择规格尺寸' }}</text>
+                            <text class="picker-text">{{ selectedSpec ? selectedSpec.name : $t('index.selectSpecSize') }}</text>
                             <text class="picker-arrow">›</text>
                         </view>
                     </picker>
@@ -47,10 +49,10 @@
                 <view class="form-divider"></view>
 
                 <view class="form-item">
-                    <text class="label">阀体材质</text>
+                    <text class="label">{{ $t('index.bodyMaterial') }}</text>
                     <picker class="picker" mode="selector" :range="valveBodyTypes" range-key="name" @change="onSelectValveBody">
                         <view class="picker-box" :class="{ filled: SelectValveBody }">
-                            <text class="picker-text">{{ SelectValveBody ? SelectValveBody.name : '请选择阀体材质' }}</text>
+                            <text class="picker-text">{{ SelectValveBody ? SelectValveBody.name : $t('index.selectBodyMaterial') }}</text>
                             <text class="picker-arrow">›</text>
                         </view>
                     </picker>
@@ -59,10 +61,10 @@
                 <view class="form-divider"></view>
 
                 <view class="form-item">
-                    <text class="label">闸板材质</text>
+                    <text class="label">{{ $t('index.gateMaterial') }}</text>
                     <picker class="picker" mode="selector" :range="gatePlateTypes" range-key="name" @change="onSelectGatePlate">
                         <view class="picker-box" :class="{ filled: selectedGatePlate }">
-                            <text class="picker-text">{{ selectedGatePlate ? selectedGatePlate.name : '请选择闸板材质' }}</text>
+                            <text class="picker-text">{{ selectedGatePlate ? selectedGatePlate.name : $t('index.selectGateMaterial') }}</text>
                             <text class="picker-arrow">›</text>
                         </view>
                     </picker>
@@ -71,10 +73,10 @@
                 <view class="form-divider"></view>
 
                 <view class="form-item">
-                    <text class="label">阀杆材质</text>
+                    <text class="label">{{ $t('index.stemMaterial') }}</text>
                     <picker class="picker" mode="selector" :range="rodMaterials" range-key="name" @change="onSelectRodMaterial">
                         <view class="picker-box" :class="{ filled: selectedRodMaterial }">
-                            <text class="picker-text">{{ selectedRodMaterial ? selectedRodMaterial.name : '请选择阀杆材质' }}</text>
+                            <text class="picker-text">{{ selectedRodMaterial ? selectedRodMaterial.name : $t('index.selectStemMaterial') }}</text>
                             <text class="picker-arrow">›</text>
                         </view>
                     </picker>
@@ -83,10 +85,10 @@
                 <view class="form-divider"></view>
 
                 <view class="form-item">
-                    <text class="label">支架材质</text>
+                    <text class="label">{{ $t('index.yokeMaterial') }}</text>
                     <picker class="picker" mode="selector" :range="yokeMaterials" range-key="name" @change="onSelectYokeMaterial">
                         <view class="picker-box" :class="{ filled: selectedYokeMaterial }">
-                            <text class="picker-text">{{ selectedYokeMaterial ? selectedYokeMaterial.name : '请选择支架材质' }}</text>
+                            <text class="picker-text">{{ selectedYokeMaterial ? selectedYokeMaterial.name : $t('index.selectYokeMaterial') }}</text>
                             <text class="picker-arrow">›</text>
                         </view>
                     </picker>
@@ -95,7 +97,7 @@
                 <view class="form-divider"></view>
 
                 <view class="form-item">
-                    <text class="label">产品类型</text>
+                    <text class="label">{{ $t('index.productType') }}</text>
                     <picker class="picker" mode="selector" :range="productTypeOptions" @change="onSelectProductType">
                         <view class="picker-box filled">
                             <text class="picker-text">{{ selectedProductType }}</text>
@@ -107,27 +109,27 @@
                 <view class="form-divider"></view>
 
                 <view class="form-item">
-                    <text class="label">数量</text>
+                    <text class="label">{{ $t('index.quantity') }}</text>
                     <view class="qty-wrapper">
                         <input class="qty-input" type="number" :value="quantity" @input="onQuantityChange"
-                            placeholder="请输入数量" placeholder-class="qty-placeholder" />
+                            :placeholder="$t('index.inputQuantity')" placeholder-class="qty-placeholder" />
                     </view>
                 </view>
 
                 <view class="form-divider"></view>
 
                 <view class="form-item">
-                    <text class="label">磨商标</text>
+                    <text class="label">{{ $t('index.branding') }}</text>
                     <view class="toggle-group">
                         <view class="toggle-item" :class="{ active: selectedBranding === true }" @tap="onSelectBranding(true)">
                             <text class="toggle-dot" v-if="selectedBranding === true">●</text>
                             <text class="toggle-dot-off" v-else>○</text>
-                            <text>是</text>
+                            <text>{{ $t('index.yes') }}</text>
                         </view>
                         <view class="toggle-item" :class="{ active: selectedBranding === false }" @tap="onSelectBranding(false)">
                             <text class="toggle-dot" v-if="selectedBranding === false">●</text>
                             <text class="toggle-dot-off" v-else>○</text>
-                            <text>否</text>
+                            <text>{{ $t('index.no') }}</text>
                         </view>
                     </view>
                 </view>
@@ -136,7 +138,7 @@
                 <view class="price-card" v-if="selectedValve && selectedSpec && selectedGatePlate && selectedRodMaterial">
                     <view class="price-row">
                         <view class="price-col">
-                            <text class="price-tag">单　价</text>
+                            <text class="price-tag">{{ $t('index.unitPrice') }}</text>
                             <view class="price-input-wrap">
                                 <text class="price-prefix">¥</text>
                                 <input class="price-input" type="digit" :value="confirmedPrice" @input="onPriceInput" />
@@ -144,13 +146,13 @@
                         </view>
                         <view class="price-divider-v"></view>
                         <view class="price-col">
-                            <text class="price-tag">预估总价</text>
+                            <text class="price-tag">{{ $t('index.estimatedTotal') }}</text>
                             <text class="price-amount total-highlight">¥<text class="price-num">{{ totalPreviewPrice }}</text></text>
                         </view>
                     </view>
                     <view class="price-tip">
                         <text class="tip-icon">💡</text>
-                        <text class="tip-text">与报价员协商后可手动修改单价作为最终报价，修改后请在报价单备注中说明</text>
+                        <text class="tip-text">{{ $t('index.priceTip') }}</text>
                     </view>
                 </view>
             </view>
@@ -159,20 +161,20 @@
             <view class="action-area">
                 <button class="btn btn-add" @tap="onAddToQuote">
                     <text class="btn-icon">＋</text>
-                    <text>添加到报价表</text>
+                    <text>{{ $t('index.addToQuote') }}</text>
                 </button>
                 <button class="btn btn-generate" v-if="quoteItems.length > 0" @tap="onGenerateQuotation">
                     <text class="btn-icon">📋</text>
-                    <text>生成报价表</text>
+                    <text>{{ $t('index.generateQuote') }}</text>
                 </button>
             </view>
 
             <!-- 报价列表 -->
             <view class="quote-list" v-if="quoteItems.length > 0">
                 <view class="list-header">
-                    <text class="list-title">📦 报价明细</text>
+                    <text class="list-title">📦 {{ $t('index.quoteDetails') }}</text>
                     <view class="list-count-badge">
-                        <text class="list-count">{{ quoteItems.length }} 项</text>
+                        <text class="list-count">{{ $t('index.totalItems', { count: quoteItems.length }) }}</text>
                     </view>
                 </view>
 
@@ -198,7 +200,7 @@
 
                     <view class="item-price-row">
                         <view class="item-meta">
-                            <text class="meta-item">× {{ item.quantity }} 件</text>
+                            <text class="meta-item">× {{ item.quantity }} {{ $t('quotation.pieces') }}</text>
                             <text class="meta-item" v-if="item.brandingFee">磨标 ¥{{ item.brandingFee }}/件</text>
                         </view>
                         <view class="item-price-right">
@@ -209,7 +211,7 @@
                 </view>
 
                 <view class="quote-total-bar">
-                    <text class="total-bar-label">合计金额</text>
+                    <text class="total-bar-label">{{ $t('index.totalAmount') }}</text>
                     <text class="total-bar-value">¥{{ totalPrice }}</text>
                 </view>
             </view>
@@ -217,8 +219,8 @@
             <!-- 空状态 -->
             <view class="empty-state" v-else-if="!quoteItems || quoteItems.length === 0">
                 <text class="empty-icon">📝</text>
-                <text class="empty-text">暂无报价项目</text>
-                <text class="empty-sub">配置好参数后点击「添加到报价表」</text>
+                <text class="empty-text">{{ $t('index.noQuoteItems') }}</text>
+                <text class="empty-sub">{{ $t('index.noQuoteItemsSub') }}</text>
             </view>
 
             <view class="bottom-safe"></view>
@@ -269,8 +271,8 @@ export default {
             // 价格表（保留部分本地数据作为备用）
             priceTable: {
                 productTypeMultiplier: {
-                    '常规品': 1.0,
-                    '新品': 1.3
+                    'regular': 1.0,
+                    'newProduct': 1.3
                 }
             },
 
@@ -285,7 +287,7 @@ export default {
             materialDiffs: [],
 
             // 产品类型
-            productTypeOptions: ['常规品', '新品'],
+            productTypeOptions: [],
 
             // 报价系数规则（从数据库加载，替代硬编码起订量）
             pricingRules: [],
@@ -297,7 +299,7 @@ export default {
             selectedGatePlate: null,
             selectedRodMaterial: null,
             selectedYokeMaterial: null,
-            selectedProductType: '常规品',
+            selectedProductType: '',
             selectedBranding: false,
             quantity: 1,
             // 报价数据
@@ -314,6 +316,17 @@ export default {
             confirmedPrice: '0.00',
         };
     },
+    created() {
+        this.initI18nData();
+        this._i18nUnsubscribe = this.$localeOn(() => {
+            this.initI18nData();
+        });
+    },
+    beforeDestroy() {
+        if (this._i18nUnsubscribe) {
+            this._i18nUnsubscribe();
+        }
+    },
     onLoad() {
         this.currentProductSeries = uni.getStorageSync('currentProductSeries') || '';
         this.loadDataFromBackend();
@@ -324,6 +337,16 @@ export default {
         }
     },
     methods: {
+        initI18nData() {
+            const regular = this.$t('index.regular');
+            const newProduct = this.$t('index.newProduct');
+            this.productTypeOptions = [regular, newProduct];
+            this.selectedProductType = regular;
+            this.priceTable.productTypeMultiplier = {
+                [regular]: 1.0,
+                [newProduct]: 1.3
+            };
+        },
         showToast(text, type = 'success') {
             this.showToastDialog = true;
             this.toastText = text;
@@ -334,7 +357,7 @@ export default {
         },
         async loadDataFromBackend() {
             this.showLoading = true;
-            this.loadingText = '加载数据中...';
+            this.loadingText = this.$t('index.loadingData');
             try {
                 const [series, models, rulesRes, materialsRes, diffsRes] = await Promise.all([
                     priceApi.getSeries(),
@@ -371,7 +394,7 @@ export default {
                 this.updateSpecifications();
             } catch (error) {
                 console.error('加载数据失败:', error);
-                this.showToast('加载数据失败', 'error');
+                this.showToast(this.$t('index.dataLoadFail'), 'error');
             } finally {
                 this.showLoading = false;
             }
@@ -385,8 +408,8 @@ export default {
                 this.valveTypes = [];
                 this.priceData = [];
                 uni.showModal({
-                    title: '暂无数据',
-                    content: this.currentProductSeries + ' 暂未录入产品数据，请先导入价格后再试。',
+                    title: this.$t('product.noSeriesData'),
+                    content: this.$t('product.noSeriesDataMsg', { series: this.currentProductSeries }),
                     showCancel: false,
                     confirmText: '返回',
                     success: () => {
@@ -747,7 +770,7 @@ export default {
         async calculatePrice() {
             const { selectedValve, selectedSpec, selectedGatePlate, selectedRodMaterial, selectedYokeMaterial, quantity, selectedProductType } = this;
             if (!selectedValve || !selectedSpec || !selectedGatePlate || !selectedRodMaterial) {
-                this.showToast('请填写完整信息', 'error'); return null;
+                this.showToast(this.$t('index.fillCompleteInfo'), 'error'); return null;
             }
             const specSizeStr = String(selectedSpec.name);
             const specSize = parseInt(specSizeStr.replace(/[^\d]/g, '')) || 0;
@@ -756,7 +779,7 @@ export default {
                 return p.valveName === selectedValve.name && pSize === specSize;
             });
             if (!priceItem) { 
-                this.showToast('该组合不可用', 'error'); 
+                this.showToast(this.$t('index.comboNotAvailable'), 'error'); 
                 return null; 
             }
 
@@ -834,7 +857,7 @@ export default {
         },
         async onAddToQuote() {
             this.showLoading = true;
-            this.loadingText = '计算中...';
+            this.loadingText = this.$t('index.calculating');
             const item = await this.calculatePrice();
             this.showLoading = false;
             if (!item) return;
@@ -842,7 +865,7 @@ export default {
             const newTotalPrice = this.calculateTotal(newQuoteItems);
             this.setData({ quoteItems: newQuoteItems, totalPrice: newTotalPrice });
             uni.setStorageSync('quoteItems', newQuoteItems);
-            this.showToast('已添加到报价表', 'success');
+            this.showToast(this.$t('index.addSuccess'), 'success');
             this.resetSelection();
         },
         calculateTotal(items) {
@@ -858,7 +881,7 @@ export default {
                 selectedSpec: null,
                 selectedGatePlate: null,
                 selectedRodMaterial: null,
-                selectedProductType: '常规品',
+                selectedProductType: this.$t('index.regular'),
                 selectedBranding: false,
                 quantity: 50,
                 currentPrice: '0.00',
@@ -874,7 +897,7 @@ export default {
         },
         onGenerateQuotation() {
             if (this.quoteItems.length === 0) {
-                this.showToast('请先添加阀门到报价表', 'error'); return;
+                this.showToast(this.$t('index.addFirst'), 'error'); return;
             }
             uni.navigateTo({
                 url: '/pages/quotation/quotation?data=' + encodeURIComponent(JSON.stringify(this.quoteItems))
