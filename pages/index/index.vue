@@ -109,7 +109,10 @@
                 <view class="form-divider"></view>
 
                 <view class="form-item">
-                    <text class="label">{{ $t('index.quantity') }}</text>
+                    <view class="label-row">
+                        <text class="label">{{ $t('index.quantity') }}</text>
+                        <text v-if="currentMoq > 0" class="moq-hint">{{ $t('index.moqHint', { moq: currentMoq }) }}</text>
+                    </view>
                     <view class="qty-wrapper">
                         <input class="qty-input" type="number" :value="quantity" @input="onQuantityChange"
                             :placeholder="$t('index.inputQuantity')" placeholder-class="qty-placeholder" />
@@ -138,20 +141,30 @@
                 <view class="price-card" v-if="selectedValve && selectedSpec && selectedGatePlate && selectedRodMaterial">
                     <view class="price-row">
                         <view class="price-col">
-                            <text class="price-tag">{{ $t('index.unitPrice') }}</text>
-                            <view class="price-input-wrap">
+                            <text class="price-tag">{{ $t('index.originalUnitPrice') }}</text>
+                            <view class="price-input-wrap readonly">
                                 <text class="price-prefix">¥</text>
-                                <input class="price-input" type="digit" :value="confirmedPrice" @input="onPriceInput" />
+                                <text class="price-text">{{ currentPrice }}</text>
                             </view>
                         </view>
+                        <template v-if="allowPriceModification">
+                            <view class="price-divider-v"></view>
+                            <view class="price-col">
+                                <text class="price-tag">{{ $t('index.modifiedUnitPrice') }}</text>
+                                <view class="price-input-wrap">
+                                    <text class="price-prefix">¥</text>
+                                    <input class="price-input" type="digit" :value="confirmedPrice" @input="onPriceInput" />
+                                </view>
+                            </view>
+                        </template>
                         <view class="price-divider-v"></view>
                         <view class="price-col">
                             <text class="price-tag">{{ $t('index.estimatedTotal') }}</text>
                             <text class="price-amount total-highlight">¥<text class="price-num">{{ totalPreviewPrice }}</text></text>
                         </view>
                     </view>
-                    <view class="price-tip">
-                        <text class="tip-icon">💡</text>
+                    <view class="price-tip" v-if="allowPriceModification">
+                        <uni-icons type="info-filled" size="14" color="#ef4444" class="tip-icon"></uni-icons>
                         <text class="tip-text">{{ $t('index.priceTip') }}</text>
                     </view>
                 </view>
@@ -302,6 +315,8 @@ export default {
             selectedProductType: '',
             selectedBranding: false,
             quantity: 1,
+            currentMoq: 0,
+            allowPriceModification: true,
             // 报价数据
             quoteItems: [],
             totalPrice: '0.00',
@@ -330,6 +345,7 @@ export default {
     onLoad() {
         this.currentProductSeries = uni.getStorageSync('currentProductSeries') || '';
         this.loadDataFromBackend();
+        this.loadSystemConfig();
         const cachedQuoteItems = uni.getStorageSync('quoteItems');
         if (cachedQuoteItems) {
             this.quoteItems = cachedQuoteItems;
@@ -354,6 +370,16 @@ export default {
             setTimeout(() => {
                 this.showToastDialog = false;
             }, 2000);
+        },
+        async loadSystemConfig() {
+            try {
+                const res = await priceApi.getSystemConfig(['allow_price_modification']);
+                if (res && res.success && res.data) {
+                    this.allowPriceModification = res.data.allow_price_modification !== 'false';
+                }
+            } catch (e) {
+                console.warn('[loadSystemConfig] 加载系统配置失败:', e);
+            }
         },
         async loadDataFromBackend() {
             this.showLoading = true;
@@ -623,7 +649,7 @@ export default {
         onSelectSpec(e) {
             this.setData({ selectedSpec: this.specifications[e.detail.value] });
             const minQty = this.getMinOrderQuantity(this.selectedSpec.name);
-            this.setData({ quantity: minQty });
+            this.setData({ quantity: minQty, currentMoq: minQty });
             if (this.selectedValve) {
                 this.setMaterialStandard(this.selectedValve.name);
             }
@@ -662,15 +688,47 @@ export default {
         },
         getMaterialPriceDiff(seriesName, partName, baseMaterial, targetMaterial, dn) {
             if (!baseMaterial || !targetMaterial || baseMaterial === targetMaterial) return 0;
-            const matched = this.materialDiffs.find(d => 
-                d.seriesName === seriesName &&
+
+            const candidates = this.materialDiffs.filter(d =>
                 d.partName === partName &&
                 d.baseMaterial === baseMaterial &&
-                d.targetMaterial === targetMaterial &&
-                dn >= d.dnMin &&
-                dn <= d.dnMax
+                d.targetMaterial === targetMaterial
             );
-            return matched ? matched.priceDiff : 0;
+
+            if (candidates.length === 0) return 0;
+
+            // 优先级匹配：精确(型号+尺寸) > 型号 > 系列 > 全局
+            // 1. 精确匹配：series + model + size
+            let matched = candidates.find(d =>
+                d.seriesName === seriesName &&
+                d.modelName === this.selectedValve?.name &&
+                Number(d.size) === dn
+            );
+            if (matched) return matched.priceDiff;
+
+            // 2. 型号匹配：series + model
+            matched = candidates.find(d =>
+                d.seriesName === seriesName &&
+                d.modelName === this.selectedValve?.name &&
+                (!d.size || d.size === null)
+            );
+            if (matched) return matched.priceDiff;
+
+            // 3. 系列匹配：series
+            matched = candidates.find(d =>
+                d.seriesName === seriesName &&
+                (!d.modelName || d.modelName === '')
+            );
+            if (matched) return matched.priceDiff;
+
+            // 4. 全局匹配
+            matched = candidates.find(d =>
+                (!d.seriesName || d.seriesName === '') &&
+                (!d.modelName || d.modelName === '')
+            );
+            if (matched) return matched.priceDiff;
+
+            return 0;
         },
         updateCurrentPrice() {
             const { selectedValve, selectedSpec, selectedGatePlate, selectedRodMaterial, selectedYokeMaterial, selectedProductType } = this;
@@ -748,6 +806,7 @@ export default {
             // 根据选中的阀门型号，从已加载的价格数据中提取可用规格
             // 清除之前选的规格（不同型号的可用规格不同）
             this.selectedSpec = null;
+            this.setData({ currentMoq: 0 });
             if (!this.selectedValve) {
                 // 无选中型号时，显示当前系列下所有规格
                 const allSizes = [...new Set(this.priceData.map(p => p.size))].sort((a, b) => a - b);
@@ -814,7 +873,9 @@ export default {
             );
             const baseTotal = basePrice + bodyDiff + gatePlateDiff + rodDiff + yokeDiff + brandingFee;
             const calculatedUnitPrice = baseTotal * pricingCoeff * multiplier;
-            const finalUnitPrice = parseFloat(this.confirmedPrice) || calculatedUnitPrice;
+            const finalUnitPrice = this.allowPriceModification
+                ? (parseFloat(this.confirmedPrice) || calculatedUnitPrice)
+                : calculatedUnitPrice;
             const totalPrice = finalUnitPrice * quantity;
 
             let maxPressure = '', unitWeight = '', laps = '', torque = '';
@@ -884,7 +945,9 @@ export default {
                 selectedProductType: this.$t('index.regular'),
                 selectedBranding: false,
                 quantity: 50,
+                currentMoq: 0,
                 currentPrice: '0.00',
+                confirmedPrice: '0.00',
                 totalPreviewPrice: '0.00'
             });
         },
@@ -1048,6 +1111,22 @@ page {
 }
 
 /* ---- 数量输入 ---- */
+.label-row {
+    display: flex;
+    align-items: baseline;
+    gap: 16rpx;
+    margin-bottom: 12rpx;
+}
+.label-row .label {
+    margin-bottom: 0;
+}
+.moq-hint {
+    font-size: 22rpx;
+    color: #ff6b3d;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+}
 .qty-wrapper {
     width: 100%;
     background: #f4f7fb;
@@ -1132,7 +1211,7 @@ page {
     width: 1rpx;
     height: 60rpx;
     background: rgba(255,255,255,0.12);
-    margin: 0 24rpx;
+    margin: 0 16rpx;
 }
 .price-tag {
     font-size: 20rpx;
@@ -1145,7 +1224,7 @@ page {
     color: rgba(255,255,255,0.7);
 }
 .price-num {
-    font-size: 38rpx;
+    font-size: 34rpx;
     font-weight: 700;
     color: #ffffff;
     letter-spacing: -1rpx;
@@ -1169,14 +1248,26 @@ page {
 }
 
 .price-input {
-    font-size: 38rpx;
+    font-size: 34rpx;
     font-weight: 700;
     color: #ffffff;
     letter-spacing: -1rpx;
-    width: 200rpx;
+    width: 140rpx;
     text-align: right;
     background: transparent;
     border: none;
+}
+
+.price-input-wrap.readonly {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.price-text {
+    font-size: 34rpx;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: -1rpx;
+    line-height: 1.4;
 }
 
 .price-tip {
@@ -1190,8 +1281,8 @@ page {
 }
 
 .tip-icon {
-    font-size: 24rpx;
     margin-right: 8rpx;
+    flex-shrink: 0;
 }
 
 .tip-text {

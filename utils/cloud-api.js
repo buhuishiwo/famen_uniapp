@@ -124,6 +124,11 @@ export const priceApi = {
     return callCloudFunctionRaw('price', { action: 'getPricingRules' });
   },
 
+  // 获取系统配置
+  getSystemConfig(keys) {
+    return callCloudFunctionRaw('price', { action: 'getSystemConfig', keys });
+  },
+
   // 获取所有材质数据
   getMaterials(seriesName) {
     return callCloudFunctionRaw('price', { action: 'getMaterials', seriesName });

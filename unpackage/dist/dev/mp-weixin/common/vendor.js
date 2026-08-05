@@ -11908,9 +11908,9 @@ module.exports = Array.isArray || function (arr) {
 
 /***/ }),
 /* 30 */
-/*!**********************************************!*\
-  !*** D:/Code/famen_minip_uni_new/pages.json ***!
-  \**********************************************/
+/*!********************************************************!*\
+  !*** /Users/meonsaber/Desktop/famen_uniapp/pages.json ***!
+  \********************************************************/
 /*! no static exports found */
 /***/ (function(module, exports) {
 
@@ -12054,9 +12054,9 @@ function normalizeComponent (
 
 /***/ }),
 /* 37 */
-/*!******************************************************************!*\
-  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/index.js ***!
-  \******************************************************************/
+/*!****************************************************************************!*\
+  !*** /Users/meonsaber/Desktop/famen_uniapp/uni_modules/zp-mixins/index.js ***!
+  \****************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12102,9 +12102,9 @@ exports.default = _default;
 
 /***/ }),
 /* 38 */
-/*!************************************************************************************!*\
-  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/lifecycle/pageLifetimes.js ***!
-  \************************************************************************************/
+/*!**********************************************************************************************!*\
+  !*** /Users/meonsaber/Desktop/famen_uniapp/uni_modules/zp-mixins/lifecycle/pageLifetimes.js ***!
+  \**********************************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12149,9 +12149,9 @@ exports.pageLifetimes = pageLifetimes;
 
 /***/ }),
 /* 39 */
-/*!**************************************************************************!*\
-  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/clone.js ***!
-  \**************************************************************************/
+/*!************************************************************************************!*\
+  !*** /Users/meonsaber/Desktop/famen_uniapp/uni_modules/zp-mixins/methods/clone.js ***!
+  \************************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12175,9 +12175,9 @@ function clone(target) {
 
 /***/ }),
 /* 40 */
-/*!****************************************************************************!*\
-  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/dataset.js ***!
-  \****************************************************************************/
+/*!**************************************************************************************!*\
+  !*** /Users/meonsaber/Desktop/famen_uniapp/uni_modules/zp-mixins/methods/dataset.js ***!
+  \**************************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12213,9 +12213,9 @@ function handleDataset(event) {
 
 /***/ }),
 /* 41 */
-/*!***************************************************************************!*\
-  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/escape.js ***!
-  \***************************************************************************/
+/*!*************************************************************************************!*\
+  !*** /Users/meonsaber/Desktop/famen_uniapp/uni_modules/zp-mixins/methods/escape.js ***!
+  \*************************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12265,9 +12265,9 @@ function html2Escape(sHtml) {
 
 /***/ }),
 /* 42 */
-/*!**************************************************************************!*\
-  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/event.js ***!
-  \**************************************************************************/
+/*!************************************************************************************!*\
+  !*** /Users/meonsaber/Desktop/famen_uniapp/uni_modules/zp-mixins/methods/event.js ***!
+  \************************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12291,9 +12291,9 @@ function parseEventDynamicCode(e, exp) {
 
 /***/ }),
 /* 43 */
-/*!******************************************************************************!*\
-  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/getTabBar.js ***!
-  \******************************************************************************/
+/*!****************************************************************************************!*\
+  !*** /Users/meonsaber/Desktop/famen_uniapp/uni_modules/zp-mixins/methods/getTabBar.js ***!
+  \****************************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12326,9 +12326,9 @@ function getTabBar() {
 
 /***/ }),
 /* 44 */
-/*!*****************************************************************************!*\
-  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/relation.js ***!
-  \*****************************************************************************/
+/*!***************************************************************************************!*\
+  !*** /Users/meonsaber/Desktop/famen_uniapp/uni_modules/zp-mixins/methods/relation.js ***!
+  \***************************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12352,9 +12352,9 @@ function getRelationNodes(name) {
 
 /***/ }),
 /* 45 */
-/*!************************************************************************************!*\
-  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/selectComponent.js ***!
-  \************************************************************************************/
+/*!**********************************************************************************************!*\
+  !*** /Users/meonsaber/Desktop/famen_uniapp/uni_modules/zp-mixins/methods/selectComponent.js ***!
+  \**********************************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12570,9 +12570,9 @@ function selectAllComponents(args) {
 
 /***/ }),
 /* 46 */
-/*!****************************************************************************!*\
-  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/methods/setData.js ***!
-  \****************************************************************************/
+/*!**************************************************************************************!*\
+  !*** /Users/meonsaber/Desktop/famen_uniapp/uni_modules/zp-mixins/methods/setData.js ***!
+  \**************************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12676,9 +12676,9 @@ function setData(obj) {
 
 /***/ }),
 /* 47 */
-/*!***********************************************************************!*\
-  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/utils/_set.js ***!
-  \***********************************************************************/
+/*!*********************************************************************************!*\
+  !*** /Users/meonsaber/Desktop/famen_uniapp/uni_modules/zp-mixins/utils/_set.js ***!
+  \*********************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12720,9 +12720,9 @@ exports.default = _default;
 
 /***/ }),
 /* 48 */
-/*!***************************************************************************!*\
-  !*** D:/Code/famen_minip_uni_new/uni_modules/zp-mixins/utils/debounce.js ***!
-  \***************************************************************************/
+/*!*************************************************************************************!*\
+  !*** /Users/meonsaber/Desktop/famen_uniapp/uni_modules/zp-mixins/utils/debounce.js ***!
+  \*************************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12753,9 +12753,9 @@ exports.default = _default;
 
 /***/ }),
 /* 49 */
-/*!***************************************************!*\
-  !*** D:/Code/famen_minip_uni_new/locale/index.js ***!
-  \***************************************************/
+/*!*************************************************************!*\
+  !*** /Users/meonsaber/Desktop/famen_uniapp/locale/index.js ***!
+  \*************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12768,8 +12768,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.translate = exports.toggleLanguage = exports.setLanguage = exports.onChange = exports.mixin = exports.getCurrentLanguage = exports.default = void 0;
 var _typeof2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/typeof */ 13));
-var _zhCN = _interopRequireDefault(__webpack_require__(/*! ./zh-CN.js */ 51));
-var _enUS = _interopRequireDefault(__webpack_require__(/*! ./en-US.js */ 52));
+var _zhCN = _interopRequireDefault(__webpack_require__(/*! ./zh-CN.js */ 50));
+var _enUS = _interopRequireDefault(__webpack_require__(/*! ./en-US.js */ 51));
 function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
@@ -12888,11 +12888,10 @@ exports.default = _default;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))
 
 /***/ }),
-/* 50 */,
-/* 51 */
-/*!***************************************************!*\
-  !*** D:/Code/famen_minip_uni_new/locale/zh-CN.js ***!
-  \***************************************************/
+/* 50 */
+/*!*************************************************************!*\
+  !*** /Users/meonsaber/Desktop/famen_uniapp/locale/zh-CN.js ***!
+  \*************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12974,12 +12973,15 @@ var _default = {
     productType: '产品类型',
     quantity: '数量',
     inputQuantity: '请输入数量',
+    moqHint: '最低起订量：{moq}',
     branding: '磨商标',
     yes: '是',
     no: '否',
     unitPrice: '单　价',
+    originalUnitPrice: '单价',
+    modifiedUnitPrice: '修订单价',
     estimatedTotal: '预估总价',
-    priceTip: '与报价员协商后可手动修改单价作为最终报价，修改后请在报价单备注中说明',
+    priceTip: '如需改价，请编辑修订单价。',
     addToQuote: '添加到报价表',
     generateQuote: '生成报价表',
     quoteDetails: '报价明细',
@@ -13086,10 +13088,10 @@ var _default = {
 exports.default = _default;
 
 /***/ }),
-/* 52 */
-/*!***************************************************!*\
-  !*** D:/Code/famen_minip_uni_new/locale/en-US.js ***!
-  \***************************************************/
+/* 51 */
+/*!*************************************************************!*\
+  !*** /Users/meonsaber/Desktop/famen_uniapp/locale/en-US.js ***!
+  \*************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -13171,12 +13173,15 @@ var _default = {
     productType: 'Product Type',
     quantity: 'Quantity',
     inputQuantity: 'Enter quantity',
+    moqHint: 'MOQ: {moq}',
     branding: 'Branding',
     yes: 'Yes',
     no: 'No',
     unitPrice: 'Unit Price',
+    originalUnitPrice: 'Unit Price',
+    modifiedUnitPrice: 'Adjusted',
     estimatedTotal: 'Estimated Total',
-    priceTip: 'You can manually modify the unit price after negotiation with the salesperson. Please note in quotation remarks after modification.',
+    priceTip: 'To adjust the price, please edit the adjusted price.',
     addToQuote: 'Add to Quotation',
     generateQuote: 'Generate Quotation',
     quoteDetails: 'Quotation Details',
@@ -13283,13 +13288,13 @@ var _default = {
 exports.default = _default;
 
 /***/ }),
+/* 52 */,
 /* 53 */,
 /* 54 */,
 /* 55 */,
 /* 56 */,
 /* 57 */,
-/* 58 */,
-/* 59 */
+/* 58 */
 /*!************************************************************************************************!*\
   !*** ./node_modules/@dcloudio/vue-cli-plugin-uni/packages/@babel/runtime/regenerator/index.js ***!
   \************************************************************************************************/
@@ -13298,11 +13303,11 @@ exports.default = _default;
 
 // TODO(Babel 8): Remove this file.
 
-var runtime = __webpack_require__(/*! @babel/runtime/helpers/regeneratorRuntime */ 60)();
+var runtime = __webpack_require__(/*! @babel/runtime/helpers/regeneratorRuntime */ 59)();
 module.exports = runtime;
 
 /***/ }),
-/* 60 */
+/* 59 */
 /*!*******************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/regeneratorRuntime.js ***!
   \*******************************************************************/
@@ -13623,7 +13628,7 @@ function _regeneratorRuntime() {
 module.exports = _regeneratorRuntime, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
 /***/ }),
-/* 61 */
+/* 60 */
 /*!*****************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/asyncToGenerator.js ***!
   \*****************************************************************/
@@ -13663,10 +13668,10 @@ function _asyncToGenerator(fn) {
 module.exports = _asyncToGenerator, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
 /***/ }),
-/* 62 */
-/*!******************************************************!*\
-  !*** D:/Code/famen_minip_uni_new/utils/cloud-api.js ***!
-  \******************************************************/
+/* 61 */
+/*!****************************************************************!*\
+  !*** /Users/meonsaber/Desktop/famen_uniapp/utils/cloud-api.js ***!
+  \****************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -13678,9 +13683,9 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.userApi = exports.storage = exports.quotationApi = exports.priceApi = exports.default = void 0;
-var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/regenerator */ 59));
+var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/regenerator */ 58));
 var _defineProperty2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/defineProperty */ 11));
-var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/asyncToGenerator */ 61));
+var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/asyncToGenerator */ 60));
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { (0, _defineProperty2.default)(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 // 微信云开发 API 封装
@@ -13851,6 +13856,13 @@ var priceApi = {
   getPricingRules: function getPricingRules() {
     return callCloudFunctionRaw('price', {
       action: 'getPricingRules'
+    });
+  },
+  // 获取系统配置
+  getSystemConfig: function getSystemConfig(keys) {
+    return callCloudFunctionRaw('price', {
+      action: 'getSystemConfig',
+      keys: keys
     });
   },
   // 获取所有材质数据
@@ -14040,6 +14052,561 @@ var _default = {
 };
 exports.default = _default;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/wx.js */ 1)["default"], __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))
+
+/***/ }),
+/* 62 */,
+/* 63 */,
+/* 64 */,
+/* 65 */,
+/* 66 */,
+/* 67 */,
+/* 68 */,
+/* 69 */,
+/* 70 */,
+/* 71 */,
+/* 72 */,
+/* 73 */,
+/* 74 */,
+/* 75 */,
+/* 76 */,
+/* 77 */,
+/* 78 */,
+/* 79 */,
+/* 80 */,
+/* 81 */,
+/* 82 */,
+/* 83 */,
+/* 84 */,
+/* 85 */,
+/* 86 */,
+/* 87 */,
+/* 88 */,
+/* 89 */,
+/* 90 */,
+/* 91 */,
+/* 92 */,
+/* 93 */,
+/* 94 */,
+/* 95 */,
+/* 96 */,
+/* 97 */,
+/* 98 */,
+/* 99 */,
+/* 100 */,
+/* 101 */,
+/* 102 */,
+/* 103 */,
+/* 104 */,
+/* 105 */,
+/* 106 */,
+/* 107 */,
+/* 108 */,
+/* 109 */,
+/* 110 */,
+/* 111 */,
+/* 112 */,
+/* 113 */,
+/* 114 */
+/*!**************************************************************************************************************!*\
+  !*** /Users/meonsaber/Desktop/famen_uniapp/node_modules/@dcloudio/uni-ui/lib/uni-icons/uniicons_file_vue.js ***!
+  \**************************************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.fontData = void 0;
+var fontData = [{
+  "font_class": "arrow-down",
+  "unicode": "\uE6BE"
+}, {
+  "font_class": "arrow-left",
+  "unicode": "\uE6BC"
+}, {
+  "font_class": "arrow-right",
+  "unicode": "\uE6BB"
+}, {
+  "font_class": "arrow-up",
+  "unicode": "\uE6BD"
+}, {
+  "font_class": "auth",
+  "unicode": "\uE6AB"
+}, {
+  "font_class": "auth-filled",
+  "unicode": "\uE6CC"
+}, {
+  "font_class": "back",
+  "unicode": "\uE6B9"
+}, {
+  "font_class": "bars",
+  "unicode": "\uE627"
+}, {
+  "font_class": "calendar",
+  "unicode": "\uE6A0"
+}, {
+  "font_class": "calendar-filled",
+  "unicode": "\uE6C0"
+}, {
+  "font_class": "camera",
+  "unicode": "\uE65A"
+}, {
+  "font_class": "camera-filled",
+  "unicode": "\uE658"
+}, {
+  "font_class": "cart",
+  "unicode": "\uE631"
+}, {
+  "font_class": "cart-filled",
+  "unicode": "\uE6D0"
+}, {
+  "font_class": "chat",
+  "unicode": "\uE65D"
+}, {
+  "font_class": "chat-filled",
+  "unicode": "\uE659"
+}, {
+  "font_class": "chatboxes",
+  "unicode": "\uE696"
+}, {
+  "font_class": "chatboxes-filled",
+  "unicode": "\uE692"
+}, {
+  "font_class": "chatbubble",
+  "unicode": "\uE697"
+}, {
+  "font_class": "chatbubble-filled",
+  "unicode": "\uE694"
+}, {
+  "font_class": "checkbox",
+  "unicode": "\uE62B"
+}, {
+  "font_class": "checkbox-filled",
+  "unicode": "\uE62C"
+}, {
+  "font_class": "checkmarkempty",
+  "unicode": "\uE65C"
+}, {
+  "font_class": "circle",
+  "unicode": "\uE65B"
+}, {
+  "font_class": "circle-filled",
+  "unicode": "\uE65E"
+}, {
+  "font_class": "clear",
+  "unicode": "\uE66D"
+}, {
+  "font_class": "close",
+  "unicode": "\uE673"
+}, {
+  "font_class": "closeempty",
+  "unicode": "\uE66C"
+}, {
+  "font_class": "cloud-download",
+  "unicode": "\uE647"
+}, {
+  "font_class": "cloud-download-filled",
+  "unicode": "\uE646"
+}, {
+  "font_class": "cloud-upload",
+  "unicode": "\uE645"
+}, {
+  "font_class": "cloud-upload-filled",
+  "unicode": "\uE648"
+}, {
+  "font_class": "color",
+  "unicode": "\uE6CF"
+}, {
+  "font_class": "color-filled",
+  "unicode": "\uE6C9"
+}, {
+  "font_class": "compose",
+  "unicode": "\uE67F"
+}, {
+  "font_class": "contact",
+  "unicode": "\uE693"
+}, {
+  "font_class": "contact-filled",
+  "unicode": "\uE695"
+}, {
+  "font_class": "down",
+  "unicode": "\uE6B8"
+}, {
+  "font_class": "bottom",
+  "unicode": "\uE6B8"
+}, {
+  "font_class": "download",
+  "unicode": "\uE68D"
+}, {
+  "font_class": "download-filled",
+  "unicode": "\uE681"
+}, {
+  "font_class": "email",
+  "unicode": "\uE69E"
+}, {
+  "font_class": "email-filled",
+  "unicode": "\uE69A"
+}, {
+  "font_class": "eye",
+  "unicode": "\uE651"
+}, {
+  "font_class": "eye-filled",
+  "unicode": "\uE66A"
+}, {
+  "font_class": "eye-slash",
+  "unicode": "\uE6B3"
+}, {
+  "font_class": "eye-slash-filled",
+  "unicode": "\uE6B4"
+}, {
+  "font_class": "fire",
+  "unicode": "\uE6A1"
+}, {
+  "font_class": "fire-filled",
+  "unicode": "\uE6C5"
+}, {
+  "font_class": "flag",
+  "unicode": "\uE65F"
+}, {
+  "font_class": "flag-filled",
+  "unicode": "\uE660"
+}, {
+  "font_class": "folder-add",
+  "unicode": "\uE6A9"
+}, {
+  "font_class": "folder-add-filled",
+  "unicode": "\uE6C8"
+}, {
+  "font_class": "font",
+  "unicode": "\uE6A3"
+}, {
+  "font_class": "forward",
+  "unicode": "\uE6BA"
+}, {
+  "font_class": "gear",
+  "unicode": "\uE664"
+}, {
+  "font_class": "gear-filled",
+  "unicode": "\uE661"
+}, {
+  "font_class": "gift",
+  "unicode": "\uE6A4"
+}, {
+  "font_class": "gift-filled",
+  "unicode": "\uE6C4"
+}, {
+  "font_class": "hand-down",
+  "unicode": "\uE63D"
+}, {
+  "font_class": "hand-down-filled",
+  "unicode": "\uE63C"
+}, {
+  "font_class": "hand-up",
+  "unicode": "\uE63F"
+}, {
+  "font_class": "hand-up-filled",
+  "unicode": "\uE63E"
+}, {
+  "font_class": "headphones",
+  "unicode": "\uE630"
+}, {
+  "font_class": "heart",
+  "unicode": "\uE639"
+}, {
+  "font_class": "heart-filled",
+  "unicode": "\uE641"
+}, {
+  "font_class": "help",
+  "unicode": "\uE679"
+}, {
+  "font_class": "help-filled",
+  "unicode": "\uE674"
+}, {
+  "font_class": "home",
+  "unicode": "\uE662"
+}, {
+  "font_class": "home-filled",
+  "unicode": "\uE663"
+}, {
+  "font_class": "image",
+  "unicode": "\uE670"
+}, {
+  "font_class": "image-filled",
+  "unicode": "\uE678"
+}, {
+  "font_class": "images",
+  "unicode": "\uE650"
+}, {
+  "font_class": "images-filled",
+  "unicode": "\uE64B"
+}, {
+  "font_class": "info",
+  "unicode": "\uE669"
+}, {
+  "font_class": "info-filled",
+  "unicode": "\uE649"
+}, {
+  "font_class": "left",
+  "unicode": "\uE6B7"
+}, {
+  "font_class": "link",
+  "unicode": "\uE6A5"
+}, {
+  "font_class": "list",
+  "unicode": "\uE644"
+}, {
+  "font_class": "location",
+  "unicode": "\uE6AE"
+}, {
+  "font_class": "location-filled",
+  "unicode": "\uE6AF"
+}, {
+  "font_class": "locked",
+  "unicode": "\uE66B"
+}, {
+  "font_class": "locked-filled",
+  "unicode": "\uE668"
+}, {
+  "font_class": "loop",
+  "unicode": "\uE633"
+}, {
+  "font_class": "mail-open",
+  "unicode": "\uE643"
+}, {
+  "font_class": "mail-open-filled",
+  "unicode": "\uE63A"
+}, {
+  "font_class": "map",
+  "unicode": "\uE667"
+}, {
+  "font_class": "map-filled",
+  "unicode": "\uE666"
+}, {
+  "font_class": "map-pin",
+  "unicode": "\uE6AD"
+}, {
+  "font_class": "map-pin-ellipse",
+  "unicode": "\uE6AC"
+}, {
+  "font_class": "medal",
+  "unicode": "\uE6A2"
+}, {
+  "font_class": "medal-filled",
+  "unicode": "\uE6C3"
+}, {
+  "font_class": "mic",
+  "unicode": "\uE671"
+}, {
+  "font_class": "mic-filled",
+  "unicode": "\uE677"
+}, {
+  "font_class": "micoff",
+  "unicode": "\uE67E"
+}, {
+  "font_class": "micoff-filled",
+  "unicode": "\uE6B0"
+}, {
+  "font_class": "minus",
+  "unicode": "\uE66F"
+}, {
+  "font_class": "minus-filled",
+  "unicode": "\uE67D"
+}, {
+  "font_class": "more",
+  "unicode": "\uE64D"
+}, {
+  "font_class": "more-filled",
+  "unicode": "\uE64E"
+}, {
+  "font_class": "navigate",
+  "unicode": "\uE66E"
+}, {
+  "font_class": "navigate-filled",
+  "unicode": "\uE67A"
+}, {
+  "font_class": "notification",
+  "unicode": "\uE6A6"
+}, {
+  "font_class": "notification-filled",
+  "unicode": "\uE6C1"
+}, {
+  "font_class": "paperclip",
+  "unicode": "\uE652"
+}, {
+  "font_class": "paperplane",
+  "unicode": "\uE672"
+}, {
+  "font_class": "paperplane-filled",
+  "unicode": "\uE675"
+}, {
+  "font_class": "person",
+  "unicode": "\uE699"
+}, {
+  "font_class": "person-filled",
+  "unicode": "\uE69D"
+}, {
+  "font_class": "personadd",
+  "unicode": "\uE69F"
+}, {
+  "font_class": "personadd-filled",
+  "unicode": "\uE698"
+}, {
+  "font_class": "personadd-filled-copy",
+  "unicode": "\uE6D1"
+}, {
+  "font_class": "phone",
+  "unicode": "\uE69C"
+}, {
+  "font_class": "phone-filled",
+  "unicode": "\uE69B"
+}, {
+  "font_class": "plus",
+  "unicode": "\uE676"
+}, {
+  "font_class": "plus-filled",
+  "unicode": "\uE6C7"
+}, {
+  "font_class": "plusempty",
+  "unicode": "\uE67B"
+}, {
+  "font_class": "pulldown",
+  "unicode": "\uE632"
+}, {
+  "font_class": "pyq",
+  "unicode": "\uE682"
+}, {
+  "font_class": "qq",
+  "unicode": "\uE680"
+}, {
+  "font_class": "redo",
+  "unicode": "\uE64A"
+}, {
+  "font_class": "redo-filled",
+  "unicode": "\uE655"
+}, {
+  "font_class": "refresh",
+  "unicode": "\uE657"
+}, {
+  "font_class": "refresh-filled",
+  "unicode": "\uE656"
+}, {
+  "font_class": "refreshempty",
+  "unicode": "\uE6BF"
+}, {
+  "font_class": "reload",
+  "unicode": "\uE6B2"
+}, {
+  "font_class": "right",
+  "unicode": "\uE6B5"
+}, {
+  "font_class": "scan",
+  "unicode": "\uE62A"
+}, {
+  "font_class": "search",
+  "unicode": "\uE654"
+}, {
+  "font_class": "settings",
+  "unicode": "\uE653"
+}, {
+  "font_class": "settings-filled",
+  "unicode": "\uE6CE"
+}, {
+  "font_class": "shop",
+  "unicode": "\uE62F"
+}, {
+  "font_class": "shop-filled",
+  "unicode": "\uE6CD"
+}, {
+  "font_class": "smallcircle",
+  "unicode": "\uE67C"
+}, {
+  "font_class": "smallcircle-filled",
+  "unicode": "\uE665"
+}, {
+  "font_class": "sound",
+  "unicode": "\uE684"
+}, {
+  "font_class": "sound-filled",
+  "unicode": "\uE686"
+}, {
+  "font_class": "spinner-cycle",
+  "unicode": "\uE68A"
+}, {
+  "font_class": "staff",
+  "unicode": "\uE6A7"
+}, {
+  "font_class": "staff-filled",
+  "unicode": "\uE6CB"
+}, {
+  "font_class": "star",
+  "unicode": "\uE688"
+}, {
+  "font_class": "star-filled",
+  "unicode": "\uE68F"
+}, {
+  "font_class": "starhalf",
+  "unicode": "\uE683"
+}, {
+  "font_class": "trash",
+  "unicode": "\uE687"
+}, {
+  "font_class": "trash-filled",
+  "unicode": "\uE685"
+}, {
+  "font_class": "tune",
+  "unicode": "\uE6AA"
+}, {
+  "font_class": "tune-filled",
+  "unicode": "\uE6CA"
+}, {
+  "font_class": "undo",
+  "unicode": "\uE64F"
+}, {
+  "font_class": "undo-filled",
+  "unicode": "\uE64C"
+}, {
+  "font_class": "up",
+  "unicode": "\uE6B6"
+}, {
+  "font_class": "top",
+  "unicode": "\uE6B6"
+}, {
+  "font_class": "upload",
+  "unicode": "\uE690"
+}, {
+  "font_class": "upload-filled",
+  "unicode": "\uE68E"
+}, {
+  "font_class": "videocam",
+  "unicode": "\uE68C"
+}, {
+  "font_class": "videocam-filled",
+  "unicode": "\uE689"
+}, {
+  "font_class": "vip",
+  "unicode": "\uE6A8"
+}, {
+  "font_class": "vip-filled",
+  "unicode": "\uE6C6"
+}, {
+  "font_class": "wallet",
+  "unicode": "\uE6B1"
+}, {
+  "font_class": "wallet-filled",
+  "unicode": "\uE6C2"
+}, {
+  "font_class": "weibo",
+  "unicode": "\uE68B"
+}, {
+  "font_class": "weixin",
+  "unicode": "\uE691"
+}];
+
+// export const fontData = JSON.parse<IconsDataItem>(fontDataJson)
+exports.fontData = fontData;
 
 /***/ })
 ]]);

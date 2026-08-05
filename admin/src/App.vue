@@ -36,6 +36,10 @@
             <PercentageOutlined />
             <span>报价系数</span>
           </a-menu-item>
+          <a-menu-item key="pricing-rules">
+            <ControlOutlined />
+            <span>报价规则</span>
+          </a-menu-item>
           <a-menu-item key="material">
             <BgColorsOutlined />
             <span>材质标配</span>
@@ -79,6 +83,12 @@
           </div>
           <div class="header-right">
             <a-tag color="blue" class="env-tag">环境: cloud1-d2g6k45v21dd52696</a-tag>
+            <a-tooltip title="导出所有产品数据为 Excel">
+              <a-button type="text" :loading="exporting" @click="exportAllData" class="export-btn">
+                <template #icon><DownloadOutlined /></template>
+                导出数据
+              </a-button>
+            </a-tooltip>
             <a-button type="text" @click="handleLogout">退出登录</a-button>
             <a-avatar style="background-color: #1677ff" size="small">A</a-avatar>
           </div>
@@ -101,6 +111,8 @@
 import { ref, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import zhCN from 'ant-design-vue/es/locale/zh_CN';
+import { message } from 'ant-design-vue';
+import * as XLSX from 'xlsx';
 import {
   DashboardOutlined,
   AppstoreOutlined,
@@ -116,8 +128,11 @@ import {
   TeamOutlined,
   FileTextOutlined,
   MenuFoldOutlined,
-  MenuUnfoldOutlined
+  MenuUnfoldOutlined,
+  ControlOutlined,
+  DownloadOutlined
 } from '@ant-design/icons-vue';
+import { seriesApi, modelApi, priceApi, materialApi, coefficientApi, modelSpecApi } from './api';
 
 const router = useRouter();
 const route = useRoute();
@@ -134,6 +149,7 @@ const pageTitles = {
   price: '价格管理',
   material: '材质标配',
   coefficient: '报价系数',
+  'pricing-rules': '报价规则',
   'material-diff': '材质价差',
   'material-lib': '材质库',
   'material-combo': '材质组合',
@@ -155,6 +171,82 @@ function handleMenuClick({ key }) {
 function handleLogout() {
   localStorage.removeItem('admin_token');
   router.push('/login');
+}
+
+const exporting = ref(false);
+
+async function exportAllData() {
+  exporting.value = true;
+  try {
+    const [seriesData, modelsData, pricesData, materialsData, specsData, coeffData] = await Promise.all([
+      seriesApi.getAll(),
+      modelApi.getAll(),
+      priceApi.getAll(),
+      materialApi.getAll(),
+      modelSpecApi.getAll({}),
+      coefficientApi.getAll()
+    ]);
+
+    const wb = XLSX.utils.book_new();
+
+    // Sheet 1: 产品系列
+    const seriesRows = (seriesData || []).map(s => ({
+      'ID': s.id, '系列名称': s.name, '图片': s.image || ''
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(seriesRows.length ? seriesRows : [{}]), '产品系列');
+
+    // Sheet 2: 阀门型号
+    const modelRows = [];
+    if (modelsData && typeof modelsData === 'object') {
+      for (const [seriesName, models] of Object.entries(modelsData)) {
+        for (const m of models) {
+          modelRows.push({ 'ID': m.id, '所属系列': seriesName, '型号名称': m.name, '类型代码': m.type || '' });
+        }
+      }
+    }
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(modelRows.length ? modelRows : [{}]), '阀门型号');
+
+    // Sheet 3: 价格数据
+    const priceRows = (pricesData || []).map(p => ({
+      'ID': p.id, '所属系列': p.seriesName || '', '阀门型号': p.valveName || '', '规格(DN)': p.size,
+      '基础价格': p.price, '闸板304差价': p.gatePlate304Diff, '闸板316差价': p.gatePlate316Diff,
+      '阀杆304差价': p.rod304Diff, '阀杆316差价': p.rod316Diff, '磨标费': p.brandingFee,
+      '最小起订量': p.minOrderQty, '状态': p.status === 'enabled' ? '启用' : '禁用', '备注': p.remark || ''
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(priceRows.length ? priceRows : [{}]), '价格数据');
+
+    // Sheet 4: 材质配置
+    const materialRows = (materialsData || []).map(m => ({
+      'ID': m.id, '所属系列': m.seriesName || '', '阀门型号': m.valveName || '',
+      '阀体材质': m.bodyMaterial || '', '闸板材质': m.gatePlateMaterial || '',
+      '阀杆材质': m.stemMaterial || '', '支架材质': m.yokeMaterial || '', '备注': m.remark || ''
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(materialRows.length ? materialRows : [{}]), '材质配置');
+
+    // Sheet 5: 规格参数
+    const specRows = (specsData || []).map(s => ({
+      'ID': s.id, '所属系列': s.seriesName || '', '阀门型号': s.valveName || '', '规格(DN)': s.size,
+      '最大压力': s.maxPressure || '', '单重': s.unitWeight || '', '圈数': s.laps || '', '扭矩': s.torque || ''
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(specRows.length ? specRows : [{}]), '规格参数');
+
+    // Sheet 6: 报价系数
+    const coeffRows = (coeffData || []).map(c => ({
+      'ID': c.id, '系列名称': c.seriesName || '', '产品名称': c.productName || '',
+      'DN最小值': c.dnMin, 'DN最大值': c.dnMax, '最小起订量': c.minOrderQty,
+      '满足起订量-原厂系数': c.moqMetOriginalCoeff, '满足起订量-OEM系数': c.moqMetOemCoeff,
+      '未满足起订量-原厂系数': c.moqUnmetOriginalCoeff, '未满足起订量-OEM系数': c.moqUnmetOemCoeff
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(coeffRows.length ? coeffRows : [{}]), '报价系数');
+
+    XLSX.writeFile(wb, `产品数据导出_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    message.success('导出成功');
+  } catch (e) {
+    console.error('导出失败:', e);
+    message.error('导出失败: ' + (e.message || '未知错误'));
+  } finally {
+    exporting.value = false;
+  }
 }
 </script>
 
@@ -256,6 +348,15 @@ function handleLogout() {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.export-btn {
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 13px;
+}
+
+.export-btn:hover {
+  color: #1677ff;
 }
 
 .env-tag {

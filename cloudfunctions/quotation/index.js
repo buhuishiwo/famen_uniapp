@@ -25,7 +25,68 @@ exports.main = async (event, context) => {
 
 // ========== 价格计算 ==========
 
+// 价格计算模式：'engine' = 使用规则引擎, 'legacy' = 使用旧逻辑, 'auto' = 自动切换（优先引擎，兜底旧逻辑）
+const PRICING_MODE = 'auto';
+
+/**
+ * 尝试使用规则引擎计算价格
+ * @returns {object|null} 成功返回计算结果，失败返回 null
+ */
+async function tryCalcWithEngine(item) {
+  try {
+    // 检查是否存在启用的规则组
+    const { data: ruleGroups } = await rdb.from('pricing_rule_groups')
+      .select('id')
+      .eq('is_enabled', 1);
+    
+    if (!ruleGroups || ruleGroups.length === 0) {
+      return null; // 没有规则组，使用旧逻辑
+    }
+
+    // 调用规则引擎云函数
+    const result = await app.callFunction({
+      name: 'pricing-engine',
+      data: { action: 'calcPrice', item, useEngine: true }
+    });
+
+    if (result.result && result.result.success && result.result.data) {
+      return result.result.data;
+    }
+    return null;
+  } catch (e) {
+    console.warn('[tryCalcWithEngine] 规则引擎调用失败，使用旧逻辑:', e.message);
+    return null;
+  }
+}
+
 async function calcItemPrice(item) {
+  // 根据配置选择计算模式
+  if (PRICING_MODE === 'engine') {
+    const engineResult = await tryCalcWithEngine(item);
+    if (engineResult) {
+      return engineResult;
+    }
+    throw new Error('规则引擎计算失败');
+  }
+
+  // 自动模式：优先引擎，兜底旧逻辑
+  if (PRICING_MODE === 'auto') {
+    const engineResult = await tryCalcWithEngine(item);
+    if (engineResult) {
+      return engineResult;
+    }
+    // 兜底：使用旧逻辑计算
+    console.warn('[calcItemPrice] 使用旧逻辑兜底计算');
+  }
+
+  // 旧逻辑计算
+  return await calcItemPriceLegacy(item);
+}
+
+/**
+ * 旧版价格计算逻辑（兜底方案）
+ */
+async function calcItemPriceLegacy(item) {
   const { data: models, error: mErr } = await rdb.from('valve_models').select('id,series_id').eq('name', item.valveName);
   if (mErr) throw new Error('DB错误');
   if (!models || models.length === 0) throw new Error('阀门型号不存在: ' + item.valveName);

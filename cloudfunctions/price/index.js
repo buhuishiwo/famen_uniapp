@@ -44,6 +44,7 @@ exports.main = async (event, context) => {
       case 'getMaterialByModel': return await getMaterialByModel(event);
       case 'getMaterialDiffs': return await getMaterialDiffs(event);
       case 'getMaterialDiff': return await getMaterialDiff(event);
+      case 'getMaterialDiffByPart': return await getMaterialDiffByPart(event);
       case 'getAllMaterials': return await getAllMaterials();
       case 'getDashboardStats': return await getDashboardStats();
 
@@ -95,6 +96,10 @@ exports.main = async (event, context) => {
       case 'updateCustomer': return await updateCustomer(event);
       case 'deleteCustomer': return await deleteCustomer(event);
       case 'uploadImage': return await uploadImage(event);
+
+      // ===== 系统设置 =====
+      case 'getSystemConfig': return await getSystemConfig(event);
+      case 'setSystemConfig': return await setSystemConfig(event);
 
       default: return { success: false, message: '未知操作: ' + action };
     }
@@ -490,6 +495,82 @@ async function getMaterialDiff(event) {
     return { success: true, data: null };
   } catch (e) {
     console.error('[getMaterialDiff] 错误:', e);
+    return { success: false, message: e.message };
+  }
+}
+
+/**
+ * 按部位查询材质差价（带优先级匹配）
+ * 优先级：精确(型号+尺寸) > 型号 > 系列 > 全局
+ */
+async function getMaterialDiffByPart(event) {
+  const { seriesName, modelName, size, partName, baseMaterial, targetMaterial } = event;
+  if (!partName || !baseMaterial || !targetMaterial) {
+    return { success: true, data: null };
+  }
+
+  // baseMaterial 和 targetMaterial 相同说明没有材质变化
+  if (baseMaterial === targetMaterial) {
+    return { success: true, data: null };
+  }
+
+  try {
+    var allDiffs = await selectAll('material_price_diffs', '*');
+
+    const candidates = allDiffs.filter(function(d) {
+      return d.part_name === partName
+        && d.base_material === baseMaterial
+        && d.target_material === targetMaterial;
+    });
+
+    if (candidates.length === 0) {
+      return { success: true, data: null };
+    }
+
+    // 优先级匹配
+    let matched = null;
+
+    // 1. 精确匹配：型号 + 尺寸
+    if (modelName && size !== undefined && size !== null) {
+      matched = candidates.find(d =>
+        d.model_name === modelName && Number(d.size) === Number(size)
+      );
+    }
+
+    // 2. 型号级匹配（不限尺寸）
+    if (!matched && modelName) {
+      matched = candidates.find(d => d.model_name === modelName && (d.size === null || d.size === undefined));
+    }
+
+    // 3. 系列级匹配
+    if (!matched && seriesName) {
+      matched = candidates.find(d =>
+        d.series_name === seriesName
+        && (d.model_name === null || d.model_name === undefined || d.model_name === '')
+      );
+    }
+
+    // 4. 全局匹配
+    if (!matched) {
+      matched = candidates.find(d =>
+        (d.series_name === null || d.series_name === undefined || d.series_name === '')
+        && (d.model_name === null || d.model_name === undefined || d.model_name === '')
+      );
+    }
+
+    if (matched) {
+      return {
+        success: true,
+        data: {
+          priceDiff: Number(matched.price_diff) || 0,
+          level: matched.model_name ? (matched.size ? 'exact' : 'model') : (matched.series_name ? 'series' : 'global')
+        }
+      };
+    }
+
+    return { success: true, data: null };
+  } catch (e) {
+    console.error('[getMaterialDiffByPart] 错误:', e);
     return { success: false, message: e.message };
   }
 }
@@ -1525,5 +1606,83 @@ async function getDashboardStats() {
   } catch (error) {
     console.error('[getDashboardStats] 错误:', error);
     return { success: false, message: '获取统计数据失败: ' + error.message };
+  }
+}
+
+// ===== 系统设置 =====
+
+async function getSystemConfig(event) {
+  const { keys } = event;
+  try {
+    const allSettings = await selectAll('system_settings', '*');
+    const config = {};
+    for (const s of allSettings) {
+      config[s.setting_key] = s.setting_value;
+    }
+
+    // 默认值
+    const defaults = {
+      allow_price_modification: 'true'
+    };
+    for (const k in defaults) {
+      if (config[k] === undefined) config[k] = defaults[k];
+    }
+
+    // 如果只请求特定 key
+    if (keys && Array.isArray(keys)) {
+      const filtered = {};
+      for (const k of keys) {
+        filtered[k] = config[k] !== undefined ? config[k] : (defaults[k] || null);
+      }
+      return { success: true, data: filtered };
+    }
+
+    return { success: true, data: config };
+  } catch (e) {
+    // 表可能不存在，返回默认值
+    console.warn('[getSystemConfig] 查询失败，返回默认值:', e.message);
+    const defaults = {
+      allow_price_modification: 'true'
+    };
+    if (keys && Array.isArray(keys)) {
+      const filtered = {};
+      for (const k of keys) {
+        filtered[k] = defaults[k] !== undefined ? defaults[k] : null;
+      }
+      return { success: true, data: filtered };
+    }
+    return { success: true, data: defaults };
+  }
+}
+
+async function setSystemConfig(event) {
+  const { key, value } = event;
+  if (!key) return { success: false, message: '设置键不能为空' };
+
+  try {
+    // 先查是否存在
+    const { data: existing } = await rdb.from('system_settings')
+      .select('id')
+      .eq('setting_key', key);
+
+    if (existing && existing.length > 0) {
+      // 更新
+      const { error } = await rdb.from('system_settings')
+        .update({ setting_value: String(value) })
+        .eq('setting_key', key);
+      if (error) return { success: false, message: '更新设置失败: ' + error.message };
+    } else {
+      // 插入
+      const { error } = await rdb.from('system_settings').insert({
+        setting_key: key,
+        setting_value: String(value)
+      });
+      if (error) return { success: false, message: '保存设置失败: ' + error.message };
+    }
+
+    return { success: true, data: { key, value: String(value) } };
+  } catch (e) {
+    console.error('[setSystemConfig] 错误:', e);
+    return { success: false, message: '保存设置失败: ' + e.message };
   }
 }

@@ -140,6 +140,9 @@ export const materialApi = {
   getBySeries(seriesName) {
     return callCloudFunction({ action: 'getMaterials', seriesName });
   },
+  getByModel(modelId) {
+    return callCloudFunction({ action: 'getMaterialByModel', modelId });
+  },
   create(data) {
     return callCloudFunction({ action: 'createMaterial', data });
   },
@@ -272,6 +275,12 @@ export const statsApi = {
   getDashboardStats() {
     return callCloudFunction({ action: 'getDashboardStats' });
   },
+  getSystemConfig(keys) {
+    return callCloudFunction({ action: 'getSystemConfig', keys });
+  },
+  setSystemConfig(key, value) {
+    return callCloudFunction({ action: 'setSystemConfig', key, value });
+  },
   async getOrderStats() {
     try {
       await ensureAuth();
@@ -381,5 +390,91 @@ export const userApi = {
         }
       }).catch(reject);
     });
+  }
+};
+
+// ========== 报价规则引擎 API ==========
+async function callPricingEngine(data = {}) {
+  try {
+    await ensureAuth();
+    const result = await app.callFunction({
+      name: 'pricing-engine',
+      data: data
+    });
+    const res = result.result;
+    if (res.success) {
+      return res.data;
+    }
+    throw new Error(res.message || '请求失败');
+  } catch (error) {
+    console.error('Pricing Engine Cloud Function Error:', error);
+    throw error;
+  }
+}
+
+export const pricingEngineApi = {
+  // 规则组管理
+  getRuleGroups() {
+    return callPricingEngine({ action: 'getRuleGroups' });
+  },
+  getRuleGroup(id) {
+    return callPricingEngine({ action: 'getRuleGroup', id });
+  },
+  createRuleGroup(data) {
+    return callPricingEngine({ action: 'createRuleGroup', data });
+  },
+  updateRuleGroup(id, data) {
+    return callPricingEngine({ action: 'updateRuleGroup', id, data });
+  },
+  deleteRuleGroup(id) {
+    return callPricingEngine({ action: 'deleteRuleGroup', id });
+  },
+  toggleRuleGroup(id, isEnabled) {
+    return callPricingEngine({ action: 'toggleRuleGroup', id, isEnabled });
+  },
+  initDefaultRules() {
+    return callPricingEngine({ action: 'initDefaultRules' });
+  },
+
+  // 条件管理
+  getConditions(groupId) {
+    return callPricingEngine({ action: 'getConditions', groupId });
+  },
+  addCondition(data) {
+    return callPricingEngine({ action: 'addCondition', data });
+  },
+  updateCondition(id, data) {
+    return callPricingEngine({ action: 'updateCondition', id, data });
+  },
+  deleteCondition(id) {
+    return callPricingEngine({ action: 'deleteCondition', id });
+  },
+  async deleteConditionsByGroup(groupId) {
+    return callPricingEngine({ action: 'deleteConditionsByGroup', groupId });
+  },
+
+  // 动作管理
+  getActions(groupId) {
+    return callPricingEngine({ action: 'getActions', groupId });
+  },
+  addAction(data) {
+    return callPricingEngine({ action: 'addAction', data });
+  },
+  updateAction(id, data) {
+    return callPricingEngine({ action: 'updateAction', id, data });
+  },
+  deleteAction(id) {
+    return callPricingEngine({ action: 'deleteAction', id });
+  },
+  async deleteActionsByGroup(groupId) {
+    return callPricingEngine({ action: 'deleteActionsByGroup', groupId });
+  },
+
+  // 计算和测试
+  testRules(item) {
+    return callPricingEngine({ action: 'testRules', item });
+  },
+  calcPrice(item, useEngine = true) {
+    return callPricingEngine({ action: 'calcPrice', item, useEngine });
   }
 };

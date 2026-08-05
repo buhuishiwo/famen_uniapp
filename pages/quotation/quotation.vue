@@ -29,12 +29,6 @@
 
                 <view class="card">
                     <view class="info-row">
-                        <text class="info-label">{{ $t('quotation.salePerson') }}</text>
-                        <input class="info-input" :placeholder="$t('quotation.salePersonPlaceholder')" placeholder-class="placeholder-style" @input="onSalespersonInput"
-                            :value="salesperson" />
-                    </view>
-                    <view class="divider-line"></view>
-                    <view class="info-row">
                         <text class="info-label">{{ $t('quotation.customerName') }}</text>
                         <input class="info-input" :placeholder="$t('quotation.customerPlaceholder')" placeholder-class="placeholder-style" @input="onCustomerNameInput"
                             :value="customerName" />
@@ -234,7 +228,6 @@ export default {
             quoteData: [],
             currentDate: '',
             customerName: '',
-            salesperson: '',
             note: '',
             paymentMethod: '',
             packaging: '',
@@ -356,7 +349,6 @@ export default {
         },
 
         onCustomerNameInput(e) { this.customerName = e.detail.value; },
-        onSalespersonInput(e) { this.salesperson = e.detail.value; },
 
         onNoteInput(e) { this.note = e.detail.value; },
         onPaymentMethodInput(e) { this.paymentMethod = e.detail.value; },
@@ -507,12 +499,12 @@ export default {
 
                     ctx.setFontSize(15);
                     ctx.setFillStyle('#475569');
-                    const salesLabel = this.$t('quotation.salePerson') + '：';
-                    ctx.fillText(salesLabel, 30, y);
-                    const salesLabelWidth = ctx.measureText(salesLabel).width;
+                    const quoterLabel = this.$t('quotation.quoter') + '：';
+                    ctx.fillText(quoterLabel, 30, y);
+                    const quoterLabelWidth = ctx.measureText(quoterLabel).width;
                     ctx.setFontSize(15);
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(this.salesperson || this.$t('quotation.noSalePerson'), 30 + salesLabelWidth + 8, y);
+                    ctx.fillText(this.quoter || this.$t('quotation.noSalePerson'), 30 + quoterLabelWidth + 8, y);
                     y += 35 * scale;
 
                     ctx.setFontSize(15);

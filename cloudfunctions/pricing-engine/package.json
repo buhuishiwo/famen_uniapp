@@ -1,0 +1,9 @@
+{
+  "name": "pricing-engine",
+  "version": "1.0.0",
+  "description": "报价规则引擎云函数",
+  "main": "index.js",
+  "dependencies": {
+    "@cloudbase/node-sdk": "latest"
+  }
+}

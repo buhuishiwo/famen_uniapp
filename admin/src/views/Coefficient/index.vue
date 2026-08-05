@@ -25,6 +25,13 @@
           </a-button>
         </a-space>
       </template>
+      <a-alert
+        class="coeff-link-hint"
+        type="info"
+        show-icon
+        :message="'此处配置的系数将被报价规则引擎自动引用（通过「报价系数查询」动作），无需在规则中重复配置系数值'"
+        :closable="true"
+      />
       <template v-if="loading">
         <a-table :columns="columns" :data-source="skeletonData" :pagination="false" rowKey="key" size="middle" :scroll="{ x: 1100 }">
           <template #bodyCell="{ column }">
@@ -475,5 +482,13 @@ async function handleBatchSetBrandingFee() {
   background: #fafafa;
   border-radius: 8px;
   padding: 12px 16px;
+}
+
+.coeff-link-hint {
+  margin-bottom: 12px;
+}
+
+.coeff-link-hint :deep(.ant-alert-message) {
+  font-size: 12px;
 }
 </style>

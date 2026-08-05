@@ -75,6 +75,11 @@ const routes = [
     path: '/order',
     name: 'Order',
     component: () => import('../views/Order/index.vue')
+  },
+  {
+    path: '/pricing-rules',
+    name: 'PricingRules',
+    component: () => import('../views/PricingRules/index.vue')
   }
 ];
 
