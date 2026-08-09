@@ -126,10 +126,12 @@ var render = function () {
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   var m0 = _vm.$t("product.category")
-  var m1 = _vm.$t("product.title")
-  var m2 = _vm.$t("product.subtitle")
-  var m3 = _vm.$t("product.searchPlaceholder")
-  var m4 = _vm.$t("product.totalSeries", {
+  var m1 = _vm.$t("product.brand")
+  var m2 = _vm.$t("product.brandTagline")
+  var m3 = _vm.$t("product.title")
+  var m4 = _vm.$t("product.subtitle")
+  var m5 = _vm.$t("product.searchPlaceholder")
+  var m6 = _vm.$t("product.totalSeries", {
     count: _vm.filteredProducts.length,
   })
   var l0 = _vm.__map(_vm.filteredProducts, function (product, index) {
@@ -141,8 +143,16 @@ var render = function () {
     }
   })
   var g1 = _vm.filteredProducts.length
-  var m5 = g1 === 0 ? _vm.$t("product.noResult") : null
-  var m6 = g1 === 0 ? _vm.$t("product.noResultSub") : null
+  var m7 = g1 === 0 ? _vm.$t("product.noResult") : null
+  var m8 = g1 === 0 ? _vm.$t("product.noResultSub") : null
+  var m9 = _vm.$t("quotation.companyName")
+  var m10 = _vm.$t("product.brandSince")
+  var m11 = _vm.$t("quotation.companyPhone")
+  var m12 = _vm.$t("quotation.companyEmail")
+  var m13 = _vm.$t("quotation.companyWebsite")
+  var m14 = _vm.$t("quotation.companyAddress")
+  var g2 = new Date().getFullYear()
+  var m15 = _vm.$t("quotation.companyName")
   if (!_vm._isMounted) {
     _vm.e0 = function ($event) {
       _vm.searchKeyword = ""
@@ -157,10 +167,20 @@ var render = function () {
         m2: m2,
         m3: m3,
         m4: m4,
-        l0: l0,
-        g1: g1,
         m5: m5,
         m6: m6,
+        l0: l0,
+        g1: g1,
+        m7: m7,
+        m8: m8,
+        m9: m9,
+        m10: m10,
+        m11: m11,
+        m12: m12,
+        m13: m13,
+        m14: m14,
+        g2: g2,
+        m15: m15,
       },
     }
   )

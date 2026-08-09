@@ -9,6 +9,18 @@
 
             <!-- 顶部 Hero 区 -->
             <view class="hero">
+
+                <!-- 企业品牌区（Logo + 名称 + 标语） -->
+                <view class="brand-row">
+                    <view class="brand-logo-wrap">
+                        <image class="brand-logo" src="/static/logo.png" mode="aspectFit"></image>
+                    </view>
+                    <view class="brand-info">
+                        <text class="brand-name">{{ $t('product.brand') }}</text>
+                        <text class="brand-tagline">{{ $t('product.brandTagline') }}</text>
+                    </view>
+                </view>
+
                 <view class="hero-label">
                     <text class="hero-dot"></text>
                     <text class="hero-label-text">PRODUCT SERIES</text>
@@ -72,6 +84,44 @@
                 <text class="empty-icon">🔍</text>
                 <text class="empty-text">{{ $t('product.noResult') }}</text>
                 <text class="empty-sub">{{ $t('product.noResultSub') }}</text>
+            </view>
+
+            <!-- 品牌信息区（奇胜阀门企业元素） -->
+            <view class="brand-section">
+
+                <!-- 品牌故事 / 关于企业 -->
+                <view class="brand-story-card">
+                    <view class="story-head">
+                        <image class="story-logo" src="/static/logo.png" mode="aspectFit"></image>
+                        <view class="story-head-text">
+                            <text class="story-title">{{ $t('quotation.companyName') }}</text>
+                            <text class="story-sub">{{ $t('product.brandSince') }}</text>
+                        </view>
+                    </view>
+                    <view class="story-divider"></view>
+                    <view class="story-contact">
+                        <view class="contact-item">
+                            <text class="contact-icon">📞</text>
+                            <text class="contact-text">{{ $t('quotation.companyPhone') }}</text>
+                        </view>
+                        <view class="contact-item">
+                            <text class="contact-icon">📧</text>
+                            <text class="contact-text">{{ $t('quotation.companyEmail') }}</text>
+                        </view>
+                        <view class="contact-item">
+                            <text class="contact-icon">🌐</text>
+                            <text class="contact-text">{{ $t('quotation.companyWebsite') }}</text>
+                        </view>
+                        <view class="contact-item">
+                            <text class="contact-icon">📍</text>
+                            <text class="contact-text">{{ $t('quotation.companyAddress') }}</text>
+                        </view>
+                    </view>
+                </view>
+
+                <view class="brand-copyright">
+                    <text class="copyright-text">© {{ new Date().getFullYear() }} CHISUN VALVE · {{ $t('quotation.companyName') }}</text>
+                </view>
             </view>
 
             <view class="bottom-safe"></view>
@@ -150,6 +200,53 @@ export default {
     padding: 40rpx 32rpx 48rpx;
     position: relative;
     overflow: hidden;
+}
+/* ---- 企业品牌条（奇胜阀门 Logo + 名称） ---- */
+.brand-row {
+    display: flex;
+    align-items: center;
+    gap: 20rpx;
+    padding: 10rpx 0 22rpx;
+    border-bottom: 1rpx solid rgba(200,170,110,0.2);
+    margin-bottom: 22rpx;
+    position: relative;
+    z-index: 1;
+}
+.brand-logo-wrap {
+    width: 88rpx;
+    height: 88rpx;
+    background: #ffffff;
+    border-radius: 16rpx;
+    padding: 10rpx;
+    box-shadow: 0 4rpx 14rpx rgba(0,0,0,0.25), 0 0 0 1rpx rgba(200,170,110,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.brand-logo {
+    width: 100%;
+    height: 100%;
+}
+.brand-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6rpx;
+    overflow: hidden;
+}
+.brand-name {
+    font-size: 30rpx;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: 0.5rpx;
+    line-height: 1.2;
+}
+.brand-tagline {
+    font-size: 22rpx;
+    color: #c8aa6e;
+    letter-spacing: 0.5rpx;
+    line-height: 1.3;
 }
 /* 背景几何装饰 */
 .hero::before {
@@ -388,4 +485,158 @@ export default {
 
 /* ---- 底部安全 ---- */
 .bottom-safe { height: 60rpx; }
+
+/* ============================================
+   奇胜阀门 · 品牌信息区样式
+   与 Hero 保持深蓝钢铁 + 金色强调配色
+============================================ */
+.brand-section {
+    margin: 36rpx 26rpx 20rpx;
+    position: relative;
+}
+
+/* ---- 资质认证条 ---- */
+.brand-certs {
+    display: flex;
+    gap: 14rpx;
+    justify-content: center;
+    margin-bottom: 24rpx;
+    flex-wrap: wrap;
+}
+.cert-tag {
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+    background: linear-gradient(180deg, #ffffff, #f6f8fc);
+    border: 1rpx solid #e2e8f1;
+    border-radius: 30rpx;
+    padding: 10rpx 22rpx;
+    box-shadow: 0 2rpx 8rpx rgba(13, 21, 38, 0.05);
+}
+.cert-icon {
+    font-size: 24rpx;
+}
+.cert-text {
+    font-size: 22rpx;
+    font-weight: 700;
+    color: #1a2236;
+    letter-spacing: 0.5rpx;
+}
+
+/* ---- 品牌故事 / 企业卡片 ---- */
+.brand-story-card {
+    background: linear-gradient(160deg, #1a2236 0%, #0d1526 100%);
+    border-radius: 20rpx;
+    padding: 28rpx 28rpx 24rpx;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8rpx 28rpx rgba(13, 21, 38, 0.18);
+    border: 1rpx solid rgba(200,170,110,0.18);
+}
+.brand-story-card::before {
+    content: '';
+    position: absolute;
+    top: -80rpx;
+    right: -80rpx;
+    width: 260rpx;
+    height: 260rpx;
+    border-radius: 50%;
+    border: 40rpx solid rgba(200,170,110,0.08);
+    pointer-events: none;
+}
+.brand-story-card::after {
+    content: '';
+    position: absolute;
+    bottom: -60rpx;
+    left: -40rpx;
+    width: 200rpx;
+    height: 200rpx;
+    border-radius: 50%;
+    border: 30rpx solid rgba(200,170,110,0.05);
+    pointer-events: none;
+}
+
+/* 企业头部（Logo + 名称 + 简介） */
+.story-head {
+    display: flex;
+    align-items: center;
+    gap: 18rpx;
+    position: relative;
+    z-index: 1;
+}
+.story-logo {
+    width: 80rpx;
+    height: 80rpx;
+    background: #ffffff;
+    border-radius: 14rpx;
+    padding: 8rpx;
+    box-shadow: 0 3rpx 10rpx rgba(0,0,0,0.25), 0 0 0 1rpx rgba(200,170,110,0.3);
+    flex-shrink: 0;
+}
+.story-head-text {
+    display: flex;
+    flex-direction: column;
+    gap: 6rpx;
+    overflow: hidden;
+}
+.story-title {
+    font-size: 28rpx;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: 0.5rpx;
+    line-height: 1.2;
+}
+.story-sub {
+    font-size: 20rpx;
+    color: rgba(200,170,110,0.9);
+    letter-spacing: 0.3rpx;
+    line-height: 1.3;
+}
+
+/* 金色分隔线 */
+.story-divider {
+    height: 1rpx;
+    background: linear-gradient(90deg, rgba(200,170,110,0.0), rgba(200,170,110,0.6), rgba(200,170,110,0.0));
+    margin: 22rpx 0 18rpx;
+}
+
+/* 联系方式 */
+.story-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 14rpx;
+    position: relative;
+    z-index: 1;
+}
+.contact-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14rpx;
+}
+.contact-icon {
+    font-size: 24rpx;
+    flex-shrink: 0;
+    width: 32rpx;
+    text-align: center;
+    margin-top: 2rpx;
+}
+.contact-text {
+    font-size: 22rpx;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.5;
+    letter-spacing: 0.3rpx;
+    flex: 1;
+}
+
+/* 版权 */
+.brand-copyright {
+    margin-top: 26rpx;
+    text-align: center;
+    padding: 10rpx 0 4rpx;
+}
+.copyright-text {
+    font-size: 20rpx;
+    color: #96a3b7;
+    letter-spacing: 0.5rpx;
+}
 </style>

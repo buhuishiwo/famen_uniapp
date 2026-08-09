@@ -394,6 +394,103 @@ var _default = {
       this.validity = this.$t('quotation.defaultValidity');
       this.currentDate = this.formatDate(new Date());
     },
+    /**
+     * 带完整权限检查的保存图片到相册
+     * 处理路径：getSetting -> 已授权直接保存 / 未授权 -> authorize -> 失败则 openSetting
+     */
+    saveImageWithPermission: function saveImageWithPermission(filePath) {
+      var that = this;
+      return new Promise(function (resolve, reject) {
+        var doSave = function doSave() {
+          uni.saveImageToPhotosAlbum({
+            filePath: filePath,
+            success: function success() {
+              that.showToast(that.$t('quotation.savedToAlbum'), 'success');
+              resolve();
+            },
+            fail: function fail(err) {
+              console.error('saveImageToPhotosAlbum fail:', err);
+              // 仍然可能是权限问题，走引导流程
+              that._handleSaveDenied(filePath, resolve, reject);
+            }
+          });
+        };
+        uni.getSetting({
+          success: function success(res) {
+            var authStatus = res.authSetting['scope.writePhotosAlbum'];
+            if (authStatus === true) {
+              // 已授权，直接保存
+              doSave();
+            } else if (authStatus === false) {
+              // 用户曾拒绝授权，不会再弹窗 -> 引导去设置
+              that._handleSaveDenied(filePath, resolve, reject);
+            } else {
+              // 首次询问：尝试请求授权
+              uni.authorize({
+                scope: 'scope.writePhotosAlbum',
+                success: function success() {
+                  return doSave();
+                },
+                fail: function fail() {
+                  return that._handleSaveDenied(filePath, resolve, reject);
+                }
+              });
+            }
+          },
+          fail: function fail() {
+            // getSetting 失败，兜底直接尝试保存
+            doSave();
+          }
+        });
+      });
+    },
+    /**
+     * 权限被拒后，弹窗提示并引导用户去设置页打开相册权限
+     */
+    _handleSaveDenied: function _handleSaveDenied(filePath, resolve, reject) {
+      var that = this;
+      uni.showModal({
+        title: that.$t('quotation.needPermissionTitle'),
+        content: that.$t('quotation.needAlbumPermissionDesc'),
+        confirmText: that.$t('quotation.toOpenSettings'),
+        cancelText: that.$t('quotation.cancel'),
+        success: function success(modalRes) {
+          if (modalRes.confirm) {
+            uni.openSetting({
+              success: function success(settingRes) {
+                if (settingRes.authSetting['scope.writePhotosAlbum']) {
+                  that.showToast(that.$t('quotation.permissionGranted'), 'success');
+                  // 再次执行保存
+                  setTimeout(function () {
+                    uni.saveImageToPhotosAlbum({
+                      filePath: filePath,
+                      success: function success() {
+                        that.showToast(that.$t('quotation.savedToAlbum'), 'success');
+                        resolve && resolve();
+                      },
+                      fail: function fail(err) {
+                        console.error('openSetting后保存仍失败:', err);
+                        that.showToast(that.$t('quotation.needAlbumPermission'), 'error');
+                        reject && reject(err);
+                      }
+                    });
+                  }, 300);
+                } else {
+                  that.showToast(that.$t('quotation.needAlbumPermission'), 'error');
+                  reject && reject(new Error('permission denied'));
+                }
+              },
+              fail: function fail() {
+                that.showToast(that.$t('quotation.needAlbumPermission'), 'error');
+                reject && reject(new Error('openSetting fail'));
+              }
+            });
+          } else {
+            reject && reject(new Error('user cancelled'));
+          }
+        }
+      });
+    },
     translateProductType: function translateProductType(type) {
       if (!type) return this.$t('index.regular');
       var regular = this.$t('index.regular');
@@ -537,25 +634,25 @@ var _default = {
     },
     generateQuotation: function generateQuotation() {
       var _this5 = this;
-      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
         var that, ctx, scale, width, y, logoPath;
-        return _regenerator.default.wrap(function _callee2$(_context2) {
+        return _regenerator.default.wrap(function _callee3$(_context3) {
           while (1) {
-            switch (_context2.prev = _context2.next) {
+            switch (_context3.prev = _context3.next) {
               case 0:
                 _this5.showLoading = true;
                 _this5.loadingText = _this5.$t('quotation.priceGenerating');
                 that = _this5;
-                _context2.prev = 3;
-                _context2.next = 6;
+                _context3.prev = 3;
+                _context3.next = 6;
                 return _this5.saveQuotationToDatabase();
               case 6:
-                _context2.next = 11;
+                _context3.next = 11;
                 break;
               case 8:
-                _context2.prev = 8;
-                _context2.t0 = _context2["catch"](3);
-                console.error('保存报价数据失败:', _context2.t0);
+                _context3.prev = 8;
+                _context3.t0 = _context3["catch"](3);
+                console.error('保存报价数据失败:', _context3.t0);
               case 11:
                 ctx = uni.createCanvasContext('quotationCanvas', _this5);
                 scale = 1;
@@ -795,17 +892,26 @@ var _default = {
                         height: finalHeight,
                         destWidth: 1500,
                         destHeight: finalHeight * 2,
-                        success: function success(res) {
-                          uni.saveImageToPhotosAlbum({
-                            filePath: res.tempFilePath,
-                            success: function success() {
-                              that.showToast(_this5.$t('quotation.savedToAlbum'), 'success');
-                            },
-                            fail: function fail() {
-                              that.showToast(_this5.$t('quotation.needAlbumPermission'), 'error');
-                            }
-                          });
-                        },
+                        success: function () {
+                          var _success = (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2(res) {
+                            return _regenerator.default.wrap(function _callee2$(_context2) {
+                              while (1) {
+                                switch (_context2.prev = _context2.next) {
+                                  case 0:
+                                    _context2.next = 2;
+                                    return that.saveImageWithPermission(res.tempFilePath);
+                                  case 2:
+                                  case "end":
+                                    return _context2.stop();
+                                }
+                              }
+                            }, _callee2);
+                          }));
+                          function success(_x) {
+                            return _success.apply(this, arguments);
+                          }
+                          return success;
+                        }(),
                         fail: function fail(err) {
                           console.error(err);
                           that.showToast(_this5.$t('quotation.renderFail'), 'error');
@@ -824,10 +930,10 @@ var _default = {
                 });
               case 21:
               case "end":
-                return _context2.stop();
+                return _context3.stop();
             }
           }
-        }, _callee2, null, [[3, 8]]);
+        }, _callee3, null, [[3, 8]]);
       }))();
     }
   }

@@ -12943,6 +12943,9 @@ var _default = {
   },
   product: {
     category: '产品分类',
+    brand: '奇胜阀门 · CHISUN VALVE',
+    brandTagline: '专注工业阀门 · 成就品质之源',
+    brandSince: '创立于浙江温州 · 多年工业阀门制造经验',
     title: '阀门产品系列',
     subtitle: '选择产品系列，进入规格配置与报价',
     searchPlaceholder: '搜索产品系列…',
@@ -12951,7 +12954,12 @@ var _default = {
     noResult: '未找到匹配的系列',
     noResultSub: '尝试搜索 "QB" 或 "QW" 等关键词',
     noSeriesData: '暂无数据',
-    noSeriesDataMsg: '{series} 暂未录入产品数据，请先导入价格后再试。'
+    noSeriesDataMsg: '{series} 暂未录入产品数据，请先导入价格后再试。',
+    certIso: 'ISO 9001',
+    certCe: 'CE 认证',
+    certApi: 'API 资质',
+    footerAbout: '关于企业',
+    footerContact: '联系我们'
   },
   index: {
     valveSelection: '阀门选择',
@@ -13053,6 +13061,11 @@ var _default = {
     saveFail: '保存失败，请检查网络',
     savedToAlbum: '报价单已妥善存储到相册',
     needAlbumPermission: '请开启相册读写权限',
+    needPermissionTitle: '需要相册权限',
+    needAlbumPermissionDesc: '保存报价单图片需要使用相册读写权限，请在设置中开启「保存到相册」后重试。',
+    toOpenSettings: '去设置',
+    cancel: '取消',
+    permissionGranted: '权限已开启',
     renderFail: '高精度渲染失败',
     logoLoadFail: '企业徽标调取失败',
     shareTitle: '您的特约报价单',
@@ -13069,8 +13082,8 @@ var _default = {
     issueDate: '发布日期：',
     defaultPayment: '预定定金30%，付清余款发货。',
     defaultPackaging: '木箱包装。可以提供产品使用说明，产品材质报告，产品检测报告。',
-    defaultQuoter: '童惠业',
-    defaultQuoterPhone: '13957713583',
+    defaultQuoter: '报价人 1',
+    defaultQuoterPhone: '15988785557',
     defaultValidity: '15天',
     noSalePerson: '未指定报价员',
     noCustomer: '未指定客户',
@@ -13143,6 +13156,9 @@ var _default = {
   },
   product: {
     category: 'Products',
+    brand: 'CHISUN VALVE · 奇胜阀门',
+    brandTagline: 'Industrial Valve Excellence · Quality That Endures',
+    brandSince: 'Founded in Wenzhou, Zhejiang · Years of industrial valve manufacturing',
     title: 'Valve Product Series',
     subtitle: 'Select a product series to configure specifications and generate quotations',
     searchPlaceholder: 'Search product series...',
@@ -13151,7 +13167,12 @@ var _default = {
     noResult: 'No matching series found',
     noResultSub: 'Try searching for "QB" or "QW"',
     noSeriesData: 'No Data',
-    noSeriesDataMsg: 'No product data entered for {series}, please import prices first.'
+    noSeriesDataMsg: 'No product data entered for {series}, please import prices first.',
+    certIso: 'ISO 9001',
+    certCe: 'CE Certified',
+    certApi: 'API Compliant',
+    footerAbout: 'About Us',
+    footerContact: 'Contact'
   },
   index: {
     valveSelection: 'Valve Selection',
@@ -13253,6 +13274,11 @@ var _default = {
     saveFail: 'Save failed, please check network',
     savedToAlbum: 'Quotation saved to album',
     needAlbumPermission: 'Please enable album access permission',
+    needPermissionTitle: 'Album Permission Required',
+    needAlbumPermissionDesc: 'Saving the quotation image requires album access. Please enable "Save to Photos" in Settings and try again.',
+    toOpenSettings: 'Open Settings',
+    cancel: 'Cancel',
+    permissionGranted: 'Permission granted',
     renderFail: 'High-precision rendering failed',
     logoLoadFail: 'Failed to load company logo',
     shareTitle: 'Your Special Quotation',
@@ -13269,8 +13295,8 @@ var _default = {
     issueDate: 'Issue Date:',
     defaultPayment: '30% deposit in advance, balance paid before delivery.',
     defaultPackaging: 'Wooden box packaging. Product manual, material report, and inspection report available.',
-    defaultQuoter: 'Tong Huiye',
-    defaultQuoterPhone: '+86-13957713583',
+    defaultQuoter: 'Quoter 1',
+    defaultQuoterPhone: '+86-15988785557',
     defaultValidity: '15 Days',
     noSalePerson: 'Unspecified',
     noCustomer: 'Unspecified',
@@ -14099,14 +14125,7 @@ exports.default = _default;
 /* 104 */,
 /* 105 */,
 /* 106 */,
-/* 107 */,
-/* 108 */,
-/* 109 */,
-/* 110 */,
-/* 111 */,
-/* 112 */,
-/* 113 */,
-/* 114 */
+/* 107 */
 /*!**************************************************************************************************************!*\
   !*** /Users/meonsaber/Desktop/famen_uniapp/node_modules/@dcloudio/uni-ui/lib/uni-icons/uniicons_file_vue.js ***!
   \**************************************************************************************************************/

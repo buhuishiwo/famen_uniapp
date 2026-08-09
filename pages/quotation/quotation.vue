@@ -312,6 +312,100 @@ export default {
             this.validity = this.$t('quotation.defaultValidity');
             this.currentDate = this.formatDate(new Date());
         },
+        /**
+         * 带完整权限检查的保存图片到相册
+         * 处理路径：getSetting -> 已授权直接保存 / 未授权 -> authorize -> 失败则 openSetting
+         */
+        saveImageWithPermission(filePath) {
+            const that = this;
+            return new Promise((resolve, reject) => {
+                const doSave = () => {
+                    uni.saveImageToPhotosAlbum({
+                        filePath: filePath,
+                        success: () => {
+                            that.showToast(that.$t('quotation.savedToAlbum'), 'success');
+                            resolve();
+                        },
+                        fail: (err) => {
+                            console.error('saveImageToPhotosAlbum fail:', err);
+                            // 仍然可能是权限问题，走引导流程
+                            that._handleSaveDenied(filePath, resolve, reject);
+                        }
+                    });
+                };
+
+                uni.getSetting({
+                    success: (res) => {
+                        const authStatus = res.authSetting['scope.writePhotosAlbum'];
+                        if (authStatus === true) {
+                            // 已授权，直接保存
+                            doSave();
+                        } else if (authStatus === false) {
+                            // 用户曾拒绝授权，不会再弹窗 -> 引导去设置
+                            that._handleSaveDenied(filePath, resolve, reject);
+                        } else {
+                            // 首次询问：尝试请求授权
+                            uni.authorize({
+                                scope: 'scope.writePhotosAlbum',
+                                success: () => doSave(),
+                                fail: () => that._handleSaveDenied(filePath, resolve, reject)
+                            });
+                        }
+                    },
+                    fail: () => {
+                        // getSetting 失败，兜底直接尝试保存
+                        doSave();
+                    }
+                });
+            });
+        },
+        /**
+         * 权限被拒后，弹窗提示并引导用户去设置页打开相册权限
+         */
+        _handleSaveDenied(filePath, resolve, reject) {
+            const that = this;
+            uni.showModal({
+                title: that.$t('quotation.needPermissionTitle'),
+                content: that.$t('quotation.needAlbumPermissionDesc'),
+                confirmText: that.$t('quotation.toOpenSettings'),
+                cancelText: that.$t('quotation.cancel'),
+                success: (modalRes) => {
+                    if (modalRes.confirm) {
+                        uni.openSetting({
+                            success: (settingRes) => {
+                                if (settingRes.authSetting['scope.writePhotosAlbum']) {
+                                    that.showToast(that.$t('quotation.permissionGranted'), 'success');
+                                    // 再次执行保存
+                                    setTimeout(() => {
+                                        uni.saveImageToPhotosAlbum({
+                                            filePath: filePath,
+                                            success: () => {
+                                                that.showToast(that.$t('quotation.savedToAlbum'), 'success');
+                                                resolve && resolve();
+                                            },
+                                            fail: (err) => {
+                                                console.error('openSetting后保存仍失败:', err);
+                                                that.showToast(that.$t('quotation.needAlbumPermission'), 'error');
+                                                reject && reject(err);
+                                            }
+                                        });
+                                    }, 300);
+                                } else {
+                                    that.showToast(that.$t('quotation.needAlbumPermission'), 'error');
+                                    reject && reject(new Error('permission denied'));
+                                }
+                            },
+                            fail: () => {
+                                that.showToast(that.$t('quotation.needAlbumPermission'), 'error');
+                                reject && reject(new Error('openSetting fail'));
+                            }
+                        });
+                    } else {
+                        reject && reject(new Error('user cancelled'));
+                    }
+                }
+            });
+        },
         translateProductType(type) {
             if (!type) return this.$t('index.regular');
             const regular = this.$t('index.regular');
@@ -710,16 +804,8 @@ export default {
                             height: finalHeight,
                             destWidth: 1500,
                             destHeight: finalHeight * 2,
-                            success: (res) => {
-                                uni.saveImageToPhotosAlbum({
-                                    filePath: res.tempFilePath,
-                                    success: () => {
-                                        that.showToast(this.$t('quotation.savedToAlbum'), 'success');
-                                    },
-                                    fail: () => {
-                                        that.showToast(this.$t('quotation.needAlbumPermission'), 'error');
-                                    }
-                                });
+                            success: async (res) => {
+                                await that.saveImageWithPermission(res.tempFilePath);
                             },
                             fail: (err) => {
                                 console.error(err);
