@@ -1,21 +1,5 @@
 <template>
   <div class="dashboard-container">
-    <a-card :bordered="false" class="settings-card" style="margin-bottom: 16px;">
-      <div class="settings-row">
-        <div class="settings-info">
-          <span class="settings-label">允许修订单价</span>
-          <span class="settings-desc">关闭后，小程序端将不显示修订单价入口及提示，所有产品按系统计算单价报价</span>
-        </div>
-        <a-switch
-          v-model:checked="allowPriceModification"
-          :loading="settingsLoading"
-          checked-children="开"
-          un-checked-children="关"
-          @change="onTogglePriceModification"
-        />
-      </div>
-    </a-card>
-
     <a-row :gutter="[16, 16]">
       <a-col :span="6" v-for="(item, index) in statCards" :key="'stat-' + index">
         <a-card :bordered="false" class="stat-card" :class="'stat-card-' + index">
@@ -183,9 +167,6 @@ const seriesModelStats = ref([]);
 const materialDistribution = ref([]);
 const recentPrices = ref([]);
 
-const allowPriceModification = ref(true);
-const settingsLoading = ref(false);
-
 const orderSummary = ref({});
 const orderStatusDistribution = ref([]);
 const orderTrend = ref([]);
@@ -234,34 +215,8 @@ const orderColumns = [
 ];
 
 onMounted(async () => {
-  loadSystemConfig();
   await loadData();
 });
-
-async function loadSystemConfig() {
-  settingsLoading.value = true;
-  try {
-    const config = await statsApi.getSystemConfig(['allow_price_modification']);
-    allowPriceModification.value = config.allow_price_modification !== 'false';
-  } catch (e) {
-    console.warn('加载系统设置失败:', e);
-  } finally {
-    settingsLoading.value = false;
-  }
-}
-
-async function onTogglePriceModification(checked) {
-  settingsLoading.value = true;
-  try {
-    await statsApi.setSystemConfig('allow_price_modification', checked ? 'true' : 'false');
-    message.success(checked ? '已开启修订单价功能' : '已关闭修订单价功能');
-  } catch (e) {
-    allowPriceModification.value = !checked;
-    message.error('设置失败: ' + (e.message || '未知错误'));
-  } finally {
-    settingsLoading.value = false;
-  }
-}
 
 onBeforeUnmount(() => {
   if (barChart) { barChart.destroy(); barChart = null; }

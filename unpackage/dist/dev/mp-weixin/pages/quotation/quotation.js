@@ -296,6 +296,165 @@ var navigationBar = function navigationBar() {
     return resolve(__webpack_require__(/*! @/components/navigation-bar/navigation-bar */ 95));
   }).bind(null, __webpack_require__)).catch(__webpack_require__.oe);
 };
+/**
+ * 报价单显示配置 + 字段定义（模块级常量，不放到 methods 里）
+ * Vue/uni-app 只会把 methods 里的 Function 绑定到 vm，Object 类型会被忽略，
+ * 因此这里作为模块级 const，methods 里的函数直接闭包引用即可。
+ */
+var _DEFAULT_DISPLAY_CONFIG = {
+  tableFields: [{
+    key: 'productType',
+    visible: true
+  }, {
+    key: 'modelSpec',
+    visible: true
+  }, {
+    key: 'gateMaterial',
+    visible: true
+  }, {
+    key: 'stemMaterial',
+    visible: true
+  }, {
+    key: 'quantity',
+    visible: true
+  }, {
+    key: 'brandingFee',
+    visible: true
+  }, {
+    key: 'unitPrice',
+    visible: true
+  }, {
+    key: 'totalPrice',
+    visible: true
+  }],
+  specFields: [{
+    key: 'maxPressure',
+    visible: true
+  }, {
+    key: 'unitWeight',
+    visible: true
+  }, {
+    key: 'laps',
+    visible: true
+  }, {
+    key: 'torque',
+    visible: true
+  }]
+};
+var _TABLE_FIELD_META = {
+  productType: {
+    i18nKey: 'quotation.productName',
+    width: 110,
+    required: true,
+    forceVisible: false,
+    valueFn: function valueFn(item, vm) {
+      return vm.translateProductType(item.productType);
+    }
+  },
+  modelSpec: {
+    i18nKey: 'quotation.modelSpec',
+    width: 120,
+    required: true,
+    forceVisible: true,
+    valueFn: function valueFn(item) {
+      // 兼容两种 productName 格式："QB" 或 "QB-DN80"，避免重复 DN
+      var name = item.productName || '';
+      var model = String(item.model || '');
+      if (!model) return name;
+      var dnSuffix = '-DN' + model;
+      var dnInline = 'DN' + model;
+      return name.includes(dnSuffix) || name.includes(dnInline) ? name : name + dnSuffix;
+    }
+  },
+  gateMaterial: {
+    i18nKey: 'quotation.gateMaterialCol',
+    width: 100,
+    required: false,
+    forceVisible: false,
+    valueFn: function valueFn(item) {
+      return item.gateMaterial || '';
+    }
+  },
+  stemMaterial: {
+    i18nKey: 'quotation.stemMaterialCol',
+    width: 100,
+    required: false,
+    forceVisible: false,
+    valueFn: function valueFn(item) {
+      return item.stemMaterial || '';
+    }
+  },
+  quantity: {
+    i18nKey: 'quotation.quantityCol',
+    width: 65,
+    required: true,
+    forceVisible: true,
+    valueFn: function valueFn(item) {
+      return String(item.quantity);
+    }
+  },
+  brandingFee: {
+    i18nKey: 'quotation.brandingFeeCol',
+    width: 80,
+    required: false,
+    forceVisible: false,
+    valueFn: function valueFn(item) {
+      return '¥' + (Number(item.brandingFee) || 0).toFixed(2);
+    }
+  },
+  unitPrice: {
+    i18nKey: 'quotation.unitPriceCol',
+    width: 85,
+    required: true,
+    forceVisible: true,
+    valueFn: function valueFn(item) {
+      return '¥' + (Number(item.unitPrice) || 0).toFixed(2);
+    }
+  },
+  totalPrice: {
+    i18nKey: 'quotation.totalPriceCol',
+    width: 95,
+    required: true,
+    forceVisible: true,
+    valueFn: function valueFn(item) {
+      return '¥' + (Number(item.totalPrice) || 0).toFixed(2);
+    }
+  }
+};
+var _SPEC_FIELD_META = {
+  maxPressure: {
+    i18nLabelKey: 'quotation.maxPressure',
+    en: 'Max Pressure',
+    unit: 'BAR',
+    valueFn: function valueFn(item) {
+      return item.maxPressure;
+    }
+  },
+  unitWeight: {
+    i18nLabelKey: 'quotation.unitWeight',
+    en: 'Unit Weight',
+    unitI18nKey: 'quotation.weightUnit',
+    valueFn: function valueFn(item) {
+      return item.unitWeight;
+    }
+  },
+  laps: {
+    i18nLabelKey: 'quotation.laps',
+    en: 'Laps',
+    unit: '',
+    valueFn: function valueFn(item) {
+      return item.laps;
+    }
+  },
+  torque: {
+    i18nLabelKey: 'quotation.torque',
+    en: 'Torque',
+    unitI18nKey: 'quotation.torqueUnit',
+    valueFn: function valueFn(item) {
+      return item.torque;
+    }
+  }
+};
 var _default = {
   components: {
     navigationBar: navigationBar
@@ -316,7 +475,10 @@ var _default = {
       loadingText: '',
       showToastDialog: false,
       toastText: '',
-      toastType: 'success'
+      toastType: 'success',
+      // 报价单显示配置（从 system_settings 读取）
+      _displayConfig: null,
+      _displayConfigLoaded: false
     };
   },
   computed: {
@@ -523,6 +685,165 @@ var _default = {
         _this3.showToastDialog = false;
       }, 2000);
     },
+    ensureDisplayConfigLoaded: function ensureDisplayConfigLoaded(forceRefresh) {
+      var _this4 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
+        var CACHE_KEY, CACHE_MAX_MS, cached, res, raw, parsed, tableConfig;
+        return _regenerator.default.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                CACHE_KEY = 'quotation_display_config_cache';
+                CACHE_MAX_MS = 10 * 60 * 1000; // 10 分钟
+                if (!(!forceRefresh && _this4._displayConfigLoaded && _this4._displayConfig)) {
+                  _context.next = 4;
+                  break;
+                }
+                return _context.abrupt("return");
+              case 4:
+                if (forceRefresh) {
+                  _context.next = 15;
+                  break;
+                }
+                _context.prev = 5;
+                cached = uni.getStorageSync(CACHE_KEY);
+                if (!(cached && cached.value && Date.now() - cached.ts < CACHE_MAX_MS)) {
+                  _context.next = 11;
+                  break;
+                }
+                _this4._displayConfig = cached.value;
+                _this4._displayConfigLoaded = true;
+                return _context.abrupt("return");
+              case 11:
+                _context.next = 15;
+                break;
+              case 13:
+                _context.prev = 13;
+                _context.t0 = _context["catch"](5);
+              case 15:
+                _context.prev = 15;
+                _context.next = 18;
+                return _cloudApi.priceApi.getSystemConfig(['quotation_display_config']);
+              case 18:
+                res = _context.sent;
+                if (res && res.success && res.data) {
+                  raw = res.data.quotation_display_config;
+                  parsed = null;
+                  if (raw) {
+                    try {
+                      parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                    } catch (_) {}
+                  }
+                  if (parsed && parsed.tableFields && parsed.specFields) {
+                    _this4._displayConfig = parsed;
+                  } else {
+                    _this4._displayConfig = JSON.parse(JSON.stringify(_DEFAULT_DISPLAY_CONFIG));
+                  }
+                } else {
+                  _this4._displayConfig = JSON.parse(JSON.stringify(_DEFAULT_DISPLAY_CONFIG));
+                }
+                _context.next = 26;
+                break;
+              case 22:
+                _context.prev = 22;
+                _context.t1 = _context["catch"](15);
+                console.warn('[ensureDisplayConfigLoaded] 读取失败，使用全显示默认:', _context.t1.message);
+                _this4._displayConfig = JSON.parse(JSON.stringify(_DEFAULT_DISPLAY_CONFIG));
+              case 26:
+                // 强制必选字段可见
+                tableConfig = _this4._displayConfig.tableFields || [];
+                tableConfig.forEach(function (f) {
+                  var meta = _TABLE_FIELD_META[f.key];
+                  if (meta && meta.forceVisible) f.visible = true;
+                });
+                _this4._displayConfigLoaded = true;
+                try {
+                  uni.setStorageSync(CACHE_KEY, {
+                    ts: Date.now(),
+                    value: _this4._displayConfig
+                  });
+                } catch (_) {/* ignore */}
+              case 30:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, null, [[5, 13], [15, 22]]);
+      }))();
+    },
+    /**
+     * 计算当前可见的列表列（按配置返回 {key,label,width,value} 数组）
+     * 注意：无论配置如何，若最终返回空数组则强制返回最小必选集（modelSpec/quantity/unitPrice/totalPrice），
+     *       防止表格被绘制成一条黑横线。
+     */
+    getVisibleTableCols: function getVisibleTableCols() {
+      var _this5 = this;
+      var cfg = this._displayConfig || _DEFAULT_DISPLAY_CONFIG;
+      var visibleKeys = new Set((cfg.tableFields || []).filter(function (f) {
+        return f.visible;
+      }).map(function (f) {
+        return f.key;
+      }));
+      // 按 META 固定顺序生成（保证导出稳定）
+      var cols = [];
+      Object.keys(_TABLE_FIELD_META).forEach(function (key) {
+        var meta = _TABLE_FIELD_META[key];
+        if (meta.forceVisible || visibleKeys.has(key)) {
+          cols.push({
+            key: key,
+            label: _this5.$t(meta.i18nKey),
+            width: meta.width,
+            isTotalPrice: key === 'totalPrice',
+            meta: meta
+          });
+        }
+      });
+      // 兜底：至少必须有四列必选，否则强制按 meta.forceVisible 默认加入，避免画空表格
+      if (cols.length === 0) {
+        Object.keys(_TABLE_FIELD_META).forEach(function (key) {
+          var meta = _TABLE_FIELD_META[key];
+          if (meta.forceVisible) {
+            cols.push({
+              key: key,
+              label: _this5.$t(meta.i18nKey),
+              width: meta.width,
+              isTotalPrice: key === 'totalPrice',
+              meta: meta
+            });
+          }
+        });
+      }
+      return cols;
+    },
+    /**
+     * 获取某条数据的可见规格参数数组（value 非空才返回）
+     */
+    getVisibleSpecs: function getVisibleSpecs(item) {
+      var _this6 = this;
+      var cfg = this._displayConfig || _DEFAULT_DISPLAY_CONFIG;
+      var visibleKeys = new Set((cfg.specFields || []).filter(function (f) {
+        return f.visible;
+      }).map(function (f) {
+        return f.key;
+      }));
+      var isEn = this.$locale && this.$locale() && this.$locale().locale === 'en-US' || this.$i18n && this.$i18n.locale === 'en-US';
+      var specs = [];
+      Object.keys(_SPEC_FIELD_META).forEach(function (key) {
+        if (!visibleKeys.has(key)) return;
+        var meta = _SPEC_FIELD_META[key];
+        var v = meta.valueFn(item);
+        if (v === undefined || v === null || v === '') return;
+        var label = _this6.$t(meta.i18nLabelKey);
+        var unit;
+        if (meta.unitI18nKey) unit = _this6.$t(meta.unitI18nKey);else unit = meta.unit || '';
+        var labelText = isEn ? "".concat(label, ": ").concat(v).concat(unit) : "".concat(label, "(").concat(meta.en, "): ").concat(v).concat(unit);
+        specs.push({
+          key: key,
+          labelText: labelText
+        });
+      });
+      return specs;
+    },
     onCustomerNameInput: function onCustomerNameInput(e) {
       this.customerName = e.detail.value;
     },
@@ -551,23 +872,23 @@ var _default = {
       uni.navigateBack();
     },
     saveQuotationToDatabase: function saveQuotationToDatabase() {
-      var _this4 = this;
-      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
+      var _this7 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
         var quotationData, result;
-        return _regenerator.default.wrap(function _callee$(_context) {
+        return _regenerator.default.wrap(function _callee2$(_context2) {
           while (1) {
-            switch (_context.prev = _context.next) {
+            switch (_context2.prev = _context2.next) {
               case 0:
                 quotationData = {
-                  customerName: _this4.customerName,
-                  note: _this4.note,
-                  paymentMethod: _this4.paymentMethod,
-                  packaging: _this4.packaging,
-                  quoter: _this4.quoter,
-                  quoterPhone: _this4.quoterPhone,
-                  validity: _this4.validity,
-                  finalPrice: parseFloat(_this4.finalPrice) || parseFloat(_this4.totalAmount) || 0,
-                  items: _this4.quoteData.map(function (item) {
+                  customerName: _this7.customerName,
+                  note: _this7.note,
+                  paymentMethod: _this7.paymentMethod,
+                  packaging: _this7.packaging,
+                  quoter: _this7.quoter,
+                  quoterPhone: _this7.quoterPhone,
+                  validity: _this7.validity,
+                  finalPrice: parseFloat(_this7.finalPrice) || parseFloat(_this7.totalAmount) || 0,
+                  items: _this7.quoteData.map(function (item) {
                     return {
                       valveName: item.productName,
                       spec: parseInt(item.model),
@@ -580,26 +901,26 @@ var _default = {
                     };
                   })
                 };
-                _context.prev = 1;
-                _context.next = 4;
+                _context2.prev = 1;
+                _context2.next = 4;
                 return _cloudApi.quotationApi.create(quotationData);
               case 4:
-                result = _context.sent;
+                result = _context2.sent;
                 console.log('报价数据保存成功:', result);
-                _this4.showToast(_this4.$t('quotation.saveSuccess'), 'success');
-                return _context.abrupt("return", result);
+                _this7.showToast(_this7.$t('quotation.saveSuccess'), 'success');
+                return _context2.abrupt("return", result);
               case 10:
-                _context.prev = 10;
-                _context.t0 = _context["catch"](1);
-                console.error('保存报价数据失败:', _context.t0);
-                _this4.showToast(_this4.$t('quotation.saveFail'), 'error');
-                throw _context.t0;
+                _context2.prev = 10;
+                _context2.t0 = _context2["catch"](1);
+                console.error('保存报价数据失败:', _context2.t0);
+                _this7.showToast(_this7.$t('quotation.saveFail'), 'error');
+                throw _context2.t0;
               case 15:
               case "end":
-                return _context.stop();
+                return _context2.stop();
             }
           }
-        }, _callee, null, [[1, 10]]);
+        }, _callee2, null, [[1, 10]]);
       }))();
     },
     drawText: function drawText(ctx, text, x, y, maxWidth, lineHeight, fontSize) {
@@ -633,28 +954,39 @@ var _default = {
       return y + lines.length * lineHeight;
     },
     generateQuotation: function generateQuotation() {
-      var _this5 = this;
-      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
+      var _this8 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee4() {
         var that, ctx, scale, width, y, logoPath;
-        return _regenerator.default.wrap(function _callee3$(_context3) {
+        return _regenerator.default.wrap(function _callee4$(_context4) {
           while (1) {
-            switch (_context3.prev = _context3.next) {
+            switch (_context4.prev = _context4.next) {
               case 0:
-                _this5.showLoading = true;
-                _this5.loadingText = _this5.$t('quotation.priceGenerating');
-                that = _this5;
-                _context3.prev = 3;
-                _context3.next = 6;
-                return _this5.saveQuotationToDatabase();
+                _this8.showLoading = true;
+                _this8.loadingText = _this8.$t('quotation.priceGenerating');
+                that = _this8;
+                _context4.prev = 3;
+                _context4.next = 6;
+                return _this8.saveQuotationToDatabase();
               case 6:
-                _context3.next = 11;
+                _context4.next = 11;
                 break;
               case 8:
-                _context3.prev = 8;
-                _context3.t0 = _context3["catch"](3);
-                console.error('保存报价数据失败:', _context3.t0);
+                _context4.prev = 8;
+                _context4.t0 = _context4["catch"](3);
+                console.error('保存报价数据失败:', _context4.t0);
               case 11:
-                ctx = uni.createCanvasContext('quotationCanvas', _this5);
+                _context4.prev = 11;
+                _context4.next = 14;
+                return _this8.ensureDisplayConfigLoaded();
+              case 14:
+                _context4.next = 19;
+                break;
+              case 16:
+                _context4.prev = 16;
+                _context4.t1 = _context4["catch"](11);
+                console.warn('加载报价单显示配置失败，使用默认:', _context4.t1);
+              case 19:
+                ctx = uni.createCanvasContext('quotationCanvas', _this8);
                 scale = 1;
                 width = 750;
                 y = 30 * scale;
@@ -673,9 +1005,9 @@ var _default = {
                     ctx.drawImage(logoRes.path, logoX, logoY, logoWidth, logoHeight);
                     var infoX = logoX + logoWidth + 24;
                     var infoY = logoY;
-                    var companyName = _this5.$t('quotation.companyName');
-                    var companyNameEn = _this5.$t('quotation.companyNameEn');
-                    var companyInfo = [_this5.$t('quotation.companyWebsite'), _this5.$t('quotation.companyEmail'), _this5.$t('quotation.companyAddress'), _this5.$t('quotation.companyPhone')];
+                    var companyName = _this8.$t('quotation.companyName');
+                    var companyNameEn = _this8.$t('quotation.companyNameEn');
+                    var companyInfo = [_this8.$t('quotation.companyWebsite'), _this8.$t('quotation.companyEmail'), _this8.$t('quotation.companyAddress'), _this8.$t('quotation.companyPhone')];
                     ctx.setFontSize(26);
                     ctx.setFillStyle('#0d1526');
                     ctx.fillText(companyName, infoX, infoY + 26);
@@ -701,34 +1033,48 @@ var _default = {
                     ctx.setFontSize(24);
                     ctx.setFillStyle('#0d1526');
                     ctx.setTextAlign('center');
-                    ctx.fillText(_this5.$t('quotation.title'), 375, y + 24);
+                    ctx.fillText(_this8.$t('quotation.title'), 375, y + 24);
                     ctx.setTextAlign('left');
                     y += 60 * scale;
                     ctx.setFontSize(15);
                     ctx.setFillStyle('#475569');
-                    var quoterLabel = _this5.$t('quotation.quoter') + '：';
+                    var quoterLabel = _this8.$t('quotation.quoter') + '：';
                     ctx.fillText(quoterLabel, 30, y);
                     var quoterLabelWidth = ctx.measureText(quoterLabel).width;
                     ctx.setFontSize(15);
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(_this5.quoter || _this5.$t('quotation.noSalePerson'), 30 + quoterLabelWidth + 8, y);
+                    ctx.fillText(_this8.quoter || _this8.$t('quotation.noSalePerson'), 30 + quoterLabelWidth + 8, y);
                     y += 35 * scale;
                     ctx.setFontSize(15);
                     ctx.setFillStyle('#475569');
-                    var customerLabel = _this5.$t('quotation.customerName') + '：';
+                    var customerLabel = _this8.$t('quotation.customerName') + '：';
                     ctx.fillText(customerLabel, 30, y);
                     var customerLabelWidth = ctx.measureText(customerLabel).width;
                     ctx.setFontSize(15);
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(_this5.customerName || _this5.$t('quotation.noCustomer'), 30 + customerLabelWidth + 8, y);
+                    ctx.fillText(_this8.customerName || _this8.$t('quotation.noCustomer'), 30 + customerLabelWidth + 8, y);
                     y += 35 * scale;
                     var totalWidth = 690;
                     var startX = 30;
-                    var headers = [_this5.$t('quotation.productName'), _this5.$t('quotation.modelSpec'), _this5.$t('quotation.gateMaterialCol'), _this5.$t('quotation.stemMaterialCol'), _this5.$t('quotation.quantityCol'), _this5.$t('quotation.unitPriceCol'), _this5.$t('quotation.totalPriceCol')];
-                    var cellWidths = [110, 120, 100, 100, 65, 85, 90];
-                    var totalCellWidth = cellWidths.reduce(function (a, b) {
+
+                    // === 使用系统设置中的可见列，替代硬编码 headers ===
+                    var visibleCols = _this8.getVisibleTableCols();
+                    var cellWidths = visibleCols.map(function (c) {
+                      return c.width;
+                    });
+                    var headers = visibleCols.map(function (c) {
+                      return c.label;
+                    });
+                    // 如果只有很少几列，让表格总宽度仍填满 totalWidth（居中+扩展）
+                    var usedWidth = cellWidths.reduce(function (a, b) {
                       return a + b;
                     }, 0);
+                    if (usedWidth < totalWidth && visibleCols.length > 0) {
+                      var extraEach = Math.floor((totalWidth - usedWidth) / visibleCols.length);
+                      for (var i = 0; i < visibleCols.length; i++) {
+                        cellWidths[i] += extraEach;
+                      }
+                    }
                     ctx.setFillStyle('#0d1526');
                     ctx.fillRect(startX, y, totalWidth, 36);
                     ctx.setFillStyle('#FFFFFF');
@@ -751,21 +1097,26 @@ var _default = {
                     y += 36 * scale;
                     var rowHeight = 38;
                     var specRowHeight = 28;
-                    _this5.quoteData.forEach(function (item, idx) {
+                    var pricingInfoLabel = _this8.$t('quotation.pricingInfo');
+                    // 提前测量 pricingInfoLabel 的宽度
+                    var pricingInfoLabelWidth = ctx.measureText(pricingInfoLabel).width;
+                    _this8.quoteData.forEach(function (item, idx) {
                       x = startX + 8;
-                      var values = [_this5.translateProductType(item.productType), item.productName + '-DN' + item.model, item.gateMaterial || '', item.stemMaterial || '', String(item.quantity), '¥' + item.unitPrice, '¥' + item.totalPrice];
+                      var values = visibleCols.map(function (col) {
+                        return col.meta.valueFn(item, _this8);
+                      });
                       if (idx % 2 === 1) {
                         ctx.setFillStyle('#f8fafc');
                         ctx.fillRect(startX, y, totalWidth, rowHeight + specRowHeight);
                       }
                       values.forEach(function (val, i) {
-                        if (i === 6) ctx.setFillStyle('#dc2626');else ctx.setFillStyle('#1e293b');
+                        if (visibleCols[i].isTotalPrice) ctx.setFillStyle('#dc2626');else ctx.setFillStyle('#1e293b');
                         var maxWidth = cellWidths[i] - 8;
-                        var displayVal = val || '';
-                        if (val) {
-                          var textWidth = ctx.measureText(val).width;
+                        var displayVal = val === undefined || val === null ? '' : String(val);
+                        if (displayVal) {
+                          var textWidth = ctx.measureText(displayVal).width;
                           if (textWidth > maxWidth) {
-                            var truncated = val;
+                            var truncated = displayVal;
                             while (ctx.measureText(truncated + '...').width > maxWidth && truncated.length > 1) {
                               truncated = truncated.slice(0, -1);
                             }
@@ -776,43 +1127,29 @@ var _default = {
                         x += cellWidths[i];
                       });
                       y += rowHeight * scale;
+
+                      // 规格参数行
                       ctx.setFontSize(11);
                       ctx.setFillStyle('#64748b');
-                      ctx.fillText(_this5.$t('quotation.pricingInfo'), startX + 8, y + 18);
-                      x = startX + 60;
-                      var isEn = _locale.default.getCurrentLanguage() === 'en-US';
-                      var specs = [{
-                        label: _this5.$t('quotation.maxPressure'),
-                        en: 'Max Pressure',
-                        value: item.maxPressure,
-                        unit: 'BAR'
-                      }, {
-                        label: _this5.$t('quotation.unitWeight'),
-                        en: 'Unit Weight',
-                        value: item.unitWeight,
-                        unit: _this5.$t('quotation.weightUnit')
-                      }, {
-                        label: _this5.$t('quotation.laps'),
-                        en: 'Laps',
-                        value: item.laps,
-                        unit: ''
-                      }, {
-                        label: _this5.$t('quotation.torque'),
-                        en: 'Torque',
-                        value: item.torque,
-                        unit: _this5.$t('quotation.torqueUnit')
-                      }];
-                      specs.forEach(function (spec, i) {
-                        if (spec.value) {
-                          var labelText = isEn ? "".concat(spec.label, ": ").concat(spec.value).concat(spec.unit) : "".concat(spec.label, "(").concat(spec.en, "): ").concat(spec.value).concat(spec.unit);
-                          var labelWidth = ctx.measureText(labelText).width;
-                          if (x + labelWidth <= startX + totalWidth - 10) {
-                            ctx.setFillStyle('#475569');
-                            ctx.fillText(labelText, x, y + 18);
-                            x += labelWidth + 15;
-                          }
+                      ctx.fillText(pricingInfoLabel, startX + 8, y + 18);
+                      x = startX + 8 + pricingInfoLabelWidth + 12;
+                      var specs = _this8.getVisibleSpecs(item);
+                      var firstSpecX = x;
+                      var anySpecPrinted = false;
+                      specs.forEach(function (spec) {
+                        var labelWidth = ctx.measureText(spec.labelText).width;
+                        if (x + labelWidth <= startX + totalWidth - 10) {
+                          ctx.setFillStyle('#475569');
+                          ctx.fillText(spec.labelText, x, y + 18);
+                          x += labelWidth + 15;
+                          anySpecPrinted = true;
                         }
                       });
+                      // 如果当前行没有规格显示，打印一个"—"占位提示
+                      if (!anySpecPrinted) {
+                        ctx.setFillStyle('#b0bac8');
+                        ctx.fillText('—', firstSpecX, y + 18);
+                      }
                       ctx.setStrokeStyle('#e2e8f0');
                       ctx.beginPath();
                       ctx.moveTo(startX, y + specRowHeight);
@@ -824,31 +1161,31 @@ var _default = {
                     y += 30 * scale;
                     ctx.setFontSize(15);
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(_this5.$t('quotation.remarkAndTech'), 30, y);
+                    ctx.fillText(_this8.$t('quotation.remarkAndTech'), 30, y);
                     y += 24 * scale;
-                    y = _this5.drawText(ctx, _this5.note, 30, y, 690, 22, 13) + 15;
+                    y = _this8.drawText(ctx, _this8.note, 30, y, 690, 22, 13) + 15;
                     ctx.setFontSize(14);
                     ctx.setFillStyle('#475569');
-                    var paymentLabel = _this5.$t('quotation.paymentMethod') + '：';
+                    var paymentLabel = _this8.$t('quotation.paymentMethod') + '：';
                     ctx.fillText(paymentLabel, 30, y);
                     var paymentLabelWidth = ctx.measureText(paymentLabel).width;
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(_this5.paymentMethod, 30 + paymentLabelWidth + 6, y);
+                    ctx.fillText(_this8.paymentMethod, 30 + paymentLabelWidth + 6, y);
                     y += 26 * scale;
                     ctx.setFillStyle('#475569');
-                    var packagingLabel = _this5.$t('quotation.packaging') + '：';
+                    var packagingLabel = _this8.$t('quotation.packaging') + '：';
                     ctx.fillText(packagingLabel, 30, y);
                     var packagingLabelWidth = ctx.measureText(packagingLabel).width;
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(_this5.packaging, 30 + packagingLabelWidth + 6, y);
+                    ctx.fillText(_this8.packaging, 30 + packagingLabelWidth + 6, y);
                     y += 26 * scale;
                     ctx.setFillStyle('#475569');
-                    var confirmLabel = _this5.$t('quotation.confirmAmount');
+                    var confirmLabel = _this8.$t('quotation.confirmAmount');
                     ctx.fillText(confirmLabel, 30, y);
                     var confirmLabelWidth = ctx.measureText(confirmLabel).width;
                     ctx.setFillStyle('#dc2626');
                     ctx.setFontSize(16);
-                    ctx.fillText('¥' + (_this5.finalPrice || _this5.totalAmount), 30 + confirmLabelWidth + 8, y);
+                    ctx.fillText('¥' + (_this8.finalPrice || _this8.totalAmount), 30 + confirmLabelWidth + 8, y);
                     ctx.setFontSize(14);
                     y += 35 * scale;
                     ctx.setStrokeStyle('#e2e8f0');
@@ -859,30 +1196,30 @@ var _default = {
                     y += 25 * scale;
                     ctx.setFontSize(14);
                     ctx.setFillStyle('#475569');
-                    var signLabel = _this5.$t('quotation.quoterSign');
+                    var signLabel = _this8.$t('quotation.quoterSign');
                     ctx.fillText(signLabel, 30, y);
                     var signLabelWidth = ctx.measureText(signLabel).width;
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(_this5.quoter, 30 + signLabelWidth + 6, y);
+                    ctx.fillText(_this8.quoter, 30 + signLabelWidth + 6, y);
                     ctx.setFillStyle('#475569');
-                    var phoneLabel = _this5.$t('quotation.quoterPhoneLabel');
+                    var phoneLabel = _this8.$t('quotation.quoterPhoneLabel');
                     ctx.fillText(phoneLabel, 400, y);
                     var phoneLabelWidth = ctx.measureText(phoneLabel).width;
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(_this5.quoterPhone, 400 + phoneLabelWidth + 6, y);
+                    ctx.fillText(_this8.quoterPhone, 400 + phoneLabelWidth + 6, y);
                     y += 26 * scale;
                     ctx.setFillStyle('#475569');
-                    var validityLabel = _this5.$t('quotation.validityLabel');
+                    var validityLabel = _this8.$t('quotation.validityLabel');
                     ctx.fillText(validityLabel, 30, y);
                     var validityLabelWidth = ctx.measureText(validityLabel).width;
                     ctx.setFillStyle('#c8aa6e');
-                    ctx.fillText(_this5.validity, 30 + validityLabelWidth + 6, y);
+                    ctx.fillText(_this8.validity, 30 + validityLabelWidth + 6, y);
                     ctx.setFillStyle('#475569');
-                    var dateLabel = _this5.$t('quotation.issueDate');
+                    var dateLabel = _this8.$t('quotation.issueDate');
                     ctx.fillText(dateLabel, 400, y);
                     var dateLabelWidth = ctx.measureText(dateLabel).width;
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(_this5.currentDate, 400 + dateLabelWidth + 6, y);
+                    ctx.fillText(_this8.currentDate, 400 + dateLabelWidth + 6, y);
                     y += 60 * scale;
                     ctx.draw(false, function () {
                       var finalHeight = Math.ceil(y);
@@ -893,19 +1230,19 @@ var _default = {
                         destWidth: 1500,
                         destHeight: finalHeight * 2,
                         success: function () {
-                          var _success = (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2(res) {
-                            return _regenerator.default.wrap(function _callee2$(_context2) {
+                          var _success = (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3(res) {
+                            return _regenerator.default.wrap(function _callee3$(_context3) {
                               while (1) {
-                                switch (_context2.prev = _context2.next) {
+                                switch (_context3.prev = _context3.next) {
                                   case 0:
-                                    _context2.next = 2;
+                                    _context3.next = 2;
                                     return that.saveImageWithPermission(res.tempFilePath);
                                   case 2:
                                   case "end":
-                                    return _context2.stop();
+                                    return _context3.stop();
                                 }
                               }
-                            }, _callee2);
+                            }, _callee3);
                           }));
                           function success(_x) {
                             return _success.apply(this, arguments);
@@ -914,26 +1251,26 @@ var _default = {
                         }(),
                         fail: function fail(err) {
                           console.error(err);
-                          that.showToast(_this5.$t('quotation.renderFail'), 'error');
+                          that.showToast(_this8.$t('quotation.renderFail'), 'error');
                         },
                         complete: function complete() {
-                          _this5.showLoading = false;
+                          _this8.showLoading = false;
                         }
                       });
                     });
                   },
                   fail: function fail(err) {
                     console.error(err);
-                    that.showToast(_this5.$t('quotation.logoLoadFail'), 'error');
+                    that.showToast(_this8.$t('quotation.logoLoadFail'), 'error');
                     that.showLoading = false;
                   }
                 });
-              case 21:
+              case 29:
               case "end":
-                return _context3.stop();
+                return _context4.stop();
             }
           }
-        }, _callee3, null, [[3, 8]]);
+        }, _callee4, null, [[3, 8], [11, 16]]);
       }))();
     }
   }

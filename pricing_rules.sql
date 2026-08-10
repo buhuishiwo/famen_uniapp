@@ -102,3 +102,17 @@ CREATE TABLE IF NOT EXISTS system_settings (
 -- 默认设置：允许修订单价（请单独执行）
 INSERT INTO system_settings (setting_key, setting_value) VALUES ('allow_price_modification', 'true')
 ON DUPLICATE KEY UPDATE setting_value = setting_value;
+
+-- ============================================
+-- 系统设置：报价单显示配置（请单独执行）
+-- 小程序端报价单图片的列表列和规格参数可见性控制
+-- 列表字段：productType/modelSpec/gateMaterial/stemMaterial/quantity/brandingFee/unitPrice/totalPrice
+-- 规格参数：maxPressure/unitWeight/laps/torque
+-- modelSpec/quantity/unitPrice/totalPrice 被标记为必选，前端会强制不可取消
+-- ============================================
+INSERT INTO system_settings (setting_key, setting_value)
+VALUES (
+  'quotation_display_config',
+  '{"tableFields":[{"key":"productType","visible":true},{"key":"modelSpec","visible":true},{"key":"gateMaterial","visible":true},{"key":"stemMaterial","visible":true},{"key":"quantity","visible":true},{"key":"brandingFee","visible":true},{"key":"unitPrice","visible":true},{"key":"totalPrice","visible":true}],"specFields":[{"key":"maxPressure","visible":true},{"key":"unitWeight","visible":true},{"key":"laps","visible":true},{"key":"torque","visible":true}]}'
+)
+ON DUPLICATE KEY UPDATE setting_value = setting_value;

@@ -219,6 +219,68 @@ import navigationBar from '@/components/navigation-bar/navigation-bar';
 import { quotationApi, priceApi } from '@/utils/cloud-api.js';
 import i18n from '@/locale';
 
+/**
+ * 报价单显示配置 + 字段定义（模块级常量，不放到 methods 里）
+ * Vue/uni-app 只会把 methods 里的 Function 绑定到 vm，Object 类型会被忽略，
+ * 因此这里作为模块级 const，methods 里的函数直接闭包引用即可。
+ */
+const _DEFAULT_DISPLAY_CONFIG = {
+    tableFields: [
+        { key: 'productType',  visible: true },
+        { key: 'modelSpec',    visible: true },
+        { key: 'gateMaterial', visible: true },
+        { key: 'stemMaterial', visible: true },
+        { key: 'quantity',     visible: true },
+        { key: 'brandingFee',  visible: true },
+        { key: 'unitPrice',    visible: true },
+        { key: 'totalPrice',   visible: true }
+    ],
+    specFields: [
+        { key: 'maxPressure', visible: true },
+        { key: 'unitWeight',  visible: true },
+        { key: 'laps',        visible: true },
+        { key: 'torque',      visible: true }
+    ]
+};
+
+const _TABLE_FIELD_META = {
+    productType:  { i18nKey: 'quotation.productName',    width: 110, required: true,  forceVisible: false,
+        valueFn: (item, vm) => vm.translateProductType(item.productType) },
+    modelSpec:    { i18nKey: 'quotation.modelSpec',      width: 120, required: true,  forceVisible: true,
+        valueFn: (item) => {
+            // 兼容两种 productName 格式："QB" 或 "QB-DN80"，避免重复 DN
+            const name = item.productName || '';
+            const model = String(item.model || '');
+            if (!model) return name;
+            const dnSuffix = '-DN' + model;
+            const dnInline = 'DN' + model;
+            return (name.includes(dnSuffix) || name.includes(dnInline)) ? name : name + dnSuffix;
+        } },
+    gateMaterial: { i18nKey: 'quotation.gateMaterialCol',width: 100, required: false, forceVisible: false,
+        valueFn: (item) => item.gateMaterial || '' },
+    stemMaterial: { i18nKey: 'quotation.stemMaterialCol',width: 100, required: false, forceVisible: false,
+        valueFn: (item) => item.stemMaterial || '' },
+    quantity:     { i18nKey: 'quotation.quantityCol',   width: 65,  required: true,  forceVisible: true,
+        valueFn: (item) => String(item.quantity) },
+    brandingFee:  { i18nKey: 'quotation.brandingFeeCol',width: 80,  required: false, forceVisible: false,
+        valueFn: (item) => '¥' + (Number(item.brandingFee) || 0).toFixed(2) },
+    unitPrice:    { i18nKey: 'quotation.unitPriceCol',  width: 85,  required: true,  forceVisible: true,
+        valueFn: (item) => '¥' + (Number(item.unitPrice) || 0).toFixed(2) },
+    totalPrice:   { i18nKey: 'quotation.totalPriceCol', width: 95,  required: true,  forceVisible: true,
+        valueFn: (item) => '¥' + (Number(item.totalPrice) || 0).toFixed(2) }
+};
+
+const _SPEC_FIELD_META = {
+    maxPressure: { i18nLabelKey: 'quotation.maxPressure', en: 'Max Pressure', unit: 'BAR',
+        valueFn: (item) => item.maxPressure },
+    unitWeight:  { i18nLabelKey: 'quotation.unitWeight',  en: 'Unit Weight',
+        unitI18nKey: 'quotation.weightUnit', valueFn: (item) => item.unitWeight },
+    laps:        { i18nLabelKey: 'quotation.laps',        en: 'Laps', unit: '',
+        valueFn: (item) => item.laps },
+    torque:      { i18nLabelKey: 'quotation.torque',      en: 'Torque',
+        unitI18nKey: 'quotation.torqueUnit', valueFn: (item) => item.torque }
+};
+
 export default {
     components: {
         navigationBar
@@ -239,8 +301,10 @@ export default {
             loadingText: '',
             showToastDialog: false,
             toastText: '',
-            toastType: 'success'
-
+            toastType: 'success',
+            // 报价单显示配置（从 system_settings 读取）
+            _displayConfig: null,
+            _displayConfigLoaded: false
         };
     },
     computed: {
@@ -442,6 +506,132 @@ export default {
             }, 2000);
         },
 
+        async ensureDisplayConfigLoaded(forceRefresh) {
+            const CACHE_KEY = 'quotation_display_config_cache';
+            const CACHE_MAX_MS = 10 * 60 * 1000; // 10 分钟
+
+            if (!forceRefresh && this._displayConfigLoaded && this._displayConfig) return;
+
+            // 尝试读缓存（减少每次生成都调云函数）
+            if (!forceRefresh) {
+                try {
+                    const cached = uni.getStorageSync(CACHE_KEY);
+                    if (cached && cached.value && Date.now() - cached.ts < CACHE_MAX_MS) {
+                        this._displayConfig = cached.value;
+                        this._displayConfigLoaded = true;
+                        return;
+                    }
+                } catch (_) { /* ignore */ }
+            }
+
+            try {
+                const res = await priceApi.getSystemConfig(['quotation_display_config']);
+                if (res && res.success && res.data) {
+                    const raw = res.data.quotation_display_config;
+                    let parsed = null;
+                    if (raw) {
+                        try { parsed = (typeof raw === 'string') ? JSON.parse(raw) : raw; } catch (_) {}
+                    }
+                    if (parsed && parsed.tableFields && parsed.specFields) {
+                        this._displayConfig = parsed;
+                    } else {
+                        this._displayConfig = JSON.parse(JSON.stringify(_DEFAULT_DISPLAY_CONFIG));
+                    }
+                } else {
+                    this._displayConfig = JSON.parse(JSON.stringify(_DEFAULT_DISPLAY_CONFIG));
+                }
+            } catch (e) {
+                console.warn('[ensureDisplayConfigLoaded] 读取失败，使用全显示默认:', e.message);
+                this._displayConfig = JSON.parse(JSON.stringify(_DEFAULT_DISPLAY_CONFIG));
+            }
+
+            // 强制必选字段可见
+            const tableConfig = this._displayConfig.tableFields || [];
+            tableConfig.forEach(f => {
+                const meta = _TABLE_FIELD_META[f.key];
+                if (meta && meta.forceVisible) f.visible = true;
+            });
+
+            this._displayConfigLoaded = true;
+            try {
+                uni.setStorageSync(CACHE_KEY, { ts: Date.now(), value: this._displayConfig });
+            } catch (_) { /* ignore */ }
+        },
+
+        /**
+         * 计算当前可见的列表列（按配置返回 {key,label,width,value} 数组）
+         * 注意：无论配置如何，若最终返回空数组则强制返回最小必选集（modelSpec/quantity/unitPrice/totalPrice），
+         *       防止表格被绘制成一条黑横线。
+         */
+        getVisibleTableCols() {
+            const cfg = this._displayConfig || _DEFAULT_DISPLAY_CONFIG;
+            const visibleKeys = new Set(
+                (cfg.tableFields || [])
+                    .filter(f => f.visible)
+                    .map(f => f.key)
+            );
+            // 按 META 固定顺序生成（保证导出稳定）
+            const cols = [];
+            Object.keys(_TABLE_FIELD_META).forEach(key => {
+                const meta = _TABLE_FIELD_META[key];
+                if (meta.forceVisible || visibleKeys.has(key)) {
+                    cols.push({
+                        key,
+                        label: this.$t(meta.i18nKey),
+                        width: meta.width,
+                        isTotalPrice: key === 'totalPrice',
+                        meta
+                    });
+                }
+            });
+            // 兜底：至少必须有四列必选，否则强制按 meta.forceVisible 默认加入，避免画空表格
+            if (cols.length === 0) {
+                Object.keys(_TABLE_FIELD_META).forEach(key => {
+                    const meta = _TABLE_FIELD_META[key];
+                    if (meta.forceVisible) {
+                        cols.push({
+                            key,
+                            label: this.$t(meta.i18nKey),
+                            width: meta.width,
+                            isTotalPrice: key === 'totalPrice',
+                            meta
+                        });
+                    }
+                });
+            }
+            return cols;
+        },
+
+        /**
+         * 获取某条数据的可见规格参数数组（value 非空才返回）
+         */
+        getVisibleSpecs(item) {
+            const cfg = this._displayConfig || _DEFAULT_DISPLAY_CONFIG;
+            const visibleKeys = new Set(
+                (cfg.specFields || [])
+                    .filter(f => f.visible)
+                    .map(f => f.key)
+            );
+            const isEn = (this.$locale && this.$locale() && this.$locale().locale === 'en-US') ||
+                (this.$i18n && this.$i18n.locale === 'en-US');
+            const specs = [];
+            Object.keys(_SPEC_FIELD_META).forEach(key => {
+                if (!visibleKeys.has(key)) return;
+                const meta = _SPEC_FIELD_META[key];
+                const v = meta.valueFn(item);
+                if (v === undefined || v === null || v === '') return;
+                const label = this.$t(meta.i18nLabelKey);
+                let unit;
+                if (meta.unitI18nKey) unit = this.$t(meta.unitI18nKey);
+                else unit = meta.unit || '';
+                const labelText = isEn
+                    ? `${label}: ${v}${unit}`
+                    : `${label}(${meta.en}): ${v}${unit}`;
+                specs.push({ key, labelText });
+            });
+            return specs;
+        },
+
         onCustomerNameInput(e) { this.customerName = e.detail.value; },
 
         onNoteInput(e) { this.note = e.detail.value; },
@@ -520,6 +710,13 @@ export default {
                 await this.saveQuotationToDatabase();
             } catch (error) {
                 console.error('保存报价数据失败:', error);
+            }
+
+            // 确保 display_config 已加载（云端失败则使用全显示默认）
+            try {
+                await this.ensureDisplayConfigLoaded();
+            } catch (e) {
+                console.warn('加载报价单显示配置失败，使用默认:', e);
             }
 
             const ctx = uni.createCanvasContext('quotationCanvas', this);
@@ -613,23 +810,25 @@ export default {
 
                     const totalWidth = 690;
                     const startX = 30;
-                    const headers = [
-                        this.$t('quotation.productName'),
-                        this.$t('quotation.modelSpec'),
-                        this.$t('quotation.gateMaterialCol'),
-                        this.$t('quotation.stemMaterialCol'),
-                        this.$t('quotation.quantityCol'),
-                        this.$t('quotation.unitPriceCol'),
-                        this.$t('quotation.totalPriceCol')
-                    ];
-                    const cellWidths = [110, 120, 100, 100, 65, 85, 90];
-                    const totalCellWidth = cellWidths.reduce((a, b) => a + b, 0);
+
+                    // === 使用系统设置中的可见列，替代硬编码 headers ===
+                    const visibleCols = this.getVisibleTableCols();
+                    const cellWidths = visibleCols.map(c => c.width);
+                    const headers  = visibleCols.map(c => c.label);
+                    // 如果只有很少几列，让表格总宽度仍填满 totalWidth（居中+扩展）
+                    const usedWidth = cellWidths.reduce((a, b) => a + b, 0);
+                    if (usedWidth < totalWidth && visibleCols.length > 0) {
+                        const extraEach = Math.floor((totalWidth - usedWidth) / visibleCols.length);
+                        for (let i = 0; i < visibleCols.length; i++) {
+                            cellWidths[i] += extraEach;
+                        }
+                    }
 
                     ctx.setFillStyle('#0d1526');
                     ctx.fillRect(startX, y, totalWidth, 36);
                     ctx.setFillStyle('#FFFFFF');
                     ctx.setFontSize(13);
-                    
+
                     let x = startX + 8;
                     headers.forEach((h, i) => {
                         const maxWidth = cellWidths[i] - 8;
@@ -649,17 +848,13 @@ export default {
 
                     const rowHeight = 38;
                     const specRowHeight = 28;
+                    const pricingInfoLabel = this.$t('quotation.pricingInfo');
+                    // 提前测量 pricingInfoLabel 的宽度
+                    const pricingInfoLabelWidth = ctx.measureText(pricingInfoLabel).width;
+
                     this.quoteData.forEach((item, idx) => {
                         x = startX + 8;
-                        const values = [
-                            this.translateProductType(item.productType),
-                            item.productName + '-DN' + item.model,
-                            item.gateMaterial || '',
-                            item.stemMaterial || '',
-                            String(item.quantity),
-                            '¥' + item.unitPrice,
-                            '¥' + item.totalPrice
-                        ];
+                        const values = visibleCols.map(col => col.meta.valueFn(item, this));
 
                         if (idx % 2 === 1) {
                             ctx.setFillStyle('#f8fafc');
@@ -667,14 +862,14 @@ export default {
                         }
 
                         values.forEach((val, i) => {
-                            if (i === 6) ctx.setFillStyle('#dc2626');
+                            if (visibleCols[i].isTotalPrice) ctx.setFillStyle('#dc2626');
                             else ctx.setFillStyle('#1e293b');
                             const maxWidth = cellWidths[i] - 8;
-                            let displayVal = val || '';
-                            if (val) {
-                                const textWidth = ctx.measureText(val).width;
+                            let displayVal = (val === undefined || val === null) ? '' : String(val);
+                            if (displayVal) {
+                                const textWidth = ctx.measureText(displayVal).width;
                                 if (textWidth > maxWidth) {
-                                    let truncated = val;
+                                    let truncated = displayVal;
                                     while (ctx.measureText(truncated + '...').width > maxWidth && truncated.length > 1) {
                                         truncated = truncated.slice(0, -1);
                                     }
@@ -687,32 +882,29 @@ export default {
 
                         y += rowHeight * scale;
 
+                        // 规格参数行
                         ctx.setFontSize(11);
                         ctx.setFillStyle('#64748b');
-                        ctx.fillText(this.$t('quotation.pricingInfo'), startX + 8, y + 18);
-                        
-                        x = startX + 60;
-                        const isEn = i18n.getCurrentLanguage() === 'en-US';
-                        const specs = [
-                            { label: this.$t('quotation.maxPressure'), en: 'Max Pressure', value: item.maxPressure, unit: 'BAR' },
-                            { label: this.$t('quotation.unitWeight'), en: 'Unit Weight', value: item.unitWeight, unit: this.$t('quotation.weightUnit') },
-                            { label: this.$t('quotation.laps'), en: 'Laps', value: item.laps, unit: '' },
-                            { label: this.$t('quotation.torque'), en: 'Torque', value: item.torque, unit: this.$t('quotation.torqueUnit') }
-                        ];
+                        ctx.fillText(pricingInfoLabel, startX + 8, y + 18);
 
-                        specs.forEach((spec, i) => {
-                            if (spec.value) {
-                                const labelText = isEn
-                                    ? `${spec.label}: ${spec.value}${spec.unit}`
-                                    : `${spec.label}(${spec.en}): ${spec.value}${spec.unit}`;
-                                const labelWidth = ctx.measureText(labelText).width;
-                                if (x + labelWidth <= startX + totalWidth - 10) {
-                                    ctx.setFillStyle('#475569');
-                                    ctx.fillText(labelText, x, y + 18);
-                                    x += labelWidth + 15;
-                                }
+                        x = startX + 8 + pricingInfoLabelWidth + 12;
+                        const specs = this.getVisibleSpecs(item);
+                        const firstSpecX = x;
+                        let anySpecPrinted = false;
+                        specs.forEach((spec) => {
+                            const labelWidth = ctx.measureText(spec.labelText).width;
+                            if (x + labelWidth <= startX + totalWidth - 10) {
+                                ctx.setFillStyle('#475569');
+                                ctx.fillText(spec.labelText, x, y + 18);
+                                x += labelWidth + 15;
+                                anySpecPrinted = true;
                             }
                         });
+                        // 如果当前行没有规格显示，打印一个"—"占位提示
+                        if (!anySpecPrinted) {
+                            ctx.setFillStyle('#b0bac8');
+                            ctx.fillText('—', firstSpecX, y + 18);
+                        }
 
                         ctx.setStrokeStyle('#e2e8f0');
                         ctx.beginPath();

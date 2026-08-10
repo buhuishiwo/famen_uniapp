@@ -69,6 +69,11 @@
             <FileTextOutlined />
             <span>订单管理</span>
           </a-menu-item>
+          <a-menu-divider />
+          <a-menu-item key="system-settings">
+            <SettingOutlined />
+            <span>系统设置</span>
+          </a-menu-item>
         </a-menu>
       </a-layout-sider>
 
@@ -130,7 +135,8 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   ControlOutlined,
-  DownloadOutlined
+  DownloadOutlined,
+  SettingOutlined
 } from '@ant-design/icons-vue';
 import { seriesApi, modelApi, priceApi, materialApi, coefficientApi, modelSpecApi } from './api';
 
@@ -155,7 +161,8 @@ const pageTitles = {
   'material-combo': '材质组合',
   salesperson: '营销员管理',
   customer: '客户管理',
-  order: '订单管理'
+  order: '订单管理',
+  'system-settings': '系统设置'
 };
 
 const currentPageTitle = computed(() => pageTitles[selectedKey.value] || '');

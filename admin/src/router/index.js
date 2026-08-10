@@ -80,6 +80,11 @@ const routes = [
     path: '/pricing-rules',
     name: 'PricingRules',
     component: () => import('../views/PricingRules/index.vue')
+  },
+  {
+    path: '/system-settings',
+    name: 'SystemSettings',
+    component: () => import('../views/SystemSettings/index.vue')
   }
 ];
 
