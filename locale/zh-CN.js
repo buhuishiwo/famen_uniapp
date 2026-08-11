@@ -110,8 +110,19 @@ export default {
   quotation: {
     title: '报 价 单',
     generateAndSave: '生成并保存报价表',
+    generateContractExcel: '生成购销合同（Excel）',
     shareQuotation: '分享报价表',
     backToAdd: '返回继续添加',
+    contractGenerating: '正在生成购销合同…',
+    contractExported: '合同已生成',
+    contractExportedDesc: '已保存到小程序本地；点击「预览保存」后，可通过右上角「…」菜单选择「用其他应用打开」→「保存到文件」，保存到手机；也可直接转发到微信好友/文件传输助手',
+    contractFileNameLabel: '文件名',
+    contractOpenPreview: '预览保存',   // ⚠️ 微信 showModal 按钮文字最多 4 个汉字！不能再多
+    contractShareDirectly: '直接分享',  // ⚠️ 4 字上限
+    contractShareTip: '也可直接转发到微信好友/文件传输助手，再下载保存',
+    contractGenerated: '合同生成成功',
+    contractGenerateFail: '合同生成失败',
+    contractSaved: '合同已保存到本地',
     salePerson: '报价员',
     salePersonPlaceholder: '请输入报价员姓名',
     customerName: '客户名称',

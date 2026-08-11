@@ -110,8 +110,19 @@ export default {
   quotation: {
     title: 'QUOTATION',
     generateAndSave: 'Generate & Save Quotation',
+    generateContractExcel: 'Generate Purchase Contract (Excel)',
     shareQuotation: 'Share Quotation',
     backToAdd: 'Back to Add',
+    contractGenerating: 'Generating Purchase Contract…',
+    contractExported: 'Contract Generated',
+    contractExportedDesc: 'Saved locally in Mini Program. Tap "Open & Save" → tap "..." in the top-right → "Open in Other App" → "Save to Files" to store on your device.',
+    contractFileNameLabel: 'File name',
+    contractOpenPreview: 'Open',          // ⚠️ WeChat showModal confirmText/cancelText length limit (~4 Chinese chars ≈ short English)
+    contractShareDirectly: 'Share',       // Keep it short, else 'cancelText length should not larger than 4 Chinese chars' equivalent
+    contractShareTip: 'Or share to File Transfer Assistant / friend and download from chat.',
+    contractGenerated: 'Contract generated successfully',
+    contractGenerateFail: 'Failed to generate contract',
+    contractSaved: 'Contract saved locally',
     salePerson: 'Salesperson',
     salePersonPlaceholder: 'Enter salesperson name',
     customerName: 'Customer Name',

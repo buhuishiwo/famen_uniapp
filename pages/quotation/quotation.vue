@@ -181,6 +181,7 @@
 
                 <view class="button-group">
                     <button class="btn btn-primary" @tap="generateQuotation">{{ $t('quotation.generateAndSave') }}</button>
+                    <button class="btn btn-contract" @tap="generateContract">{{ $t('quotation.generateContractExcel') }}</button>
                     <button class="btn btn-secondary" open-type="share">{{ $t('quotation.shareQuotation') }}</button>
                     <button class="btn btn-back" @tap="onBack">{{ $t('quotation.backToAdd') }}</button>
                 </view>
@@ -218,6 +219,12 @@
 import navigationBar from '@/components/navigation-bar/navigation-bar';
 import { quotationApi, priceApi } from '@/utils/cloud-api.js';
 import i18n from '@/locale';
+// JSZip：操作 xlsx（ZIP）级，保证模板 styles/图片/边框/合并格 100% 原样保留，只改 sheet1.xml 数据
+import JSZip from '@/utils/jszip.min.js';
+// 合同模板原始 xlsx 字节（Uint8Array JSON）—— 与用户提供的 xlsx 文件字节完全一致，未经过任何库解析写出
+import _CONTRACT_TEMPLATE_BYTES from '@/utils/contract_template.json';
+// 合同构建器（JSZip + XML 文本替换，不改样式/边框）
+import { buildContract, toChineseMoney as _toChineseMoney } from '@/utils/contract-xlsx-builder.js';
 
 /**
  * 报价单显示配置 + 字段定义（模块级常量，不放到 methods 里）
@@ -698,6 +705,297 @@ export default {
             lines.push(currentLine);
             lines.forEach((line, i) => ctx.fillText(line, x, y + i * lineHeight));
             return y + lines.length * lineHeight;
+        },
+
+        /**
+         * 生成购销合同 xlsx 文档（基于内置快照模板）
+         * - 价格口径：报价单 finalPrice 是「不含税」总金额
+         *   不含税金额 = finalPrice
+         *   税额 = finalPrice × 0.13
+         *   价税合计小写 = finalPrice × 1.13
+         *   价税合计大写 = _toChineseMoney(价税合计)
+         * - 产品行数：无上限；当 N > 原模板 13 条时，TAX_ROW 及以后所有行 + merge + !rows 自动整体下移
+         * - 备注：R40 F 列（索引 r=NOTE_CELL_ROW, c=NOTE_CELL_COL）写入 this.note
+         * - 合同编号：按用户要求不填，保持原样
+         */
+        async generateContract() {
+            this.showLoading = true;
+            this.loadingText = this.$t('quotation.contractGenerating');
+            const that = this;
+            const DEBUG = true; // 关闭时把所有 DEBUG?xxx 变成空操作即可
+            const log = (msg, val) => { if (DEBUG) console.log('[generateContract] ' + msg, val === undefined ? '' : val); };
+            try {
+                const items = Array.isArray(this.quoteData) ? this.quoteData : [];
+                log('步骤1 - 产品数量 N =', items.length);
+                if (items.length === 0) {
+                    that.showLoading = false;
+                    uni.showModal({
+                        title: that.$t('quotation.contractGenerateFail'),
+                        content: '请先添加产品再生成合同',
+                        showCancel: false
+                    });
+                    return;
+                }
+
+                log('步骤2 - 调用 buildContract (JSZip + XML 文本替换)');
+                // 调用 builder（JSZip + XML 文本替换：不改模板样式/边框/图片/合并格，仅改 sheet1.xml 的数据和行号）
+                // 【类型安全】_CONTRACT_TEMPLATE_BYTES 是普通 number[] JSON；
+                //   先 new 一次 Uint8Array，再 new 第二次"剥离" uni-app/Vue 对 TypedArray 可能加的响应式包装（Observer）
+                //   因为 JSZip.loadAsync 内部会检查是否真 Uint8Array/ArrayBuffer，包装对象会被拒
+                const rawTplArr = Array.isArray(_CONTRACT_TEMPLATE_BYTES)
+                    ? _CONTRACT_TEMPLATE_BYTES
+                    : Array.from(new Uint8Array(_CONTRACT_TEMPLATE_BYTES));
+                const templateU8 = new Uint8Array(rawTplArr);
+                log('  模板字节数 =', templateU8.length);
+                const outU8Raw = await buildContract(JSZip, templateU8, items, {
+                    finalPrice: Number(that.finalPrice) || 0,
+                    note: that.note || ''
+                });
+                // 【类型安全】再次剥离包装 + 转 ArrayBuffer：微信 FSM writeFile 类型检查严格，
+                //   包装后的 Object (Vue Observer) 会报 data must be of type string / Buffer / TypedArray / DataView
+                const outU8 = new Uint8Array(
+                    ArrayBuffer.isView(outU8Raw)
+                        ? new Uint8Array(outU8Raw.buffer, outU8Raw.byteOffset, outU8Raw.byteLength)
+                        : outU8Raw
+                );
+                log('步骤3 - buildContract 成功，输出字节数 =', outU8.length);
+
+                // 写本地文件（小程序 USER_DATA_PATH）
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                const fname = `奇胜购销合同_${yyyy}${mm}${dd}_${Date.now()}.xlsx`;
+
+                if (typeof wx !== 'undefined' && wx.getFileSystemManager) {
+                    const fsm = wx.getFileSystemManager();
+                    const targetPath = `${wx.env.USER_DATA_PATH}/${fname}`;
+                    log('步骤4 - fsm.writeFile 写入 USER_DATA_PATH →', targetPath);
+                    // 【关键修复】小程序文档中 fsm.writeFile data 参数接受的类型：
+                    //   string / ArrayBuffer / Buffer（wx 全局）
+                    // TypedArray(Uint8Array) 虽然部分新版支持但包装成 Vue Observer 后会被 type-check 拒绝，
+                    // 因此最稳妥的方式是传纯 ArrayBuffer（绝对不会被 Vue 代理，是底层内存块）。
+                    // 同时不传 encoding（仅当 data 是字符串时才需要 encoding 参数）
+                    //   → 若仍失败则兜底降级 Buffer.from()（小程序 JSCore 注入，兼容性最好）
+                    const rawBin = outU8.buffer.slice(outU8.byteOffset, outU8.byteOffset + outU8.byteLength);
+                    log('  writeFile data instanceof ArrayBuffer?', rawBin instanceof ArrayBuffer, '  byteLength =', rawBin.byteLength);
+                    const writeOnce = (binArg) => new Promise((resolve, reject) => {
+                        fsm.writeFile({
+                            filePath: targetPath,
+                            data: binArg,
+                            success: () => resolve(true),
+                            fail: (err) => reject(err)
+                        });
+                    });
+                    let writeOk = false;
+                    try {
+                        writeOk = await writeOnce(rawBin);
+                    } catch (e1) {
+                        console.warn('[fsm.writeFile] 方案1(ArrayBuffer)失败，降级方案2(Buffer.from):', e1 && e1.errMsg);
+                        // 兜底：全局 Buffer（小程序注入的 NodeBuffer polyfill）— 是小程序端写二进制最兼容的 API
+                        try {
+                            const hasGlobalBuffer = (typeof Buffer !== 'undefined') && Buffer.from;
+                            if (!hasGlobalBuffer) throw new Error('Buffer.from not available');
+                            const bytesCopy = new Uint8Array(
+                                rawBin instanceof ArrayBuffer ? rawBin : outU8.buffer.slice(outU8.byteOffset, outU8.byteOffset + outU8.byteLength)
+                            );
+                            const buf = Buffer.from(bytesCopy);
+                            log('  Buffer.from 成功  buf.length =', buf.length, '  is Buffer?', (typeof Buffer !== 'undefined' && Buffer.isBuffer && Buffer.isBuffer(buf)));
+                            writeOk = await writeOnce(buf);
+                        } catch (e2) {
+                            console.error('[fsm.writeFile] 方案2也失败:', e2);
+                            throw e2;
+                        }
+                    }
+                    log('步骤4 - writeFile 成功?', writeOk);
+
+                    // === 诊断：写进去的文件是否真的是 xlsx(ZIP) —— 读前 4 字节，必须是 50 4B 03 04 (PK ZIP header) ===
+                    try {
+                        const headerAB = await new Promise((resolve, reject) => {
+                            fsm.readFile({
+                                filePath: targetPath,
+                                position: 0,
+                                length: 4,
+                                success: (res) => resolve(res.data),
+                                fail: (err) => reject(err)
+                            });
+                        });
+                        let hex = '';
+                        const hv = new Uint8Array(headerAB instanceof ArrayBuffer ? headerAB : (headerAB && headerAB.buffer ? headerAB.buffer : headerAB));
+                        for (let i = 0; i < Math.min(4, hv.length); i++) hex += ('0' + hv[i].toString(16)).slice(-2) + ' ';
+                        log('✅ 自检：写入文件前 4 字节 hex = [' + hex.trim() + ']   (期望 50 4b 03 04 即 PK ZIP 魔数)');
+                        if (hv.length < 4 || hv[0] !== 0x50 || hv[1] !== 0x4B || hv[2] !== 0x03 || hv[3] !== 0x04) {
+                            console.error('[文件损坏] 写入文件不是合法 ZIP/xlsx！header = [' + hex.trim() + ']');
+                            // 不抛异常，继续走完流程，让用户看到现象，日志里已记录原因
+                        } else {
+                            log('✅ 文件完整性检查通过：写入的 xlsx 是合法 ZIP 格式');
+                            // 再读整个文件大小校验
+                            try {
+                                const statRes = await new Promise((resolve) => {
+                                    fsm.stat({
+                                        path: targetPath,
+                                        success: (r) => resolve(r),
+                                        fail: () => resolve(null)
+                                    });
+                                });
+                                if (statRes && statRes.stats) {
+                                    log('  文件大小 stat.size =', statRes.stats.size, ' 期望 ~', outU8.length);
+                                }
+                            } catch (_) {}
+                        }
+                    } catch (h) {
+                        console.warn('[header 自检] 读取失败（非致命）:', h && h.errMsg);
+                    }
+
+                    // --- 1) 尝试 fsm.saveFile 持久化（防止小程序重启后丢失 USER_DATA_PATH 临时文件）---
+                    // 注意：wx.saveFile 已废弃，统一使用 wx.getFileSystemManager().saveFile
+                    // 【经验说明】部分版本小程序 saveFile 对 USER_DATA_PATH 下文件会报 permission denied，
+                    //   属于正常现象（该 API 原本用于 wx.downloadFile 的临时文件路径）。
+                    //   因此此处 saveFile 只做"尽力而为"，失败就继续使用 USER_DATA_PATH 临时路径直接 openDocument / shareFileMessage，
+                    //   二者都支持 USER_DATA_PATH 路径。
+                    let savedPath = targetPath;
+                    let saveFileOk = false;
+                    try {
+                        if (fsm && typeof fsm.saveFile === 'function') {
+                            log('步骤5 - 尝试 fsm.saveFile 持久化(尽力而为)...');
+                            const sf = await new Promise((resolve) => {
+                                fsm.saveFile({
+                                    tempFilePath: targetPath,
+                                    success: (res) => resolve({ ok: true, savedFilePath: res.savedFilePath }),
+                                    fail: (err) => resolve({ ok: false, err })
+                                });
+                            });
+                            if (sf.ok) {
+                                savedPath = sf.savedFilePath;
+                                saveFileOk = true;
+                                log('  saveFile 持久化成功 savedFilePath =', savedPath);
+                            } else {
+                                log('  saveFile 未成功(预期内，继续用临时路径):', sf.err && sf.err.errMsg);
+                            }
+                        }
+                    } catch (e) {
+                        log('[fsm.saveFile] 持久化异常(预期内)，继续使用临时路径:', e && e.message);
+                    }
+
+                    that.showLoading = false;
+
+                    // --- 2) 弹出清晰指引的对话框，展示文件名和两种保存路径 ---
+                    // 【重要！】uni.showModal 对按钮文字长度有硬限制：
+                    //   confirmText / cancelText 都**不能超过 4 个汉字**（或英文字符数约等于此）
+                    //   超过会直接 showModal fail，没有任何降级，Modal 完全不弹
+                    const tipDesc = that.$t('quotation.contractFileNameLabel')
+                        + ': ' + fname + '\n\n'
+                        + that.$t('quotation.contractExportedDesc');
+
+                    log('步骤6 - uni.showModal 弹出生成成功框（用户选 打开预览 / 直接分享）');
+                    uni.showModal({
+                        title: that.$t('quotation.contractExported') + (saveFileOk ? ' ✓' : ''),
+                        content: tipDesc,
+                        confirmText: that.$t('quotation.contractOpenPreview'),
+                        cancelText: that.$t('quotation.contractShareDirectly'),
+                        confirmColor: '#0d1526',
+                        cancelColor: '#475569',
+                        success: (mres) => {
+                            // 单向状态锁，避免 openDocument fail 回调里又触发 share 导致二次弹窗
+                            let finalized = false;
+                            const finalize = () => { finalized = true; };
+
+                            if (mres.confirm) {
+                                // === 路径 A：打开预览（推荐）→ 用户通过右上角「…」菜单保存到手机 ===
+                                log('用户点击确认 → uni.openDocument(filePath =', savedPath, ', fileType=xlsx, showMenu=true)');
+                                uni.openDocument({
+                                    filePath: savedPath,
+                                    fileType: 'xlsx',
+                                    showMenu: true, // 必须 = true，右上角菜单才有「用其他应用打开」「保存到文件」
+                                    success: () => {
+                                        log('✅ uni.openDocument success 回调 —— 已拉起微信内置文档预览/WPS，用户可右上角「…」保存到手机');
+                                        finalize();
+                                    },
+                                    fail: (err) => {
+                                        if (finalized) return;
+                                        finalize();
+                                        console.error('❌ uni.openDocument fail:', err);
+                                        // 降级：直接分享
+                                        try {
+                                            wx.shareFileMessage({
+                                                filePath: savedPath,
+                                                fileName: fname,
+                                                fail: (sfe) => {
+                                                    console.error('❌ wx.shareFileMessage fail:', sfe);
+                                                    that.showToast(that.$t('quotation.contractSaved'), 'success');
+                                                },
+                                                success: () => {
+                                                    log('✅ wx.shareFileMessage success 回调（降级成功）');
+                                                }
+                                            });
+                                        } catch (e) {
+                                            console.error('wx.shareFileMessage exception:', e);
+                                            that.showToast(that.$t('quotation.contractSaved'), 'success');
+                                        }
+                                    }
+                                });
+                            } else {
+                                // === 路径 B：直接分享给微信好友/文件传输助手 ===
+                                if (finalized) return;
+                                finalize();
+                                log('用户点击取消 → wx.shareFileMessage(filePath =', savedPath, ', fileName =', fname, ')');
+                                try {
+                                    wx.shareFileMessage({
+                                        filePath: savedPath,
+                                        fileName: fname,
+                                        success: () => {
+                                            log('✅ wx.shareFileMessage success 回调 —— 已弹出分享面板');
+                                        },
+                                        fail: (e2) => {
+                                            console.error('❌ wx.shareFileMessage fail:', e2);
+                                            console.warn('→ 降级到 uni.openDocument...');
+                                            // 再次降级：打开预览
+                                            try {
+                                                uni.openDocument({
+                                                    filePath: savedPath,
+                                                    fileType: 'xlsx',
+                                                    showMenu: true,
+                                                    success: () => {
+                                                        log('✅ uni.openDocument success（降级成功）');
+                                                    },
+                                                    fail: (e3) => {
+                                                        console.error('❌ uni.openDocument fail (降级也失败):', e3);
+                                                        that.showToast(that.$t('quotation.contractSaved'), 'success');
+                                                    }
+                                                });
+                                            } catch (e3) {
+                                                console.error('uni.openDocument exception:', e3);
+                                                that.showToast(that.$t('quotation.contractSaved'), 'success');
+                                            }
+                                        }
+                                    });
+                                } catch (e) {
+                                    console.error('wx.shareFileMessage exception:', e);
+                                    that.showToast(that.$t('quotation.contractSaved'), 'success');
+                                }
+                            }
+                        },
+                        fail: (merr) => {
+                            // Modal 自己都失败（理论上不会），给个兜底 toast
+                            console.error('uni.showModal fail:', merr);
+                            that.showToast(that.$t('quotation.contractGenerated'), 'success');
+                        }
+                    });
+                } else {
+                    that.showLoading = false;
+                    that.showToast(that.$t('quotation.contractGenerated'), 'success');
+                }
+            } catch (e) {
+                console.error('[generateContract] 全链路异常:', e);
+                that.showLoading = false;
+                // 把具体错误展示给用户，便于排查（errMsg 一般是中文可读的）
+                const errMsg = (e && (e.errMsg || e.message)) || String(e || '');
+                uni.showModal({
+                    title: that.$t('quotation.contractGenerateFail'),
+                    content: '错误信息：' + errMsg + '\n\n请截图反馈给开发人员',
+                    showCancel: false
+                });
+            }
         },
 
         async generateQuotation() {
@@ -1573,6 +1871,12 @@ page {
     background: linear-gradient(135deg, #0d1526 0%, #1e293b 100%);
     color: #ffffff;
     box-shadow: 0 8rpx 24rpx rgba(13, 21, 38, 0.2);
+}
+
+.btn-contract {
+    background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+    color: #ffffff;
+    box-shadow: 0 8rpx 24rpx rgba(30, 64, 175, 0.22);
 }
 
 .btn-secondary {

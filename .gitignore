@@ -1,11 +1,41 @@
+# =============== Node / 依赖 ===============
 node_modules/
+
+# =============== UniApp / 编译产物 ===============
+# unpackage：所有平台的编译输出（H5/微信小程序/App...）
+# 必须全部忽略；如果之前已被 git 追踪，需执行：
+#   git rm -r --cached unpackage/
+# 然后重新提交，.gitignore 规则才会生效
+unpackage/
+
+# 其他可能的输出目录（兼容 HBuilderX / CLI 双模式）
 dist/
 build/
-unpackage/
+
+# 编译过程产生的临时文件（即使 unpackage/ 已忽略，这里再显式兜底）
+.sourcemap/
+.automator/
+
+# manifest.json 本地差异化版本（HBuilderX 有时生成）
+manifest.local.json
+
+# =============== IDE / 系统 ===============
 .DS_Store
+Thumbs.db
+.hbuilderx/
+.idea/
+.vscode/
+
+# =============== 临时文档（Excel 导入模板/测试输出，避免把用户数据提交） ===============
 *.xlsx
 *.xls
 *.xlsm
 *.xltx
 *.xltm
-.hbuilderx/
+
+# =============== 测试/日志 ===============
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
