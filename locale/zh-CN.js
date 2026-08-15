@@ -196,7 +196,19 @@ export default {
     noCustomer: '未指定客户',
     weightUnit: 'KG',
     torqueUnit: 'N.M',
-    dateFormat: 'YYYY年MM月DD日'
+    dateFormat: 'YYYY年MM月DD日',
+    templatePickerTitle: '选择合同模板',
+    templatePickerDesc: '请选择要导出的合同样式，不同模板的版式、银行账户和付款信息会自动匹配',
+    templatePickerConfirm: '确认生成',    // ⚠️ 4 字上限
+    templatePickerCancel: '取消',         // ⚠️ 4 字上限
+    templateFamilyCn: '中文购销合同',
+    templateFamilyEn: '英文 PI / 外贸发票',
+    template_chisun_v1: '奇胜标准合同（奇胜商标版）',
+    template_chisun_nsh: '奇胜合同（农商行付款）',
+    template_zs_changsheng: '长胜合同（农行付款）',
+    template_pi_changqi: 'Changqi 英文 PI',
+    template_pi_chisun_multi: 'Chisun PI（农行多币种）',
+    template_pi_chisun_vtb: 'Chisun PI（VTB 卢布）'
   },
   language: {
     switchLang: '切换语言',

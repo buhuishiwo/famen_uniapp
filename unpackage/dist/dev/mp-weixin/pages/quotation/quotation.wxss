@@ -1319,6 +1319,146 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* 根页面样式 */
 page {
     background-color: #f1f5f9;
@@ -1937,5 +2077,191 @@ to {
     font-weight: 600;
     letter-spacing: 2rpx;
     text-align: center;
+}
+/* ===== 多模板合同选择弹窗 ===== */
+.tpl-picker-mask {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(13, 21, 38, 0.55);
+    z-index: 10001;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    -webkit-backdrop-filter: blur(2px);
+            backdrop-filter: blur(2px);
+}
+.tpl-picker-sheet {
+    width: 100%;
+    max-width: 750rpx;
+    background-color: #f8fafc;
+    border-radius: 32rpx 32rpx 0 0;
+    display: flex;
+    flex-direction: column;
+    /* 关键：微信小程序 flex 子元素 scroll-view 分配剩余空间，需要父有明确高度；这里用 88vh 代替纯 max-height */
+    height: 88vh;
+    max-height: 88vh;
+    overflow: hidden;
+    box-shadow: 0 -12rpx 48rpx rgba(13, 21, 38, 0.22);
+}
+.tpl-picker-header {
+    padding: 36rpx 36rpx 24rpx;
+    background-color: #ffffff;
+    border-bottom: 1rpx solid #e2e8f0;
+    flex-shrink: 0;
+}
+.tpl-picker-title {
+    display: block;
+    font-size: 34rpx;
+    font-weight: 800;
+    color: #0d1526;
+    letter-spacing: 2rpx;
+    margin-bottom: 10rpx;
+}
+.tpl-picker-desc {
+    display: block;
+    font-size: 24rpx;
+    color: #64748b;
+    line-height: 1.5;
+}
+.tpl-picker-body {
+    /* ===== 微信小程序 scroll-view 在 flex 容器内的核心高度三件套 =====
+       没有 height:0 + min-height:0，scroll-view 会被压缩为 0 高度，
+       内部所有 <view> 模板项都不会显示（截图问题就是这个原因）。 */
+    flex: 1;
+    height: 0;
+    min-height: 0;
+    padding: 24rpx 24rpx 8rpx;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+.tpl-family-group {
+    margin-bottom: 24rpx;
+}
+.tpl-family-tag {
+    display: inline-block;
+    padding: 8rpx 20rpx;
+    background: linear-gradient(135deg, #0d1526 0%, #1e293b 100%);
+    border-radius: 8rpx 8rpx 0 0;
+    margin-left: 4rpx;
+}
+.tpl-family-tag-en {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+}
+.tpl-family-tag-text {
+    font-size: 22rpx;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 2rpx;
+}
+.tpl-list {
+    background-color: #ffffff;
+    border-radius: 16rpx;
+    padding: 12rpx 8rpx;
+    border: 1rpx solid #e2e8f0;
+    overflow: hidden;
+}
+.tpl-item {
+    display: flex;
+    align-items: center;
+    padding: 24rpx 20rpx;
+    border-radius: 12rpx;
+    margin-bottom: 4rpx;
+    transition: all 0.15s ease;
+    position: relative;
+}
+.tpl-item:last-child {
+    margin-bottom: 0;
+}
+.tpl-item:active {
+    background-color: #f1f5f9;
+}
+.tpl-item-selected {
+    background: linear-gradient(135deg, rgba(13, 21, 38, 0.05) 0%, rgba(200, 170, 110, 0.10) 100%);
+    border: 1rpx solid #c8aa6e;
+}
+.tpl-item-radio {
+    flex-shrink: 0;
+    margin-right: 20rpx;
+}
+.tpl-radio-outer {
+    width: 40rpx;
+    height: 40rpx;
+    border-radius: 50%;
+    border: 3rpx solid #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    transition: all 0.15s ease;
+}
+.tpl-item-selected .tpl-radio-outer {
+    border-color: #c8aa6e;
+}
+.tpl-radio-inner {
+    width: 20rpx;
+    height: 20rpx;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0d1526 0%, #c8aa6e 100%);
+}
+.tpl-item-body {
+    flex: 1;
+    min-width: 0;
+}
+.tpl-item-name {
+    display: block;
+    font-size: 28rpx;
+    font-weight: 600;
+    color: #0d1526;
+    line-height: 1.4;
+    word-break: break-all;
+}
+.tpl-item-check {
+    flex-shrink: 0;
+    margin-left: 12rpx;
+    width: 44rpx;
+    height: 44rpx;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0d1526 0%, #c8aa6e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4rpx 12rpx rgba(13, 21, 38, 0.2);
+}
+.tpl-check-icon {
+    font-size: 26rpx;
+    color: #ffffff;
+    font-weight: 800;
+}
+.tpl-picker-footer {
+    padding: 20rpx 24rpx calc(24rpx + env(safe-area-inset-bottom));
+    background-color: #ffffff;
+    border-top: 1rpx solid #e2e8f0;
+    display: flex;
+    gap: 20rpx;
+    flex-shrink: 0;
+}
+.tpl-btn {
+    flex: 1;
+    height: 88rpx;
+    line-height: 88rpx;
+    border-radius: 44rpx;
+    font-size: 30rpx;
+    font-weight: 700;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.tpl-btn-cancel {
+    background-color: #f1f5f9;
+    color: #475569;
+}
+.tpl-btn-confirm {
+    background: linear-gradient(135deg, #0d1526 0%, #1e293b 100%);
+    color: #ffffff;
+    box-shadow: 0 8rpx 24rpx rgba(13, 21, 38, 0.2);
 }
 

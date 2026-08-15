@@ -33,7 +33,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _quotation_vue_vue_type_template_id_0f421540___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./quotation.vue?vue&type=template&id=0f421540& */ 74);
 /* harmony import */ var _quotation_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./quotation.vue?vue&type=script&lang=js& */ 76);
 /* harmony reexport (unknown) */ for(var __WEBPACK_IMPORT_KEY__ in _quotation_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__) if(["default"].indexOf(__WEBPACK_IMPORT_KEY__) < 0) (function(key) { __webpack_require__.d(__webpack_exports__, key, function() { return _quotation_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__[key]; }) }(__WEBPACK_IMPORT_KEY__));
-/* harmony import */ var _quotation_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./quotation.vue?vue&type=style&index=0&lang=css& */ 83);
+/* harmony import */ var _quotation_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./quotation.vue?vue&type=style&index=0&lang=css& */ 89);
 /* harmony import */ var _Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_vue_cli_plugin_uni_packages_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../../../../../Applications/HBuilderX.app/Contents/HBuilderX/plugins/uniapp-cli/node_modules/@dcloudio/vue-cli-plugin-uni/packages/vue-loader/lib/runtime/componentNormalizer.js */ 36);
 
 var renderjs
@@ -101,7 +101,7 @@ var components
 try {
   components = {
     languageSwitch: function () {
-      return Promise.all(/*! import() | components/language-switch/language-switch */[__webpack_require__.e("common/vendor"), __webpack_require__.e("components/language-switch/language-switch")]).then(__webpack_require__.bind(null, /*! @/components/language-switch/language-switch.vue */ 93))
+      return Promise.all(/*! import() | components/language-switch/language-switch */[__webpack_require__.e("common/vendor"), __webpack_require__.e("components/language-switch/language-switch")]).then(__webpack_require__.bind(null, /*! @/components/language-switch/language-switch.vue */ 99))
     },
   }
 } catch (e) {
@@ -191,6 +191,28 @@ var render = function () {
   var m47 = _vm.$t("quotation.generateContractExcel")
   var m48 = _vm.$t("quotation.shareQuotation")
   var m49 = _vm.$t("quotation.backToAdd")
+  var m50 = _vm.showTemplatePicker
+    ? _vm.$t("quotation.templatePickerTitle")
+    : null
+  var m51 = _vm.showTemplatePicker
+    ? _vm.$t("quotation.templatePickerDesc")
+    : null
+  var g0 = _vm.showTemplatePicker ? _vm._cnTemplates.length : null
+  var m52 =
+    _vm.showTemplatePicker && g0 > 0
+      ? _vm.$t("quotation.templateFamilyCn")
+      : null
+  var g1 = _vm.showTemplatePicker ? _vm._enTemplates.length : null
+  var m53 =
+    _vm.showTemplatePicker && g1 > 0
+      ? _vm.$t("quotation.templateFamilyEn")
+      : null
+  var m54 = _vm.showTemplatePicker
+    ? _vm.$t("quotation.templatePickerCancel")
+    : null
+  var m55 = _vm.showTemplatePicker
+    ? _vm.$t("quotation.templatePickerConfirm")
+    : null
   _vm.$mp.data = Object.assign(
     {},
     {
@@ -243,6 +265,14 @@ var render = function () {
         m47: m47,
         m48: m48,
         m49: m49,
+        m50: m50,
+        m51: m51,
+        g0: g0,
+        m52: m52,
+        g1: g1,
+        m53: m53,
+        m54: m54,
+        m55: m55,
       },
     }
   )
@@ -288,17 +318,18 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = void 0;
 var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/regenerator */ 58));
 var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/asyncToGenerator */ 60));
+var _typeof2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/typeof */ 13));
 var _cloudApi = __webpack_require__(/*! @/utils/cloud-api.js */ 61);
 var _locale = _interopRequireDefault(__webpack_require__(/*! @/locale */ 49));
 var _jszipMin = _interopRequireDefault(__webpack_require__(/*! @/utils/jszip.min.js */ 78));
-var _contract_template = _interopRequireDefault(__webpack_require__(/*! @/utils/contract_template.json */ 81));
-var _contractXlsxBuilder = __webpack_require__(/*! @/utils/contract-xlsx-builder.js */ 82);
+var _contractTemplates = __webpack_require__(/*! @/utils/contract-templates.js */ 81);
+var _contractXlsxBuilder = __webpack_require__(/*! @/utils/contract-xlsx-builder.js */ 88);
 function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 var navigationBar = function navigationBar() {
   __webpack_require__.e(/*! require.ensure | components/navigation-bar/navigation-bar */ "components/navigation-bar/navigation-bar").then((function () {
-    return resolve(__webpack_require__(/*! @/components/navigation-bar/navigation-bar */ 100));
+    return resolve(__webpack_require__(/*! @/components/navigation-bar/navigation-bar */ 106));
   }).bind(null, __webpack_require__)).catch(__webpack_require__.oe);
 };
 /**
@@ -483,15 +514,64 @@ var _default = {
       toastType: 'success',
       // 报价单显示配置（从 system_settings 读取）
       _displayConfig: null,
-      _displayConfigLoaded: false
+      _displayConfigLoaded: false,
+      // ===== 多模板合同选择 =====
+      // 模板选择弹窗显示状态
+      showTemplatePicker: false,
+      // 用户当前选中的模板 key（默认：奇胜标准合同）
+      selectedTemplateKey: 'chisun_v1'
+      // ❌ 注意：TEMPLATE_REGISTRY 含 6 份大 Uint8Array 模板字节（合计约 800KB）
+      //   绝不能放在 data() 里！Vue2 会递归劫持整个 TypedArray，轻则性能爆炸、
+      //   重则初始化失败，导致 _TPL_LIST 变空 / v-if 条件全不命中（表现为模板列表空白）。
+      //   下面改放到 computed 里直接 return 常量（不做响应式）。
     };
   },
+
   computed: {
     totalAmount: function totalAmount() {
       var total = this.quoteData.reduce(function (sum, item) {
         return sum + parseFloat(item.totalPrice || 0);
       }, 0);
       return total.toFixed(2);
+    },
+    // ===== 多模板合同选择辅助 computed =====
+    /**
+     * 模板显示元数据：返回 TEMPLATE_META_DISPLAY（仅 key/family/displayName，约 0.8KB）
+     *   【绝对不能包含 bytes/meta 字段】—— 否则会被序列化进 setData，触发 14MB+ 性能告警
+     */
+    _TPL_LIST: function _TPL_LIST() {
+      return _contractTemplates.TEMPLATE_META_DISPLAY || [];
+    },
+    _cnTemplates: function _cnTemplates() {
+      return this._TPL_LIST.filter(function (t) {
+        return t.family === 'cn_contract';
+      });
+    },
+    _enTemplates: function _enTemplates() {
+      return this._TPL_LIST.filter(function (t) {
+        return t.family === 'en_pi';
+      });
+    },
+    /** 按模板 registry displayName + locale 兜底组合后的显示名（取当前 locale） */_tplDisplayNameMap: function _tplDisplayNameMap() {
+      var _this = this;
+      var isEn = this.$locale && this.$locale() && this.$locale().locale === 'en-US' || this.$i18n && this.$i18n.locale === 'en-US';
+      var localeKey = isEn ? 'en-US' : 'zh-CN';
+      var map = {};
+      (this._TPL_LIST || []).forEach(function (t) {
+        var name = '';
+        if (t.displayName && (0, _typeof2.default)(t.displayName) === 'object') {
+          name = t.displayName[localeKey] || t.displayName['zh-CN'] || t.key;
+        } else {
+          name = String(t.displayName || t.key);
+        }
+        // 优先用 locale 文件里的文案（可由运营后续统一调整）
+        try {
+          var i18nName = _this.$t('quotation.template_' + t.key);
+          if (i18nName && !/^template_/.test(i18nName)) name = i18nName;
+        } catch (_) {}
+        map[t.key] = name;
+      });
+      return map;
     }
   },
   watch: {
@@ -505,10 +585,10 @@ var _default = {
     }
   },
   created: function created() {
-    var _this = this;
+    var _this2 = this;
     this.initI18nDefaults();
     this._i18nUnsubscribe = this.$localeOn(function () {
-      _this.initI18nDefaults();
+      _this2.initI18nDefaults();
     });
   },
   beforeDestroy: function beforeDestroy() {
@@ -517,12 +597,12 @@ var _default = {
     }
   },
   onLoad: function onLoad(options) {
-    var _this2 = this;
+    var _this3 = this;
     if (options.data) {
       var quoteData = JSON.parse(decodeURIComponent(options.data));
       var formattedData = quoteData.map(function (item) {
         return {
-          productType: _this2.translateProductType(item.productType || '常规品'),
+          productType: _this3.translateProductType(item.productType || '常规品'),
           productName: item.productName || item.valveName,
           model: item.model || item.spec || '',
           bodyMaterial: item.bodyMaterial || 'WCB',
@@ -681,17 +761,17 @@ var _default = {
       return format.replace('YYYY', year).replace('MM', month).replace('DD', day);
     },
     showToast: function showToast(text) {
-      var _this3 = this;
+      var _this4 = this;
       var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'success';
       this.showToastDialog = true;
       this.toastText = text;
       this.toastType = type;
       setTimeout(function () {
-        _this3.showToastDialog = false;
+        _this4.showToastDialog = false;
       }, 2000);
     },
     ensureDisplayConfigLoaded: function ensureDisplayConfigLoaded(forceRefresh) {
-      var _this4 = this;
+      var _this5 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
         var CACHE_KEY, CACHE_MAX_MS, cached, res, raw, parsed, tableConfig;
         return _regenerator.default.wrap(function _callee$(_context) {
@@ -700,7 +780,7 @@ var _default = {
               case 0:
                 CACHE_KEY = 'quotation_display_config_cache';
                 CACHE_MAX_MS = 10 * 60 * 1000; // 10 分钟
-                if (!(!forceRefresh && _this4._displayConfigLoaded && _this4._displayConfig)) {
+                if (!(!forceRefresh && _this5._displayConfigLoaded && _this5._displayConfig)) {
                   _context.next = 4;
                   break;
                 }
@@ -716,8 +796,8 @@ var _default = {
                   _context.next = 11;
                   break;
                 }
-                _this4._displayConfig = cached.value;
-                _this4._displayConfigLoaded = true;
+                _this5._displayConfig = cached.value;
+                _this5._displayConfigLoaded = true;
                 return _context.abrupt("return");
               case 11:
                 _context.next = 15;
@@ -740,12 +820,12 @@ var _default = {
                     } catch (_) {}
                   }
                   if (parsed && parsed.tableFields && parsed.specFields) {
-                    _this4._displayConfig = parsed;
+                    _this5._displayConfig = parsed;
                   } else {
-                    _this4._displayConfig = JSON.parse(JSON.stringify(_DEFAULT_DISPLAY_CONFIG));
+                    _this5._displayConfig = JSON.parse(JSON.stringify(_DEFAULT_DISPLAY_CONFIG));
                   }
                 } else {
-                  _this4._displayConfig = JSON.parse(JSON.stringify(_DEFAULT_DISPLAY_CONFIG));
+                  _this5._displayConfig = JSON.parse(JSON.stringify(_DEFAULT_DISPLAY_CONFIG));
                 }
                 _context.next = 26;
                 break;
@@ -753,19 +833,19 @@ var _default = {
                 _context.prev = 22;
                 _context.t1 = _context["catch"](15);
                 console.warn('[ensureDisplayConfigLoaded] 读取失败，使用全显示默认:', _context.t1.message);
-                _this4._displayConfig = JSON.parse(JSON.stringify(_DEFAULT_DISPLAY_CONFIG));
+                _this5._displayConfig = JSON.parse(JSON.stringify(_DEFAULT_DISPLAY_CONFIG));
               case 26:
                 // 强制必选字段可见
-                tableConfig = _this4._displayConfig.tableFields || [];
+                tableConfig = _this5._displayConfig.tableFields || [];
                 tableConfig.forEach(function (f) {
                   var meta = _TABLE_FIELD_META[f.key];
                   if (meta && meta.forceVisible) f.visible = true;
                 });
-                _this4._displayConfigLoaded = true;
+                _this5._displayConfigLoaded = true;
                 try {
                   uni.setStorageSync(CACHE_KEY, {
                     ts: Date.now(),
-                    value: _this4._displayConfig
+                    value: _this5._displayConfig
                   });
                 } catch (_) {/* ignore */}
               case 30:
@@ -782,7 +862,7 @@ var _default = {
      *       防止表格被绘制成一条黑横线。
      */
     getVisibleTableCols: function getVisibleTableCols() {
-      var _this5 = this;
+      var _this6 = this;
       var cfg = this._displayConfig || _DEFAULT_DISPLAY_CONFIG;
       var visibleKeys = new Set((cfg.tableFields || []).filter(function (f) {
         return f.visible;
@@ -796,7 +876,7 @@ var _default = {
         if (meta.forceVisible || visibleKeys.has(key)) {
           cols.push({
             key: key,
-            label: _this5.$t(meta.i18nKey),
+            label: _this6.$t(meta.i18nKey),
             width: meta.width,
             isTotalPrice: key === 'totalPrice',
             meta: meta
@@ -810,7 +890,7 @@ var _default = {
           if (meta.forceVisible) {
             cols.push({
               key: key,
-              label: _this5.$t(meta.i18nKey),
+              label: _this6.$t(meta.i18nKey),
               width: meta.width,
               isTotalPrice: key === 'totalPrice',
               meta: meta
@@ -824,7 +904,7 @@ var _default = {
      * 获取某条数据的可见规格参数数组（value 非空才返回）
      */
     getVisibleSpecs: function getVisibleSpecs(item) {
-      var _this6 = this;
+      var _this7 = this;
       var cfg = this._displayConfig || _DEFAULT_DISPLAY_CONFIG;
       var visibleKeys = new Set((cfg.specFields || []).filter(function (f) {
         return f.visible;
@@ -838,9 +918,9 @@ var _default = {
         var meta = _SPEC_FIELD_META[key];
         var v = meta.valueFn(item);
         if (v === undefined || v === null || v === '') return;
-        var label = _this6.$t(meta.i18nLabelKey);
+        var label = _this7.$t(meta.i18nLabelKey);
         var unit;
-        if (meta.unitI18nKey) unit = _this6.$t(meta.unitI18nKey);else unit = meta.unit || '';
+        if (meta.unitI18nKey) unit = _this7.$t(meta.unitI18nKey);else unit = meta.unit || '';
         var labelText = isEn ? "".concat(label, ": ").concat(v).concat(unit) : "".concat(label, "(").concat(meta.en, "): ").concat(v).concat(unit);
         specs.push({
           key: key,
@@ -876,8 +956,21 @@ var _default = {
     onBack: function onBack() {
       uni.navigateBack();
     },
+    // ===== 多模板合同选择方法 =====
+    onSelectTemplate: function onSelectTemplate(key) {
+      this.selectedTemplateKey = key;
+    },
+    onTemplatePickerCancel: function onTemplatePickerCancel() {
+      this.showTemplatePicker = false;
+    },
+    onTemplatePickerConfirm: function onTemplatePickerConfirm() {
+      // 用户确认模板后，关闭弹窗并开始生成
+      var key = this.selectedTemplateKey || this._TPL_LIST && this._TPL_LIST[0] && this._TPL_LIST[0].key;
+      this.showTemplatePicker = false;
+      this._doGenerateContract(key);
+    },
     saveQuotationToDatabase: function saveQuotationToDatabase() {
-      var _this7 = this;
+      var _this8 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
         var quotationData, result;
         return _regenerator.default.wrap(function _callee2$(_context2) {
@@ -885,15 +978,15 @@ var _default = {
             switch (_context2.prev = _context2.next) {
               case 0:
                 quotationData = {
-                  customerName: _this7.customerName,
-                  note: _this7.note,
-                  paymentMethod: _this7.paymentMethod,
-                  packaging: _this7.packaging,
-                  quoter: _this7.quoter,
-                  quoterPhone: _this7.quoterPhone,
-                  validity: _this7.validity,
-                  finalPrice: parseFloat(_this7.finalPrice) || parseFloat(_this7.totalAmount) || 0,
-                  items: _this7.quoteData.map(function (item) {
+                  customerName: _this8.customerName,
+                  note: _this8.note,
+                  paymentMethod: _this8.paymentMethod,
+                  packaging: _this8.packaging,
+                  quoter: _this8.quoter,
+                  quoterPhone: _this8.quoterPhone,
+                  validity: _this8.validity,
+                  finalPrice: parseFloat(_this8.finalPrice) || parseFloat(_this8.totalAmount) || 0,
+                  items: _this8.quoteData.map(function (item) {
                     return {
                       valveName: item.productName,
                       spec: parseInt(item.model),
@@ -912,13 +1005,13 @@ var _default = {
               case 4:
                 result = _context2.sent;
                 console.log('报价数据保存成功:', result);
-                _this7.showToast(_this7.$t('quotation.saveSuccess'), 'success');
+                _this8.showToast(_this8.$t('quotation.saveSuccess'), 'success');
                 return _context2.abrupt("return", result);
               case 10:
                 _context2.prev = 10;
                 _context2.t0 = _context2["catch"](1);
                 console.error('保存报价数据失败:', _context2.t0);
-                _this7.showToast(_this7.$t('quotation.saveFail'), 'error');
+                _this8.showToast(_this8.$t('quotation.saveFail'), 'error');
                 throw _context2.t0;
               case 15:
               case "end":
@@ -959,72 +1052,98 @@ var _default = {
       return y + lines.length * lineHeight;
     },
     /**
-     * 生成购销合同 xlsx 文档（基于内置快照模板）
-     * - 价格口径：报价单 finalPrice 是「不含税」总金额
-     *   不含税金额 = finalPrice
-     *   税额 = finalPrice × 0.13
-     *   价税合计小写 = finalPrice × 1.13
-     *   价税合计大写 = _toChineseMoney(价税合计)
-     * - 产品行数：无上限；当 N > 原模板 13 条时，TAX_ROW 及以后所有行 + merge + !rows 自动整体下移
-     * - 备注：R40 F 列（索引 r=NOTE_CELL_ROW, c=NOTE_CELL_COL）写入 this.note
-     * - 合同编号：按用户要求不填，保持原样
+     * 生成购销合同 xlsx 文档（多模板版入口）
+     *  - 第一步：校验产品非空 → 弹出「选择合同模板」弹窗
+     *  - 第二步：用户选择并确认后，调用 _doGenerateContract(templateKey) 按选定模板生成
      */
     generateContract: function generateContract() {
-      var _this8 = this;
+      var that = this;
+      var items = Array.isArray(this.quoteData) ? this.quoteData : [];
+      if (items.length === 0) {
+        uni.showModal({
+          title: that.$t('quotation.contractGenerateFail'),
+          content: '请先添加产品再生成合同',
+          showCancel: false
+        });
+        return;
+      }
+      // ===== 打开模板选择弹窗 =====
+      // 调试输出（可在微信开发者工具 Console 确认数据正常）
+      // 注意：这里只能用 TEMPLATE_META_DISPLAY（不含 bytes），
+      //   绝不能调用 getTemplateRegistryForBuild()，否则提前触发 6 个 Uint8Array 构造
+      var DEBUG = true;
+      if (DEBUG) {
+        console.log('[TemplatePicker] TEMPLATE_META_DISPLAY 总数 =', (_contractTemplates.TEMPLATE_META_DISPLAY || []).length);
+        console.log('[TemplatePicker] 模板 keys =', (_contractTemplates.TEMPLATE_META_DISPLAY || []).map(function (t) {
+          return t.key + '(' + t.family + ')';
+        }).join(', '));
+        var cn = (_contractTemplates.TEMPLATE_META_DISPLAY || []).filter(function (t) {
+          return t.family === 'cn_contract';
+        });
+        var en = (_contractTemplates.TEMPLATE_META_DISPLAY || []).filter(function (t) {
+          return t.family === 'en_pi';
+        });
+        console.log('[TemplatePicker] cn_contract 家族 =', cn.length, '个 | en_pi 家族 =', en.length, '个');
+      }
+      this.showTemplatePicker = true;
+    },
+    /**
+     * 实际生成合同（调用多模板 buildContract）—— 由模板选择弹窗确认按钮触发
+     * @param {string} templateKey 选中的模板 key，如 chisun_v1 / pi_chisun_multi 等
+     */
+    _doGenerateContract: function _doGenerateContract(templateKey) {
+      var _this9 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
-        var that, DEBUG, log, items, rawTplArr, templateU8, outU8Raw, outU8, today, yyyy, mm, dd, fname, fsm, targetPath, rawBin, writeOnce, writeOk, hasGlobalBuffer, bytesCopy, buf, headerAB, hex, hv, i, statRes, savedPath, saveFileOk, sf, tipDesc, errMsg;
+        var that, DEBUG, log, items, BUILD_REGISTRY, outU8Raw, outU8, zip4Hex, displayEntry, isEnPI, today, yyyy, mm, dd, tplShort, fname, fsm, targetPath, rawBin, writeOnce, writeOk, hasGlobalBuffer, bytesCopy, buf, headerAB, hex, hv, i, statRes, savedPath, saveFileOk, sf, tipDesc, errMsg;
         return _regenerator.default.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                _this8.showLoading = true;
-                _this8.loadingText = _this8.$t('quotation.contractGenerating');
-                that = _this8;
-                DEBUG = true; // 关闭时把所有 DEBUG?xxx 变成空操作即可
+                _this9.showLoading = true;
+                _this9.loadingText = _this9.$t('quotation.contractGenerating');
+                that = _this9;
+                DEBUG = true;
                 log = function log(msg, val) {
-                  if (DEBUG) console.log('[generateContract] ' + msg, val === undefined ? '' : val);
+                  if (DEBUG) console.log('[generateContract][' + templateKey + '] ' + msg, val === undefined ? '' : val);
                 };
                 _context3.prev = 5;
-                items = Array.isArray(_this8.quoteData) ? _this8.quoteData : [];
+                items = Array.isArray(_this9.quoteData) ? _this9.quoteData : [];
                 log('步骤1 - 产品数量 N =', items.length);
-                if (!(items.length === 0)) {
-                  _context3.next = 12;
-                  break;
-                }
-                that.showLoading = false;
-                uni.showModal({
-                  title: that.$t('quotation.contractGenerateFail'),
-                  content: '请先添加产品再生成合同',
-                  showCancel: false
-                });
-                return _context3.abrupt("return");
-              case 12:
-                log('步骤2 - 调用 buildContract (JSZip + XML 文本替换)');
-                // 调用 builder（JSZip + XML 文本替换：不改模板样式/边框/图片/合并格，仅改 sheet1.xml 的数据和行号）
-                // 【类型安全】_CONTRACT_TEMPLATE_BYTES 是普通 number[] JSON；
-                //   先 new 一次 Uint8Array，再 new 第二次"剥离" uni-app/Vue 对 TypedArray 可能加的响应式包装（Observer）
-                //   因为 JSZip.loadAsync 内部会检查是否真 Uint8Array/ArrayBuffer，包装对象会被拒
-                rawTplArr = Array.isArray(_contract_template.default) ? _contract_template.default : Array.from(new Uint8Array(_contract_template.default));
-                templateU8 = new Uint8Array(rawTplArr);
-                log('  模板字节数 =', templateU8.length);
-                _context3.next = 18;
-                return (0, _contractXlsxBuilder.buildContract)(_jszipMin.default, templateU8, items, {
+                log('步骤2 - 调用多模板 buildContract (JSZip + XML 文本替换)  templateKey =', templateKey);
+                // ===== 关键：仅此处调用 getTemplateRegistryForBuild()，获取含 bytes+meta 的完整注册表 =====
+                //   返回的 BUILD_REGISTRY 是 method 内局部变量，完全不进入 Vue data/computed/template，
+                //   因此不会触发任何 setData 序列化（性能隔离点）
+                BUILD_REGISTRY = (0, _contractTemplates.getTemplateRegistryForBuild)();
+                log('步骤2.1 - getTemplateRegistryForBuild() 懒加载完成，模板数 =', Array.isArray(BUILD_REGISTRY) ? BUILD_REGISTRY.length : 'FAIL');
+                _context3.next = 13;
+                return (0, _contractXlsxBuilder.buildContract)(_jszipMin.default, BUILD_REGISTRY, templateKey, items, {
                   finalPrice: Number(that.finalPrice) || 0,
-                  note: that.note || ''
+                  note: that.note || '',
+                  items: items // en_pi 家族 items 求和兜底
                 });
-              case 18:
+              case 13:
                 outU8Raw = _context3.sent;
-                // 【类型安全】再次剥离包装 + 转 ArrayBuffer：微信 FSM writeFile 类型检查严格，
-                //   包装后的 Object (Vue Observer) 会报 data must be of type string / Buffer / TypedArray / DataView
-                outU8 = new Uint8Array(ArrayBuffer.isView(outU8Raw) ? new Uint8Array(outU8Raw.buffer, outU8Raw.byteOffset, outU8Raw.byteLength) : outU8Raw);
+                // 【类型安全】剥离包装 + 转干净 Uint8Array，后续转 ArrayBuffer 写文件
+                outU8 = new Uint8Array(ArrayBuffer.isView(outU8Raw) ? new Uint8Array(outU8Raw.buffer, outU8Raw.byteOffset, outU8Raw.byteLength) : Array.isArray(outU8Raw) ? outU8Raw : []);
                 log('步骤3 - buildContract 成功，输出字节数 =', outU8.length);
+                // ZIP 魔数自检（50 4b 03 04 必须存在，否则 Excel 打开会是空白/损坏）
+                zip4Hex = outU8.length >= 4 ? [outU8[0], outU8[1], outU8[2], outU8[3]].map(function (b) {
+                  return b.toString(16).padStart(2, '0');
+                }).join(' ') : 'EMPTY';
+                log('步骤3.1 - ZIP 魔数前4字节 hex =', zip4Hex, zip4Hex === '50 4b 03 04' ? '（✅ 合法 xlsx）' : '（❌ 损坏，Excel 会空白！）');
 
-                // 写本地文件（小程序 USER_DATA_PATH）
+                // 文件名：区分家族（中文合同 vs PI），并带上模板短名
+                //   从 BUILD_REGISTRY 里取 entry（也可以用 TEMPLATE_META_DISPLAY 取 family，两者一致）
+                displayEntry = (_contractTemplates.TEMPLATE_META_DISPLAY || []).find(function (t) {
+                  return t.key === templateKey;
+                }) || _contractTemplates.TEMPLATE_META_DISPLAY[0] || {};
+                isEnPI = displayEntry.family === 'en_pi';
                 today = new Date();
                 yyyy = today.getFullYear();
                 mm = String(today.getMonth() + 1).padStart(2, '0');
                 dd = String(today.getDate()).padStart(2, '0');
-                fname = "\u5947\u80DC\u8D2D\u9500\u5408\u540C_".concat(yyyy).concat(mm).concat(dd, "_").concat(Date.now(), ".xlsx");
+                tplShort = (templateKey || 'tpl').replace(/[^a-zA-Z0-9_]/g, '_');
+                fname = isEnPI ? "PI_".concat(tplShort, "_").concat(yyyy).concat(mm).concat(dd, "_").concat(Date.now(), ".xlsx") : "\u8D2D\u9500\u5408\u540C_".concat(tplShort, "_").concat(yyyy).concat(mm).concat(dd, "_").concat(Date.now(), ".xlsx");
                 if (!(typeof wx !== 'undefined' && wx.getFileSystemManager)) {
                   _context3.next = 107;
                   break;
@@ -1032,12 +1151,7 @@ var _default = {
                 fsm = wx.getFileSystemManager();
                 targetPath = "".concat(wx.env.USER_DATA_PATH, "/").concat(fname);
                 log('步骤4 - fsm.writeFile 写入 USER_DATA_PATH →', targetPath);
-                // 【关键修复】小程序文档中 fsm.writeFile data 参数接受的类型：
-                //   string / ArrayBuffer / Buffer（wx 全局）
-                // TypedArray(Uint8Array) 虽然部分新版支持但包装成 Vue Observer 后会被 type-check 拒绝，
-                // 因此最稳妥的方式是传纯 ArrayBuffer（绝对不会被 Vue 代理，是底层内存块）。
-                // 同时不传 encoding（仅当 data 是字符串时才需要 encoding 参数）
-                //   → 若仍失败则兜底降级 Buffer.from()（小程序 JSCore 注入，兼容性最好）
+                // 【关键修复】传纯 ArrayBuffer（不会被 Vue 代理），encoding 不传（仅字符串需要）
                 rawBin = outU8.buffer.slice(outU8.byteOffset, outU8.byteOffset + outU8.byteLength);
                 log('  writeFile data instanceof ArrayBuffer?', rawBin instanceof ArrayBuffer, '  byteLength =', rawBin.byteLength);
                 writeOnce = function writeOnce(binArg) {
@@ -1066,7 +1180,6 @@ var _default = {
                 _context3.prev = 40;
                 _context3.t0 = _context3["catch"](34);
                 console.warn('[fsm.writeFile] 方案1(ArrayBuffer)失败，降级方案2(Buffer.from):', _context3.t0 && _context3.t0.errMsg);
-                // 兜底：全局 Buffer（小程序注入的 NodeBuffer polyfill）— 是小程序端写二进制最兼容的 API
                 _context3.prev = 43;
                 hasGlobalBuffer = typeof Buffer !== 'undefined' && Buffer.from;
                 if (hasGlobalBuffer) {
@@ -1092,7 +1205,7 @@ var _default = {
               case 59:
                 log('步骤4 - writeFile 成功?', writeOk);
 
-                // === 诊断：写进去的文件是否真的是 xlsx(ZIP) —— 读前 4 字节，必须是 50 4B 03 04 (PK ZIP header) ===
+                // === 诊断：xlsx(ZIP) 魔数前 4 字节 50 4B 03 04 ===
                 _context3.prev = 60;
                 _context3.next = 63;
                 return new Promise(function (resolve, reject) {
@@ -1121,12 +1234,10 @@ var _default = {
                   break;
                 }
                 console.error('[文件损坏] 写入文件不是合法 ZIP/xlsx！header = [' + hex.trim() + ']');
-                // 不抛异常，继续走完流程，让用户看到现象，日志里已记录原因
                 _context3.next = 82;
                 break;
               case 72:
                 log('✅ 文件完整性检查通过：写入的 xlsx 是合法 ZIP 格式');
-                // 再读整个文件大小校验
                 _context3.prev = 73;
                 _context3.next = 76;
                 return new Promise(function (resolve) {
@@ -1158,12 +1269,7 @@ var _default = {
                 _context3.t3 = _context3["catch"](60);
                 console.warn('[header 自检] 读取失败（非致命）:', _context3.t3 && _context3.t3.errMsg);
               case 87:
-                // --- 1) 尝试 fsm.saveFile 持久化（防止小程序重启后丢失 USER_DATA_PATH 临时文件）---
-                // 注意：wx.saveFile 已废弃，统一使用 wx.getFileSystemManager().saveFile
-                // 【经验说明】部分版本小程序 saveFile 对 USER_DATA_PATH 下文件会报 permission denied，
-                //   属于正常现象（该 API 原本用于 wx.downloadFile 的临时文件路径）。
-                //   因此此处 saveFile 只做"尽力而为"，失败就继续使用 USER_DATA_PATH 临时路径直接 openDocument / shareFileMessage，
-                //   二者都支持 USER_DATA_PATH 路径。
+                // --- 尝试 fsm.saveFile 持久化（尽力而为，permission denied 属于正常）---
                 savedPath = targetPath;
                 saveFileOk = false;
                 _context3.prev = 89;
@@ -1209,10 +1315,8 @@ var _default = {
               case 101:
                 that.showLoading = false;
 
-                // --- 2) 弹出清晰指引的对话框，展示文件名和两种保存路径 ---
-                // 【重要！】uni.showModal 对按钮文字长度有硬限制：
-                //   confirmText / cancelText 都**不能超过 4 个汉字**（或英文字符数约等于此）
-                //   超过会直接 showModal fail，没有任何降级，Modal 完全不弹
+                // --- 弹出成功指引：打开预览 / 直接分享 ---
+                // 【重要！】confirmText / cancelText 不能超过 4 个汉字！
                 tipDesc = that.$t('quotation.contractFileNameLabel') + ': ' + fname + '\n\n' + that.$t('quotation.contractExportedDesc');
                 log('步骤6 - uni.showModal 弹出生成成功框（用户选 打开预览 / 直接分享）');
                 uni.showModal({
@@ -1223,28 +1327,24 @@ var _default = {
                   confirmColor: '#0d1526',
                   cancelColor: '#475569',
                   success: function success(mres) {
-                    // 单向状态锁，避免 openDocument fail 回调里又触发 share 导致二次弹窗
                     var finalized = false;
                     var finalize = function finalize() {
                       finalized = true;
                     };
                     if (mres.confirm) {
-                      // === 路径 A：打开预览（推荐）→ 用户通过右上角「…」菜单保存到手机 ===
                       log('用户点击确认 → uni.openDocument(filePath =', savedPath, ', fileType=xlsx, showMenu=true)');
                       uni.openDocument({
                         filePath: savedPath,
                         fileType: 'xlsx',
                         showMenu: true,
-                        // 必须 = true，右上角菜单才有「用其他应用打开」「保存到文件」
                         success: function success() {
-                          log('✅ uni.openDocument success 回调 —— 已拉起微信内置文档预览/WPS，用户可右上角「…」保存到手机');
+                          log('✅ uni.openDocument success 回调 —— 已拉起微信内置文档预览/WPS');
                           finalize();
                         },
                         fail: function fail(err) {
                           if (finalized) return;
                           finalize();
                           console.error('❌ uni.openDocument fail:', err);
-                          // 降级：直接分享
                           try {
                             wx.shareFileMessage({
                               filePath: savedPath,
@@ -1264,7 +1364,6 @@ var _default = {
                         }
                       });
                     } else {
-                      // === 路径 B：直接分享给微信好友/文件传输助手 ===
                       if (finalized) return;
                       finalize();
                       log('用户点击取消 → wx.shareFileMessage(filePath =', savedPath, ', fileName =', fname, ')');
@@ -1278,7 +1377,6 @@ var _default = {
                           fail: function fail(e2) {
                             console.error('❌ wx.shareFileMessage fail:', e2);
                             console.warn('→ 降级到 uni.openDocument...');
-                            // 再次降级：打开预览
                             try {
                               uni.openDocument({
                                 filePath: savedPath,
@@ -1305,7 +1403,6 @@ var _default = {
                     }
                   },
                   fail: function fail(merr) {
-                    // Modal 自己都失败（理论上不会），给个兜底 toast
                     console.error('uni.showModal fail:', merr);
                     that.showToast(that.$t('quotation.contractGenerated'), 'success');
                   }
@@ -1321,9 +1418,8 @@ var _default = {
               case 111:
                 _context3.prev = 111;
                 _context3.t5 = _context3["catch"](5);
-                console.error('[generateContract] 全链路异常:', _context3.t5);
+                console.error('[_doGenerateContract] 全链路异常:', _context3.t5);
                 that.showLoading = false;
-                // 把具体错误展示给用户，便于排查（errMsg 一般是中文可读的）
                 errMsg = _context3.t5 && (_context3.t5.errMsg || _context3.t5.message) || String(_context3.t5 || '');
                 uni.showModal({
                   title: that.$t('quotation.contractGenerateFail'),
@@ -1339,19 +1435,19 @@ var _default = {
       }))();
     },
     generateQuotation: function generateQuotation() {
-      var _this9 = this;
+      var _this10 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee5() {
         var that, ctx, scale, width, y, logoPath;
         return _regenerator.default.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
               case 0:
-                _this9.showLoading = true;
-                _this9.loadingText = _this9.$t('quotation.priceGenerating');
-                that = _this9;
+                _this10.showLoading = true;
+                _this10.loadingText = _this10.$t('quotation.priceGenerating');
+                that = _this10;
                 _context5.prev = 3;
                 _context5.next = 6;
-                return _this9.saveQuotationToDatabase();
+                return _this10.saveQuotationToDatabase();
               case 6:
                 _context5.next = 11;
                 break;
@@ -1362,7 +1458,7 @@ var _default = {
               case 11:
                 _context5.prev = 11;
                 _context5.next = 14;
-                return _this9.ensureDisplayConfigLoaded();
+                return _this10.ensureDisplayConfigLoaded();
               case 14:
                 _context5.next = 19;
                 break;
@@ -1371,7 +1467,7 @@ var _default = {
                 _context5.t1 = _context5["catch"](11);
                 console.warn('加载报价单显示配置失败，使用默认:', _context5.t1);
               case 19:
-                ctx = uni.createCanvasContext('quotationCanvas', _this9);
+                ctx = uni.createCanvasContext('quotationCanvas', _this10);
                 scale = 1;
                 width = 750;
                 y = 30 * scale;
@@ -1390,9 +1486,9 @@ var _default = {
                     ctx.drawImage(logoRes.path, logoX, logoY, logoWidth, logoHeight);
                     var infoX = logoX + logoWidth + 24;
                     var infoY = logoY;
-                    var companyName = _this9.$t('quotation.companyName');
-                    var companyNameEn = _this9.$t('quotation.companyNameEn');
-                    var companyInfo = [_this9.$t('quotation.companyWebsite'), _this9.$t('quotation.companyEmail'), _this9.$t('quotation.companyAddress'), _this9.$t('quotation.companyPhone')];
+                    var companyName = _this10.$t('quotation.companyName');
+                    var companyNameEn = _this10.$t('quotation.companyNameEn');
+                    var companyInfo = [_this10.$t('quotation.companyWebsite'), _this10.$t('quotation.companyEmail'), _this10.$t('quotation.companyAddress'), _this10.$t('quotation.companyPhone')];
                     ctx.setFontSize(26);
                     ctx.setFillStyle('#0d1526');
                     ctx.fillText(companyName, infoX, infoY + 26);
@@ -1418,32 +1514,32 @@ var _default = {
                     ctx.setFontSize(24);
                     ctx.setFillStyle('#0d1526');
                     ctx.setTextAlign('center');
-                    ctx.fillText(_this9.$t('quotation.title'), 375, y + 24);
+                    ctx.fillText(_this10.$t('quotation.title'), 375, y + 24);
                     ctx.setTextAlign('left');
                     y += 60 * scale;
                     ctx.setFontSize(15);
                     ctx.setFillStyle('#475569');
-                    var quoterLabel = _this9.$t('quotation.quoter') + '：';
+                    var quoterLabel = _this10.$t('quotation.quoter') + '：';
                     ctx.fillText(quoterLabel, 30, y);
                     var quoterLabelWidth = ctx.measureText(quoterLabel).width;
                     ctx.setFontSize(15);
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(_this9.quoter || _this9.$t('quotation.noSalePerson'), 30 + quoterLabelWidth + 8, y);
+                    ctx.fillText(_this10.quoter || _this10.$t('quotation.noSalePerson'), 30 + quoterLabelWidth + 8, y);
                     y += 35 * scale;
                     ctx.setFontSize(15);
                     ctx.setFillStyle('#475569');
-                    var customerLabel = _this9.$t('quotation.customerName') + '：';
+                    var customerLabel = _this10.$t('quotation.customerName') + '：';
                     ctx.fillText(customerLabel, 30, y);
                     var customerLabelWidth = ctx.measureText(customerLabel).width;
                     ctx.setFontSize(15);
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(_this9.customerName || _this9.$t('quotation.noCustomer'), 30 + customerLabelWidth + 8, y);
+                    ctx.fillText(_this10.customerName || _this10.$t('quotation.noCustomer'), 30 + customerLabelWidth + 8, y);
                     y += 35 * scale;
                     var totalWidth = 690;
                     var startX = 30;
 
                     // === 使用系统设置中的可见列，替代硬编码 headers ===
-                    var visibleCols = _this9.getVisibleTableCols();
+                    var visibleCols = _this10.getVisibleTableCols();
                     var cellWidths = visibleCols.map(function (c) {
                       return c.width;
                     });
@@ -1482,13 +1578,13 @@ var _default = {
                     y += 36 * scale;
                     var rowHeight = 38;
                     var specRowHeight = 28;
-                    var pricingInfoLabel = _this9.$t('quotation.pricingInfo');
+                    var pricingInfoLabel = _this10.$t('quotation.pricingInfo');
                     // 提前测量 pricingInfoLabel 的宽度
                     var pricingInfoLabelWidth = ctx.measureText(pricingInfoLabel).width;
-                    _this9.quoteData.forEach(function (item, idx) {
+                    _this10.quoteData.forEach(function (item, idx) {
                       x = startX + 8;
                       var values = visibleCols.map(function (col) {
-                        return col.meta.valueFn(item, _this9);
+                        return col.meta.valueFn(item, _this10);
                       });
                       if (idx % 2 === 1) {
                         ctx.setFillStyle('#f8fafc');
@@ -1518,7 +1614,7 @@ var _default = {
                       ctx.setFillStyle('#64748b');
                       ctx.fillText(pricingInfoLabel, startX + 8, y + 18);
                       x = startX + 8 + pricingInfoLabelWidth + 12;
-                      var specs = _this9.getVisibleSpecs(item);
+                      var specs = _this10.getVisibleSpecs(item);
                       var firstSpecX = x;
                       var anySpecPrinted = false;
                       specs.forEach(function (spec) {
@@ -1546,31 +1642,31 @@ var _default = {
                     y += 30 * scale;
                     ctx.setFontSize(15);
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(_this9.$t('quotation.remarkAndTech'), 30, y);
+                    ctx.fillText(_this10.$t('quotation.remarkAndTech'), 30, y);
                     y += 24 * scale;
-                    y = _this9.drawText(ctx, _this9.note, 30, y, 690, 22, 13) + 15;
+                    y = _this10.drawText(ctx, _this10.note, 30, y, 690, 22, 13) + 15;
                     ctx.setFontSize(14);
                     ctx.setFillStyle('#475569');
-                    var paymentLabel = _this9.$t('quotation.paymentMethod') + '：';
+                    var paymentLabel = _this10.$t('quotation.paymentMethod') + '：';
                     ctx.fillText(paymentLabel, 30, y);
                     var paymentLabelWidth = ctx.measureText(paymentLabel).width;
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(_this9.paymentMethod, 30 + paymentLabelWidth + 6, y);
+                    ctx.fillText(_this10.paymentMethod, 30 + paymentLabelWidth + 6, y);
                     y += 26 * scale;
                     ctx.setFillStyle('#475569');
-                    var packagingLabel = _this9.$t('quotation.packaging') + '：';
+                    var packagingLabel = _this10.$t('quotation.packaging') + '：';
                     ctx.fillText(packagingLabel, 30, y);
                     var packagingLabelWidth = ctx.measureText(packagingLabel).width;
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(_this9.packaging, 30 + packagingLabelWidth + 6, y);
+                    ctx.fillText(_this10.packaging, 30 + packagingLabelWidth + 6, y);
                     y += 26 * scale;
                     ctx.setFillStyle('#475569');
-                    var confirmLabel = _this9.$t('quotation.confirmAmount');
+                    var confirmLabel = _this10.$t('quotation.confirmAmount');
                     ctx.fillText(confirmLabel, 30, y);
                     var confirmLabelWidth = ctx.measureText(confirmLabel).width;
                     ctx.setFillStyle('#dc2626');
                     ctx.setFontSize(16);
-                    ctx.fillText('¥' + (_this9.finalPrice || _this9.totalAmount), 30 + confirmLabelWidth + 8, y);
+                    ctx.fillText('¥' + (_this10.finalPrice || _this10.totalAmount), 30 + confirmLabelWidth + 8, y);
                     ctx.setFontSize(14);
                     y += 35 * scale;
                     ctx.setStrokeStyle('#e2e8f0');
@@ -1581,30 +1677,30 @@ var _default = {
                     y += 25 * scale;
                     ctx.setFontSize(14);
                     ctx.setFillStyle('#475569');
-                    var signLabel = _this9.$t('quotation.quoterSign');
+                    var signLabel = _this10.$t('quotation.quoterSign');
                     ctx.fillText(signLabel, 30, y);
                     var signLabelWidth = ctx.measureText(signLabel).width;
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(_this9.quoter, 30 + signLabelWidth + 6, y);
+                    ctx.fillText(_this10.quoter, 30 + signLabelWidth + 6, y);
                     ctx.setFillStyle('#475569');
-                    var phoneLabel = _this9.$t('quotation.quoterPhoneLabel');
+                    var phoneLabel = _this10.$t('quotation.quoterPhoneLabel');
                     ctx.fillText(phoneLabel, 400, y);
                     var phoneLabelWidth = ctx.measureText(phoneLabel).width;
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(_this9.quoterPhone, 400 + phoneLabelWidth + 6, y);
+                    ctx.fillText(_this10.quoterPhone, 400 + phoneLabelWidth + 6, y);
                     y += 26 * scale;
                     ctx.setFillStyle('#475569');
-                    var validityLabel = _this9.$t('quotation.validityLabel');
+                    var validityLabel = _this10.$t('quotation.validityLabel');
                     ctx.fillText(validityLabel, 30, y);
                     var validityLabelWidth = ctx.measureText(validityLabel).width;
                     ctx.setFillStyle('#c8aa6e');
-                    ctx.fillText(_this9.validity, 30 + validityLabelWidth + 6, y);
+                    ctx.fillText(_this10.validity, 30 + validityLabelWidth + 6, y);
                     ctx.setFillStyle('#475569');
-                    var dateLabel = _this9.$t('quotation.issueDate');
+                    var dateLabel = _this10.$t('quotation.issueDate');
                     ctx.fillText(dateLabel, 400, y);
                     var dateLabelWidth = ctx.measureText(dateLabel).width;
                     ctx.setFillStyle('#0d1526');
-                    ctx.fillText(_this9.currentDate, 400 + dateLabelWidth + 6, y);
+                    ctx.fillText(_this10.currentDate, 400 + dateLabelWidth + 6, y);
                     y += 60 * scale;
                     ctx.draw(false, function () {
                       var finalHeight = Math.ceil(y);
@@ -1636,17 +1732,17 @@ var _default = {
                         }(),
                         fail: function fail(err) {
                           console.error(err);
-                          that.showToast(_this9.$t('quotation.renderFail'), 'error');
+                          that.showToast(_this10.$t('quotation.renderFail'), 'error');
                         },
                         complete: function complete() {
-                          _this9.showLoading = false;
+                          _this10.showLoading = false;
                         }
                       });
                     });
                   },
                   fail: function fail(err) {
                     console.error(err);
-                    that.showToast(_this9.$t('quotation.logoLoadFail'), 'error');
+                    that.showToast(_this10.$t('quotation.logoLoadFail'), 'error');
                     that.showLoading = false;
                   }
                 });
@@ -1665,7 +1761,7 @@ exports.default = _default;
 
 /***/ }),
 
-/***/ 83:
+/***/ 89:
 /*!************************************************************************************************************!*\
   !*** /Users/meonsaber/Desktop/famen_uniapp/pages/quotation/quotation.vue?vue&type=style&index=0&lang=css& ***!
   \************************************************************************************************************/
@@ -1674,14 +1770,14 @@ exports.default = _default;
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_mini_css_extract_plugin_dist_loader_js_ref_6_oneOf_1_0_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_css_loader_dist_cjs_js_ref_6_oneOf_1_1_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_vue_cli_plugin_uni_packages_vue_loader_lib_loaders_stylePostLoader_js_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_vue_cli_plugin_uni_packages_webpack_preprocess_loader_index_js_ref_6_oneOf_1_2_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_postcss_loader_src_index_js_ref_6_oneOf_1_3_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_vue_cli_plugin_uni_packages_vue_loader_lib_index_js_vue_loader_options_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_webpack_uni_mp_loader_lib_style_js_quotation_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../Applications/HBuilderX.app/Contents/HBuilderX/plugins/uniapp-cli/node_modules/mini-css-extract-plugin/dist/loader.js??ref--6-oneOf-1-0!../../../../../../Applications/HBuilderX.app/Contents/HBuilderX/plugins/uniapp-cli/node_modules/css-loader/dist/cjs.js??ref--6-oneOf-1-1!../../../../../../Applications/HBuilderX.app/Contents/HBuilderX/plugins/uniapp-cli/node_modules/@dcloudio/vue-cli-plugin-uni/packages/vue-loader/lib/loaders/stylePostLoader.js!../../../../../../Applications/HBuilderX.app/Contents/HBuilderX/plugins/uniapp-cli/node_modules/@dcloudio/vue-cli-plugin-uni/packages/webpack-preprocess-loader??ref--6-oneOf-1-2!../../../../../../Applications/HBuilderX.app/Contents/HBuilderX/plugins/uniapp-cli/node_modules/postcss-loader/src??ref--6-oneOf-1-3!../../../../../../Applications/HBuilderX.app/Contents/HBuilderX/plugins/uniapp-cli/node_modules/@dcloudio/vue-cli-plugin-uni/packages/vue-loader/lib??vue-loader-options!../../../../../../Applications/HBuilderX.app/Contents/HBuilderX/plugins/uniapp-cli/node_modules/@dcloudio/webpack-uni-mp-loader/lib/style.js!./quotation.vue?vue&type=style&index=0&lang=css& */ 84);
+/* harmony import */ var _Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_mini_css_extract_plugin_dist_loader_js_ref_6_oneOf_1_0_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_css_loader_dist_cjs_js_ref_6_oneOf_1_1_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_vue_cli_plugin_uni_packages_vue_loader_lib_loaders_stylePostLoader_js_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_vue_cli_plugin_uni_packages_webpack_preprocess_loader_index_js_ref_6_oneOf_1_2_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_postcss_loader_src_index_js_ref_6_oneOf_1_3_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_vue_cli_plugin_uni_packages_vue_loader_lib_index_js_vue_loader_options_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_webpack_uni_mp_loader_lib_style_js_quotation_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../Applications/HBuilderX.app/Contents/HBuilderX/plugins/uniapp-cli/node_modules/mini-css-extract-plugin/dist/loader.js??ref--6-oneOf-1-0!../../../../../../Applications/HBuilderX.app/Contents/HBuilderX/plugins/uniapp-cli/node_modules/css-loader/dist/cjs.js??ref--6-oneOf-1-1!../../../../../../Applications/HBuilderX.app/Contents/HBuilderX/plugins/uniapp-cli/node_modules/@dcloudio/vue-cli-plugin-uni/packages/vue-loader/lib/loaders/stylePostLoader.js!../../../../../../Applications/HBuilderX.app/Contents/HBuilderX/plugins/uniapp-cli/node_modules/@dcloudio/vue-cli-plugin-uni/packages/webpack-preprocess-loader??ref--6-oneOf-1-2!../../../../../../Applications/HBuilderX.app/Contents/HBuilderX/plugins/uniapp-cli/node_modules/postcss-loader/src??ref--6-oneOf-1-3!../../../../../../Applications/HBuilderX.app/Contents/HBuilderX/plugins/uniapp-cli/node_modules/@dcloudio/vue-cli-plugin-uni/packages/vue-loader/lib??vue-loader-options!../../../../../../Applications/HBuilderX.app/Contents/HBuilderX/plugins/uniapp-cli/node_modules/@dcloudio/webpack-uni-mp-loader/lib/style.js!./quotation.vue?vue&type=style&index=0&lang=css& */ 90);
 /* harmony import */ var _Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_mini_css_extract_plugin_dist_loader_js_ref_6_oneOf_1_0_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_css_loader_dist_cjs_js_ref_6_oneOf_1_1_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_vue_cli_plugin_uni_packages_vue_loader_lib_loaders_stylePostLoader_js_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_vue_cli_plugin_uni_packages_webpack_preprocess_loader_index_js_ref_6_oneOf_1_2_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_postcss_loader_src_index_js_ref_6_oneOf_1_3_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_vue_cli_plugin_uni_packages_vue_loader_lib_index_js_vue_loader_options_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_webpack_uni_mp_loader_lib_style_js_quotation_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_mini_css_extract_plugin_dist_loader_js_ref_6_oneOf_1_0_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_css_loader_dist_cjs_js_ref_6_oneOf_1_1_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_vue_cli_plugin_uni_packages_vue_loader_lib_loaders_stylePostLoader_js_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_vue_cli_plugin_uni_packages_webpack_preprocess_loader_index_js_ref_6_oneOf_1_2_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_postcss_loader_src_index_js_ref_6_oneOf_1_3_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_vue_cli_plugin_uni_packages_vue_loader_lib_index_js_vue_loader_options_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_webpack_uni_mp_loader_lib_style_js_quotation_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__);
 /* harmony reexport (unknown) */ for(var __WEBPACK_IMPORT_KEY__ in _Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_mini_css_extract_plugin_dist_loader_js_ref_6_oneOf_1_0_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_css_loader_dist_cjs_js_ref_6_oneOf_1_1_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_vue_cli_plugin_uni_packages_vue_loader_lib_loaders_stylePostLoader_js_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_vue_cli_plugin_uni_packages_webpack_preprocess_loader_index_js_ref_6_oneOf_1_2_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_postcss_loader_src_index_js_ref_6_oneOf_1_3_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_vue_cli_plugin_uni_packages_vue_loader_lib_index_js_vue_loader_options_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_webpack_uni_mp_loader_lib_style_js_quotation_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__) if(["default"].indexOf(__WEBPACK_IMPORT_KEY__) < 0) (function(key) { __webpack_require__.d(__webpack_exports__, key, function() { return _Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_mini_css_extract_plugin_dist_loader_js_ref_6_oneOf_1_0_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_css_loader_dist_cjs_js_ref_6_oneOf_1_1_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_vue_cli_plugin_uni_packages_vue_loader_lib_loaders_stylePostLoader_js_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_vue_cli_plugin_uni_packages_webpack_preprocess_loader_index_js_ref_6_oneOf_1_2_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_postcss_loader_src_index_js_ref_6_oneOf_1_3_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_vue_cli_plugin_uni_packages_vue_loader_lib_index_js_vue_loader_options_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_webpack_uni_mp_loader_lib_style_js_quotation_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__[key]; }) }(__WEBPACK_IMPORT_KEY__));
  /* harmony default export */ __webpack_exports__["default"] = (_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_mini_css_extract_plugin_dist_loader_js_ref_6_oneOf_1_0_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_css_loader_dist_cjs_js_ref_6_oneOf_1_1_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_vue_cli_plugin_uni_packages_vue_loader_lib_loaders_stylePostLoader_js_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_vue_cli_plugin_uni_packages_webpack_preprocess_loader_index_js_ref_6_oneOf_1_2_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_postcss_loader_src_index_js_ref_6_oneOf_1_3_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_vue_cli_plugin_uni_packages_vue_loader_lib_index_js_vue_loader_options_Applications_HBuilderX_app_Contents_HBuilderX_plugins_uniapp_cli_node_modules_dcloudio_webpack_uni_mp_loader_lib_style_js_quotation_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0___default.a); 
 
 /***/ }),
 
-/***/ 84:
+/***/ 90:
 /*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/mini-css-extract-plugin/dist/loader.js??ref--6-oneOf-1-0!./node_modules/css-loader/dist/cjs.js??ref--6-oneOf-1-1!./node_modules/@dcloudio/vue-cli-plugin-uni/packages/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/@dcloudio/vue-cli-plugin-uni/packages/webpack-preprocess-loader??ref--6-oneOf-1-2!./node_modules/postcss-loader/src??ref--6-oneOf-1-3!./node_modules/@dcloudio/vue-cli-plugin-uni/packages/vue-loader/lib??vue-loader-options!./node_modules/@dcloudio/webpack-uni-mp-loader/lib/style.js!/Users/meonsaber/Desktop/famen_uniapp/pages/quotation/quotation.vue?vue&type=style&index=0&lang=css& ***!
   \****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/

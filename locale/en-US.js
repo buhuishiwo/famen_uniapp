@@ -196,7 +196,19 @@ export default {
     noCustomer: 'Unspecified',
     weightUnit: 'KG',
     torqueUnit: 'N.M',
-    dateFormat: 'YYYY-MM-DD'
+    dateFormat: 'YYYY-MM-DD',
+    templatePickerTitle: 'Select Contract Template',
+    templatePickerDesc: 'Choose a contract style to export. Layout, bank details and payment info will auto-match each template.',
+    templatePickerConfirm: 'Generate',
+    templatePickerCancel: 'Cancel',
+    templateFamilyCn: 'Chinese Purchase Contract',
+    templateFamilyEn: 'English PI / Commercial Invoice',
+    template_chisun_v1: 'Chisun Standard (With Logo)',
+    template_chisun_nsh: 'Chisun - Rural Bank',
+    template_zs_changsheng: 'ChangSheng - ABC Bank',
+    template_pi_changqi: 'Changqi Proforma Invoice',
+    template_pi_chisun_multi: 'Chisun PI (Multi-Currency ABC)',
+    template_pi_chisun_vtb: 'Chisun PI (VTB Russia RUB)'
   },
   language: {
     switchLang: 'Switch Language',

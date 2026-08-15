@@ -4,691 +4,951 @@
  *  —— 实现方式：JSZip 级打开模板 xlsx → 只改 xl/worksheets/sheet1.xml 的文本和数字 → 重新压缩
  *  —— 对小程序/Node 均通用（JSZip 都可工作）
  *
- * 核心坐标（全部使用 Excel 1-based A1 引用 / 行号，和 XML 中的 r="13" 完全一致，避免 0/1-based 混乱）：
+ * 2026-08-15 重构：多模板支持（6 套模板注册表），分两大「家族」：
+ *   - cn_contract（中文购销合同家族）：原 QCAZ / 奇胜农商行 / 长胜农行
+ *       · 有型号规格 + 材质/压力/密封面/商标/单位/单价/总价 多列
+ *       · 有税金行（13%）、价税合计大写、备注单元格
+ *   - en_pi（英文 PI / 外贸发票家族）：Changqi / Chisun IMPORT 农行多币种 / VTB 卢布
+ *       · 有序号(A) / 型号(B) / 描述(C,D) / 数量(E) / 单价(H) / 总价(I)
+ *       · 仅 Total 汇总；无税金、无中文大写、无备注
  */
-const CFG = {
-    // 原模板产品行 1-based 行号范围
+
+// ================ 家族通用列映射：quoteData 字段 → 模板 A1 列 ================
+// quoteData item 字段（与 quotation.vue 保持一致，从小程序实际 quoteData 中挑）：
+//   productName, productType, model, bodyMaterial, gateMaterial, stemMaterial,
+//   sealMaterial, trademark, unit, quantity, unitPrice, maxPressure, unitWeight,
+//   woodenBoxSize, torque, laps, bevelGearCouplingModel, moq, brandingFee,
+//   gatePlateThickness, productNote, spec (型号规格完整字符串), totalPrice
+function modelSpecOf(it) {
+  // 产品型号 = 产品名称 + DN + 型号数字。
+  // 注意：不拼 productType（如"常规品"），否则会混入 Model no. / 型号规格 列（用户要求只显示产品型号）
+  const clean = (s) => String(s == null ? '' : s).replace(/常规品/g, '').trim();
+  if (it.spec) {
+    const spec = clean(it.spec);
+    return spec || '';
+  }
+  const parts = [];
+  const name = clean(it.productName);
+  const model = clean(it.model);
+  if (name) parts.push(name);
+  if (model) parts.push(/^DN/i.test(model) ? model : ('DN' + model));
+  return parts.join('-');
+}
+
+// —— 中文规格组合（simple6 合同：P 列「产品描述」）——————
+// 对应截图样例 P12 = 「国内木箱材质压力密封面商标单位」
+// 顺序：包装（国内木箱）→ 材质 → 闸板/阀杆 → 密封面 → 压力 → 闸板厚度 → 扭矩 → 单重 → 木箱尺寸（具体数字）→ 商标 → 单位
+// 注意：如果用户传的字段里本身已经包含单位（如 gatePlateThickness="12mm"），不要再重复追加后缀
+function cnSpecDesc(it) {
+  const parts = [];
+  const boxSize = (it.woodenBoxSize != null) ? String(it.woodenBoxSize).trim() : '';
+  parts.push(boxSize ? (`国内木箱${boxSize}`) : '国内木箱');
+  if (it.bodyMaterial) parts.push(`材质${it.bodyMaterial}`);
+  if (it.gateMaterial) parts.push(`闸板${it.gateMaterial}`);
+  if (it.stemMaterial) parts.push(`阀杆${it.stemMaterial}`);
+  if (it.sealMaterial) parts.push(`密封面${it.sealMaterial}`);
+  if (it.maxPressure != null && String(it.maxPressure).trim()) {
+    const p = String(it.maxPressure).trim();
+    parts.push(/PN|压力|bar/i.test(p) ? `压力${p}` : `压力PN${p}`);
+  }
+  if (it.gatePlateThickness != null && String(it.gatePlateThickness).trim()) {
+    const v = String(it.gatePlateThickness).trim();
+    parts.push(/mm|毫米/i.test(v) ? `闸板厚度${v}` : `闸板厚度${v}mm`);
+  }
+  if (it.torque != null && String(it.torque).trim()) {
+    const v = String(it.torque).trim();
+    // 兼容 N·m / N.m / NM / 牛米 / 扭矩 等写法（中点 · 是常见 ASCII 之外字符）
+    parts.push(/N[\.·]?[Mm]|牛|扭矩/i.test(v) ? `扭矩${v}` : `扭矩${v}N.M`);
+  }
+  if (it.unitWeight != null && String(it.unitWeight).trim()) {
+    const v = String(it.unitWeight).trim();
+    parts.push(/kg|千克|g|克/i.test(v) ? `单重${v}` : `单重${v}KG`);
+  }
+  if (it.trademark) parts.push(`商标${it.trademark}`);
+  if (it.unit) parts.push(`单位${it.unit}`);
+  return parts.join('');
+}
+
+// —— 英文 Project Name（产品名翻译，simple7 PI 的 B 列）——————
+function enProjectName(it) {
+  const base = it.productName || it.productType || 'Valve';
+  return String(base)
+    .replace(/双向/g, 'Bi-directional ')
+    .replace(/气动/g, 'Pneumatic ')
+    .replace(/电动/g, 'Electric Actuated ')
+    .replace(/伞齿轮/g, 'Bevel Gear ')
+    .replace(/蜗轮/g, 'Worm Gear ')
+    .replace(/手动/g, 'Manual ')
+    .replace(/自密封/g, 'Self-sealing ')
+    .replace(/软密封/g, 'Soft Sealing ')
+    .replace(/硬密封/g, 'Hard Sealing ')
+    .replace(/暗杆/g, 'Non-rising Stem ')
+    .replace(/明杆/g, 'Rising Stem ')
+    .replace(/对夹式/g, 'Wafer Type ')
+    .replace(/刀闸阀/g, 'Knife Gate Valve')
+    .replace(/闸阀/g, 'Gate Valve')
+    .replace(/球阀/g, 'Ball Valve')
+    .replace(/蝶阀/g, 'Butterfly Valve')
+    .replace(/止回阀/g, 'Check Valve')
+    .replace(/截止阀/g, 'Globe Valve')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// —— 英文规格组合（simple7 PI 的 D 列「Item Description」）——————
+// 对应截图样例 D5 = 「Seat:NR Working Pressure7bar，Disc Thickness=8mm」
+function enSpecDesc(it) {
+  const parts = [];
+  if (it.sealMaterial) parts.push(`Seat:${it.sealMaterial}`);
+  if (it.maxPressure != null && String(it.maxPressure).trim()) {
+    const p = String(it.maxPressure).trim();
+    parts.push(/bar|PN|压力/i.test(p) ? `Working Pressure ${p.replace(/PN/gi, '')}` : `Working Pressure ${p}bar`);
+  }
+  if (it.gatePlateThickness != null && String(it.gatePlateThickness).trim()) {
+    const v = String(it.gatePlateThickness).trim();
+    parts.push(/mm/i.test(v) ? `Disc Thickness=${v}` : `Disc Thickness=${v}mm`);
+  }
+  if (it.bodyMaterial) parts.push(`Body:${it.bodyMaterial}`);
+  if (it.gateMaterial) parts.push(`Disc:${it.gateMaterial}`);
+  if (it.stemMaterial) parts.push(`Stem:${it.stemMaterial}`);
+  if (it.unitWeight != null && String(it.unitWeight).trim()) {
+    const v = String(it.unitWeight).trim();
+    parts.push(/kg|g/i.test(v) ? `N.W.:${v}` : `N.W.:${v}kg`);
+  }
+  if (it.trademark) parts.push(`Brand:${it.trademark}`);
+  if (it.unit) parts.push(`Unit:${it.unit}`);
+  return parts.join('，');
+}
+
+// ——— 家族 1A：cn_contract_complex14（chisun_v1 = 原 14 列复杂格式：品名/型号/规格/材质/闸板厚度/单位/起订量/两档单价/最高承压/单重/圈数/扭矩/木箱尺寸/伞齿轮型号）
+const COL_MAP_CN_COMPLEX14 = [
+  { col: 'A',  get: (it) => modelSpecOf(it) },
+  { col: 'H',  get: (it) => it.productName || '' },
+  { col: 'P',  get: (it) => (it.model ? 'DN' + it.model : '') },
+  { col: 'S',  get: (it) => it.bodyMaterial || '' },
+  { col: 'W',  get: (it) => it.gatePlateThickness || '' },
+  { col: 'Z',  get: (it) => it.unit || '台' },
+  { col: 'AB', get: (it) => it.moq || '' },
+  { col: 'AC', get: (it) => {
+      const v = Number(it.unitPrice);
+      return (isNaN(v) || v === 0) ? '' : v;
+  }, isNum: true },
+  { col: 'AD', get: (it) => {
+      const t = Number(it.totalPrice);
+      return (isNaN(t) || t === 0) ? '' : t;
+  }, isNum: true },
+  { col: 'AE', get: (it) => it.maxPressure || '' },
+  { col: 'AF', get: (it) => it.unitWeight || '' },
+  { col: 'AG', get: (it) => it.laps || '' },
+  { col: 'AH', get: (it) => it.torque || '' },
+  { col: 'AI', get: (it) => it.woodenBoxSize || '' },
+  { col: 'AJ', get: (it) => it.bevelGearCouplingModel || '' }
+];
+
+// ——— 家族 1B：cn_contract_simple6（chisun_nsh + zs_changsheng，与用户截图完全一致的 6 列）
+//     A=产品名称（空）；H=型号规格=spec；P=产品描述=中文规格组合；AG=数量；AJ=单价；AK=金额；AQ=备注（空）
+const COL_MAP_CN_SIMPLE6 = [
+  { col: 'A',  get: () => '' }, // 产品名称：空着
+  { col: 'H',  get: (it) => modelSpecOf(it) },
+  { col: 'P',  get: (it) => cnSpecDesc(it) },
+  { col: 'AG', get: (it) => {
+      const q = Number(it.quantity);
+      return (isNaN(q) || q === 0) ? '' : q;
+  }, isNum: true },
+  { col: 'AJ', get: (it) => {
+      const v = Number(it.unitPrice);
+      return (isNaN(v) || v === 0) ? '' : v;
+  }, isNum: true },
+  { col: 'AK', get: (it) => {
+      const t = Number(it.totalPrice);
+      return (isNaN(t) || t === 0) ? '' : t;
+  }, isNum: true },
+  { col: 'AQ', get: () => '' }  // 备注列：清空模板原有长文字示例
+];
+
+// ——— 家族 2：en_pi_simple7（pi_changqi/pi_chisun_multi/pi_chisun_vtb 英文 PI 简单 7 列）
+//     A=No；B=Project Name（英文产品名翻译）；C=Model no（spec）；D=Item Description（英文规格组合）；G=QTY；H=Unit price；I=Total amount；J=Remark（空）
+const COL_MAP_EN_SIMPLE7 = [
+  { col: 'A', get: (_, idx) => idx + 1, isNum: true },
+  { col: 'B', get: (it) => enProjectName(it) },
+  { col: 'C', get: (it) => modelSpecOf(it) },
+  { col: 'D', get: (it) => enSpecDesc(it) },
+  { col: 'G', get: (it) => {
+      const q = Number(it.quantity);
+      return (isNaN(q) || q === 0) ? '' : q;
+  }, isNum: true },
+  { col: 'H', get: (it) => {
+      const v = Number(it.unitPrice);
+      return (isNaN(v) || v === 0) ? '' : v;
+  }, isNum: true },
+  { col: 'I', get: (it) => {
+      const t = Number(it.totalPrice);
+      return (isNaN(t) || t === 0) ? '' : t;
+  }, isNum: true },
+  { col: 'J', get: () => '' }  // Remark：清空
+];
+
+/**
+ * 各模板 CFG（覆盖默认值）：
+ *   PRODUCT_ROW_FIRST      第一条数据样例行（1-based）
+ *   PRODUCT_ROW_LAST_TPL   模板里数据区的最后一条行号（容量 = last - first + 1）
+ *   【 cn_contract 只有】
+ *     TAX_ROW              税金行（及以下是合计/签名。扩容时从这行开始整体下移）
+ *     TOTAL_ROW            价税合计大写/小写所在行
+ *     CELL_PRETAX, CELL_TAX, CELL_TOTAL_NUM, CELL_TOTAL_CN, NOTE_CELL —— A1
+ *  【 en_pi 只有】
+ *     TOTAL_ROW            R6 = Total 那一行
+ *     CELL_TOTAL_AMOUNT    C6 这样的数字格：写总金额
+ */
+const FAMILY_CFG = {
+  // ——— 家族 1A：原 14 列复杂（chisun_v1 = QCAZ543X-10P+CHISUN商标价格1.xlsx）———
+  chisun_v1: {
+    family: 'cn_contract',
     PRODUCT_ROW_FIRST: 13,
-    PRODUCT_ROW_LAST_TPL: 25,      // 模板里最多 13 条
-    HEADER_ROW: 12,
-    TAX_ROW: 26,                   // 税金汇总行（Excel 行 26）
-    TOTAL_ROW: 27,                 // 价税合计行（Excel 行 27）
-    NOTE_CELL: 'F40',              // 备注单元格（模板 R40 F 列，原模板 R40 即为备注内容）
-    // 单元格 A1 引用（模板原值位置）：
-    //   R26 = A:M 合并块文本 "不含税金额（元）："；N:Y 合并 "税额（元）："；Z:AK 合并 "税率：13%"
-    //   R27 = A:Y 合并 "价税合计（大写）："；Z:AK 合并 "价税合计（小写）：元"
-    CELL_PRETAX: 'A26',            // 不含税金额（追加到 R26 大合并文本）
-    CELL_TAX: 'N26',               // 税额（追加到 R26 N 大合并文本）
-    CELL_RATE_LABEL: 'Z26',        // 税率文本 - 保留原模板不动
-    CELL_TOTAL_NUM: 'Z27',         // 价税合计小写（追加到 R27 Z 大合并文本）
-    CELL_TOTAL_CN: 'A27',          // 价税合计大写（追加到 R27 A 大合并文本）
-    // 列映射：quoteData 字段 → A1 列（1-based 行之后会拼 A1）
-    COL_MAP: [
-        { col: 'A',  get: (it) => (it.productType ? it.productType + ' ' : '') + (it.productName || '') },
-        { col: 'H',  get: (it) => it.productName || '' },
-        { col: 'P',  get: (it) => it.model ? 'DN' + it.model : '' },
-        { col: 'S',  get: (it) => it.bodyMaterial || '' },
-        { col: 'W',  get: (it) => it.gatePlateThickness || '' },
-        { col: 'Z',  get: () => '台' },
-        { col: 'AB', get: (it) => it.moq || '' },
-        { col: 'AC', get: (it) => {
-            const v = Number(it.unitPrice);
-            return (isNaN(v) || v === 0) ? '' : v;
-        }, isNum: true },
-        { col: 'AD', get: () => '' },
-        { col: 'AE', get: (it) => it.maxPressure || '' },
-        { col: 'AF', get: (it) => it.unitWeight || '' },
-        { col: 'AG', get: (it) => it.laps || '' },
-        { col: 'AH', get: (it) => it.torque || '' },
-        { col: 'AI', get: (it) => it.woodenBoxSize || '' },
-        { col: 'AJ', get: (it) => it.bevelGearCouplingModel || '' }
-    ]
+    PRODUCT_ROW_LAST_TPL: 25,
+    TAX_ROW: 26,
+    TOTAL_ROW: 27,
+    CELL_PRETAX: 'A26',
+    CELL_TAX: 'N26',
+    CELL_RATE_LABEL: 'Z26',
+    CELL_TOTAL_NUM: 'Z27',
+    CELL_TOTAL_CN: 'A27',
+    NOTE_CELL: 'F40',
+    TAX_RATE: 0.13,
+    COL_MAP: COL_MAP_CN_COMPLEX14
+  },
+
+  // ——— 家族 1B：simple6 中文（chisun_nsh + zs_changsheng，R11=表头/R12=产品/R13=税金/R14=合计/R15=备注）———
+  chisun_nsh: {
+    family: 'cn_contract',
+    PRODUCT_ROW_FIRST: 12,
+    PRODUCT_ROW_LAST_TPL: 12,
+    TAX_ROW: 13,
+    TOTAL_ROW: 14,
+    // 真实探查：
+    //   A13  = 不含税金额（元）：55,221.24  (merge A..M，文本 + 数字)
+    //   O13  = 税额（元）：                  (merge O..U，文本)
+    //   V13  = [N]7178.76                   (数字格：税额)
+    //   AC13 = 税率：13%                    (merge AC..AP，文本)
+    //   A14  = 价税合计（大写）：陆万贰仟肆佰元整 (merge A..AB，大写文本)
+    //   AC14 = 价税合计（小写）：62,400元         (merge AC..AW，小写文本)
+    //   A15  = 备注：本合同约定的不含税金额...      (merge A..AW，固定条款备注，不写用户的备注)
+    // NOTE: 用户的报价单备注填到产品的「备注列 AQ12」里，但用户没说要填，所以 AQ12 留空（COL_MAP 已清空）
+    CELL_PRETAX_MERGE: 'A13',
+    CELL_TAX_TEXT_MERGE: 'O13',
+    CELL_TAX_NUM: 'V13',
+    CELL_RATE_MERGE: 'AC13',
+    CELL_TOTAL_CN_MERGE: 'A14',
+    CELL_TOTAL_NUM_MERGE: 'AC14',
+    TAX_RATE: 0.13,
+    COL_MAP: COL_MAP_CN_SIMPLE6,
+    _WRITE_STRATEGY: 'simple6_merge'
+  },
+  zs_changsheng: {
+    family: 'cn_contract',
+    PRODUCT_ROW_FIRST: 12,
+    PRODUCT_ROW_LAST_TPL: 12,
+    TAX_ROW: 13,
+    TOTAL_ROW: 14,
+    CELL_PRETAX_MERGE: 'A13',
+    CELL_TAX_TEXT_MERGE: 'O13',
+    CELL_TAX_NUM: 'V13',
+    CELL_RATE_MERGE: 'AC13',
+    CELL_TOTAL_CN_MERGE: 'A14',
+    CELL_TOTAL_NUM_MERGE: 'AC14',
+    TAX_RATE: 0.13,
+    COL_MAP: COL_MAP_CN_SIMPLE6,
+    _WRITE_STRATEGY: 'simple6_merge'
+  },
+
+  // ——— 家族 2：simple7 英文 PI（3 套：Changqi / Chisun 多币种 / Chisun VTB 卢布）
+  //        R4=表头 / R5=产品 / R6=Total / R7=Note:
+  pi_changqi: {
+    family: 'en_pi',
+    PRODUCT_ROW_FIRST: 5,
+    PRODUCT_ROW_LAST_TPL: 5,
+    TOTAL_ROW: 6,
+    CELL_TOTAL_AMOUNT: 'I6',  // 探查：B6="Total"，I6=[N]295460（真实写总价的数字格）
+    COL_MAP: COL_MAP_EN_SIMPLE7
+  },
+  pi_chisun_multi: {
+    family: 'en_pi',
+    PRODUCT_ROW_FIRST: 5,
+    PRODUCT_ROW_LAST_TPL: 5,
+    TOTAL_ROW: 6,
+    CELL_TOTAL_AMOUNT: 'I6',  // 探查：I6=[N]295460
+    COL_MAP: COL_MAP_EN_SIMPLE7
+  },
+  pi_chisun_vtb: {
+    family: 'en_pi',
+    PRODUCT_ROW_FIRST: 5,
+    PRODUCT_ROW_LAST_TPL: 5,
+    TOTAL_ROW: 6,
+    CELL_TOTAL_AMOUNT: 'I6',  // 探查：I6=[N]295460
+    COL_MAP: COL_MAP_EN_SIMPLE7
+  }
 };
 
-/**
- * 数字 → 人民币大写
- */
+// ================ 公共底层（两个家族共用） ================
+/** 数字 → 人民币大写 */
 function toChineseMoney(n) {
-    if (n === null || n === undefined || n === '' || isNaN(Number(n))) return '';
-    let num = Number(n);
-    if (!isFinite(num)) return '';
-    const negative = num < 0;
-    if (negative) num = -num;
-    if (num === 0) return '零元整';
-    const fraction = ['角', '分'];
-    const digit = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
-    const unit = [['元', '万', '亿'], ['', '拾', '佰', '仟']];
-    let head = negative ? '负' : '';
-    num = Math.round(num * 100) / 100;
-    const s = num.toFixed(2);
-    const parts = s.split('.');
-    const intPart = parts[0];
-    const decPart = parts[1] || '00';
-    let out = '';
-    if (parseInt(intPart, 10) > 0) {
-        for (let i = 0; i < intPart.length; i++) {
-            const idxN = intPart.length - 1 - i;
-            const d = parseInt(intPart.charAt(i), 10);
-            const p = Math.floor(idxN / 4);
-            const q = idxN % 4;
-            if (d === 0) {
-                if (q === 0) {
-                    let has = false;
-                    for (let j = i - q; j <= i; j++) {
-                        if (parseInt(intPart.charAt(j) || '0', 10) !== 0) { has = true; break; }
-                    }
-                    if (has) out += unit[0][p];
-                }
-            } else {
-                if (out.charAt(out.length - 1) !== '零' && i > 0 && q !== 3
-                    && parseInt(intPart.charAt(i - 1) || '0', 10) === 0) {
-                    out += '零';
-                }
-                out += digit[d] + unit[1][q];
-                if (q === 0) out += unit[0][p];
-            }
+  if (n === null || n === undefined || n === '' || isNaN(Number(n))) return '';
+  let num = Number(n);
+  if (!isFinite(num)) return '';
+  const negative = num < 0;
+  if (negative) num = -num;
+  if (num === 0) return '零元整';
+  const fraction = ['角', '分'];
+  const digit = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
+  const unit = [['元', '万', '亿'], ['', '拾', '佰', '仟']];
+  let head = negative ? '负' : '';
+  num = Math.round(num * 100) / 100;
+  const s = num.toFixed(2);
+  const parts = s.split('.');
+  const intPart = parts[0];
+  const decPart = parts[1] || '00';
+  let out = '';
+  if (parseInt(intPart, 10) > 0) {
+    for (let i = 0; i < intPart.length; i++) {
+      const idxN = intPart.length - 1 - i;
+      const d = parseInt(intPart.charAt(i), 10);
+      const p = Math.floor(idxN / 4);
+      const q = idxN % 4;
+      if (d === 0) {
+        if (q === 0) {
+          let has = false;
+          for (let j = i - q; j <= i; j++) {
+            if (parseInt(intPart.charAt(j) || '0', 10) !== 0) { has = true; break; }
+          }
+          if (has) out += unit[0][p];
         }
-        out = out.replace(/零+元/g, '元').replace(/零+万/g, '万')
-                 .replace(/零+亿/g, '亿').replace(/亿万/g, '亿');
-        if (!out.endsWith('元')) out += '元';
-    }
-    const jiao = parseInt(decPart.charAt(0), 10);
-    const fen = parseInt(decPart.charAt(1), 10);
-    if (jiao === 0 && fen === 0) out += '整';
-    else {
-        if (jiao === 0) {
-            if (parseInt(intPart, 10) > 0) out += '零';
-            out += digit[fen] + fraction[1];
-        } else {
-            out += digit[jiao] + fraction[0];
-            if (fen !== 0) out += digit[fen] + fraction[1];
+      } else {
+        if (out.charAt(out.length - 1) !== '零' && i > 0 && q !== 3
+            && parseInt(intPart.charAt(i - 1) || '0', 10) === 0) {
+          out += '零';
         }
+        out += digit[d] + unit[1][q];
+        if (q === 0) out += unit[0][p];
+      }
     }
-    return head + out;
+    out = out.replace(/零+元/g, '元').replace(/零+万/g, '万')
+             .replace(/零+亿/g, '亿').replace(/亿万/g, '亿');
+    if (!out.endsWith('元')) out += '元';
+  }
+  const jiao = parseInt(decPart.charAt(0), 10);
+  const fen = parseInt(decPart.charAt(1), 10);
+  if (jiao === 0 && fen === 0) out += '整';
+  else {
+    if (jiao === 0) {
+      if (parseInt(intPart, 10) > 0) out += '零';
+      out += digit[fen] + fraction[1];
+    } else {
+      out += digit[jiao] + fraction[0];
+      if (fen !== 0) out += digit[fen] + fraction[1];
+    }
+  }
+  return head + out;
 }
 
-// ============== XML 文本操作工具（不使用 DOMParser，小程序无 DOM） ===============
-
-/** 把 <c> A1 引用拆成 {col,row}（数字） */
+/** A1 引用 */
 function parseA1(a1) {
-    const m = /^([A-Z]+)(\d+)$/.exec(a1);
-    if (!m) throw new Error('bad A1: ' + a1);
-    const colStr = m[1]; let col = 0;
-    for (let i = 0; i < colStr.length; i++) col = col * 26 + (colStr.charCodeAt(i) - 64);
-    return { colStr, col, row: parseInt(m[2], 10) };
+  const m = /^([A-Z]+)(\d+)$/.exec(a1);
+  if (!m) throw new Error('bad A1: ' + a1);
+  const colStr = m[1]; let col = 0;
+  for (let i = 0; i < colStr.length; i++) col = col * 26 + (colStr.charCodeAt(i) - 64);
+  return { colStr, col, row: parseInt(m[2], 10) };
 }
-function buildA1(colStr, row) { return colStr + row; }
-function columnIndexToLetters(n) {
-    let s = '';
-    while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); }
-    return s;
-}
-
-/**
- * 从 sheet1.xml 文本中提取/替换 <row r="NN">...</row> 的 XML 片段
- * 返回 Map: 行号(1-based) → {outer, inner, attrs}
- * 同时返回 sheetData 前后的文本，以便后续拼接
- */
-function splitSheetData(xml) {
-    const sdOpen = xml.indexOf('<sheetData');
-    const sdCloseIdx = xml.indexOf('</sheetData>');
-    if (sdOpen < 0 || sdCloseIdx < 0) throw new Error('sheetData not found');
-    const endOfOpenTag = xml.indexOf('>', sdOpen) + 1;
-    const before = xml.slice(0, endOfOpenTag);
-    const inner = xml.slice(endOfOpenTag, sdCloseIdx);
-    const after = xml.slice(sdCloseIdx);
-    // 匹配所有 <row ...>...</row>
-    const rows = new Map();
-    const rowRe = /<row\s([^>]*)>([\s\S]*?)<\/row>/g;
-    let m;
-    while ((m = rowRe.exec(inner)) !== null) {
-        const attrs = parseAttrs(m[1]);
-        const r = parseInt(attrs.r, 10);
-        rows.set(r, { outer: m[0], inner: m[2], attrs, rawAttrs: m[1], start: m.index, end: m.index + m[0].length });
-    }
-    return { before, after, rows, innerRaw: inner };
-}
-
-function parseAttrs(s) {
-    const out = {};
-    const re = /([A-Za-z_:][\w\-:.]*)\s*=\s*"([^"]*)"/g;
-    let m;
-    while ((m = re.exec(s)) !== null) out[m[1]] = m[2];
-    return out;
-}
-
-/**
- * 在一段 <row>inner（一串 <c>..</c>）中找到某个 A1 的 <c> 片段，并替换其内容
- * 兼容两种写法：
- *   自闭合：  <c r="AC13" s="12"/>
- *   普通闭合：<c r="AC13" s="12"><v>x</v></c>
- * 【关键：先检测自闭合再检测闭合】，否则 <c r="X" s="Y"/> 中的 /> 会被误拆解为 `/ + >`，
- *  导致闭包正则 `[^>]*>` 误把 Y/> 当作「属性字符串 + 开标签结束 >」，从而非贪婪吞掉后续的 c 到最近 </c>。
- */
-function writeCellInRow(rowInner, cellA1, value) {
-    const { colStr, row } = parseA1(cellA1);
-    const ref = colStr + row;
-    // 先匹配自闭合：<c ...r="REF"... />
-    const reSelf = new RegExp(`<c\\s([^>]*r="${ref}"[^>]*?)\\s*\\/>`);
-    let m = reSelf.exec(rowInner);
-    let rawAttrs = '';
-    let start, end;
-    if (m) {
-        rawAttrs = m[1];
-        start = m.index;
-        end = m.index + m[0].length;
-    } else {
-        // 再匹配普通闭合：<c ...r="REF"...> ... </c> —— 开标签结束 `>` 前必须不是 `/`
-        const reClosed = new RegExp(`<c\\s([^>]*r="${ref}"[^>]*[^\\/])>([\\s\\S]*?)<\\/c>`);
-        m = reClosed.exec(rowInner);
-        if (!m) return rowInner;
-        rawAttrs = m[1];
-        start = m.index;
-        end = m.index + m[0].length;
-    }
-    // 构造新 attrs：除 t 之外都保留（r / s / cm / vm / spans 等）
-    const keepAttrs = [];
-    const attrRe = /([A-Za-z_:][\w\-:.]*)\s*=\s*"([^"]*)"/g;
-    let am;
-    while ((am = attrRe.exec(rawAttrs)) !== null) {
-        const k = am[1];
-        if (k !== 't') keepAttrs.push(`${k}="${am[2]}"`);
-    }
-    let newAttrs = keepAttrs.join(' ');
-    if (value === '' || value === null || value === undefined) {
-        // 清空：保持 s，输出自闭合形式
-        return rowInner.slice(0, start) + `<c ${newAttrs}/>` + rowInner.slice(end);
-    }
-    let newInner = '';
-    if (typeof value === 'number') {
-        newInner = `<v>${value}</v>`;
-    } else {
-        newAttrs += ' t="inlineStr"';
-        const escaped = String(value)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&apos;');
-        newInner = `<is><t xml:space="preserve">${escaped}</t></is>`;
-    }
-    const newCell = `<c ${newAttrs}>${newInner}</c>`;
-    return rowInner.slice(0, start) + newCell + rowInner.slice(end);
-}
-
-/**
- * 解析 Excel 列字母 → 数字（A=1, Z=26, AA=27）
- */
 function colLettersToNum(colStr) {
-    let n = 0;
-    for (let i = 0; i < colStr.length; i++) {
-        n = n * 26 + (colStr.charCodeAt(i) - 64);
-    }
-    return n;
+  let n = 0;
+  for (let i = 0; i < colStr.length; i++) n = n * 26 + (colStr.charCodeAt(i) - 64);
+  return n;
+}
+function parseAttrs(s) {
+  const out = {};
+  const re = /([A-Za-z_:][\w\-:.]*)\s*=\s*"([^"]*)"/g;
+  let m;
+  while ((m = re.exec(s)) !== null) out[m[1]] = m[2];
+  return out;
 }
 
-/**
- * 在 rowInner（<c>...</c><c>...</c>）的正确字母序位置插入一个自闭合 <c r="COLrowNum" s="sval"/>，返回修改后的 inner
- * 【重要】扫描现有 c 时，必须先匹配自闭合形式（防止 /> 误被拆解为 `/ + >`），再匹配普通闭合。
- */
+/** sheet1.xml → {before, after, innerRaw, rows Map<rowNum, {outer,inner,attrs,rawAttrs,start,end}>} */
+function splitSheetData(xml) {
+  const sdOpen = xml.indexOf('<sheetData');
+  const sdCloseIdx = xml.indexOf('</sheetData>');
+  if (sdOpen < 0 || sdCloseIdx < 0) throw new Error('sheetData not found');
+  const endOfOpenTag = xml.indexOf('>', sdOpen) + 1;
+  const before = xml.slice(0, endOfOpenTag);
+  const inner = xml.slice(endOfOpenTag, sdCloseIdx);
+  const after = xml.slice(sdCloseIdx);
+  const rows = new Map();
+  const rowRe = /<row\s([^>]*)>([\s\S]*?)<\/row>/g;
+  let m;
+  while ((m = rowRe.exec(inner)) !== null) {
+    const attrs = parseAttrs(m[1]);
+    const r = parseInt(attrs.r, 10);
+    rows.set(r, { outer: m[0], inner: m[2], attrs, rawAttrs: m[1], start: m.index, end: m.index + m[0].length });
+  }
+  return { before, after, rows, innerRaw: inner };
+}
+
+/** 在 <row>inner 中写某 A1 单元格的 value（string/number/''） */
+function writeCellInRow(rowInner, cellA1, value) {
+  const { colStr, row } = parseA1(cellA1);
+  const ref = colStr + row;
+  const reSelf = new RegExp(`<c\\s([^>]*r="${ref}"[^>]*?)\\s*\\/>`);
+  let m = reSelf.exec(rowInner);
+  let rawAttrs = '';
+  let start, end;
+  if (m) {
+    rawAttrs = m[1];
+    start = m.index;
+    end = m.index + m[0].length;
+  } else {
+    const reClosed = new RegExp(`<c\\s([^>]*r="${ref}"[^>]*[^\\/])>([\\s\\S]*?)<\\/c>`);
+    m = reClosed.exec(rowInner);
+    if (!m) return rowInner;
+    rawAttrs = m[1];
+    start = m.index;
+    end = m.index + m[0].length;
+  }
+  const keepAttrs = [];
+  const attrRe = /([A-Za-z_:][\w\-:.]*)\s*=\s*"([^"]*)"/g;
+  let am;
+  while ((am = attrRe.exec(rawAttrs)) !== null) {
+    const k = am[1];
+    if (k !== 't') keepAttrs.push(`${k}="${am[2]}"`);
+  }
+  let newAttrs = keepAttrs.join(' ');
+  if (value === '' || value === null || value === undefined) {
+    return rowInner.slice(0, start) + `<c ${newAttrs}/>` + rowInner.slice(end);
+  }
+  let newInner = '';
+  if (typeof value === 'number') {
+    newInner = `<v>${value}</v>`;
+  } else {
+    newAttrs += ' t="inlineStr"';
+    const escaped = String(value)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+    newInner = `<is><t xml:space="preserve">${escaped}</t></is>`;
+  }
+  const newCell = `<c ${newAttrs}>${newInner}</c>`;
+  return rowInner.slice(0, start) + newCell + rowInner.slice(end);
+}
+
+/** 在 rowInner 中按字母序插入自闭合空单元格（用于某列整个产品区模板不存在时补 s 样式占位） */
 function insertSelfCloseCell(rowInner, col, rowNum, sval) {
-    const cur = []; // [{ref, colNum, start, end}]
-    const reSelf = /<c\s[^>]*r="([A-Z]+)(\d+)"[^>]*?\/>\s*/g;
-    const reClosed = /<c\s[^>]*r="([A-Z]+)(\d+)"[^>]*[^\/]>([\s\S]*?)<\/c>\s*/g;
-    // 方案：先扫自闭合收集位置，再扫闭合收集位置，最后合并排序（按 start ASC）
-    let m;
-    while ((m = reSelf.exec(rowInner)) !== null) {
-        cur.push({ ref: m[1]+m[2], colNum: colLettersToNum(m[1]), start: m.index, end: m.index+m[0].length });
-    }
-    while ((m = reClosed.exec(rowInner)) !== null) {
-        cur.push({ ref: m[1]+m[2], colNum: colLettersToNum(m[1]), start: m.index, end: m.index+m[0].length });
-    }
-    cur.sort((a,b) => a.start - b.start);
-    const newColNum = colLettersToNum(col);
-    let insertPos = rowInner.length;
-    for (let i = 0; i < cur.length; i++) {
-        if (cur[i].colNum > newColNum) { insertPos = cur[i].start; break; }
-    }
-    if (cur.length > 0 && insertPos === rowInner.length) {
-        insertPos = cur[cur.length - 1].end;
-    }
-    const newNode = `<c r="${col}${rowNum}" s="${sval}"/>`;
-    return rowInner.slice(0, insertPos) + newNode + rowInner.slice(insertPos);
+  const cur = [];
+  const reSelf = /<c\s[^>]*r="([A-Z]+)(\d+)"([^>]*?)\/>\s*/g;
+  const reClosed = /<c\s[^>]*r="([A-Z]+)(\d+)"([^>]*[^\/])>([\s\S]*?)<\/c>\s*/g;
+  let m;
+  while ((m = reSelf.exec(rowInner)) !== null) {
+    cur.push({ colNum: colLettersToNum(m[1]), start: m.index, end: m.index + m[0].length });
+  }
+  while ((m = reClosed.exec(rowInner)) !== null) {
+    cur.push({ colNum: colLettersToNum(m[1]), start: m.index, end: m.index + m[0].length });
+  }
+  cur.sort((a, b) => a.start - b.start);
+  const newColNum = colLettersToNum(col);
+  let insertPos = rowInner.length;
+  for (let i = 0; i < cur.length; i++) {
+    if (cur[i].colNum > newColNum) { insertPos = cur[i].start; break; }
+  }
+  if (cur.length > 0 && insertPos === rowInner.length) insertPos = cur[cur.length - 1].end;
+  const newNode = `<c r="${col}${rowNum}" s="${sval}"/>`;
+  return rowInner.slice(0, insertPos) + newNode + rowInner.slice(insertPos);
 }
 
-/**
- * 清空某行的所有列映射格（其它列保留原样）
- * colStyles: { colLetter: sNum }，若某列 <c> 不存在则先按此样式插入一个（空值自闭合即可保持样式）
- */
-function clearRowForCols(rowInner, rowNum, colStyles) {
-    let r = rowInner;
-    CFG.COL_MAP.forEach(cfg => {
-        const a1 = cfg.col + rowNum;
-        const ref = cfg.col + rowNum;
-        const exists = new RegExp(`<c\\s[^>]*r="${ref}"`).test(r);
-        if (!exists && colStyles && colStyles[cfg.col] != null) {
-            r = insertSelfCloseCell(r, cfg.col, rowNum, colStyles[cfg.col]);
-        }
-        r = writeCellInRow(r, a1, '');
-    });
-    return r;
+/** 读单元格文本（支持 inline / t=s 共享字符串 / 数字）；读不到返回 null */
+function readCellTextFromRow(rdInner, cellA1, SST) {
+  const { row, colStr } = parseA1(cellA1);
+  const ref = colStr + row;
+  const re2 = new RegExp(`<c\\s([^>]*r="${ref}"[^>]*)>([\\s\\S]*?)<\\/c>`);
+  let m = re2.exec(rdInner);
+  let attrs = '', cInner = '';
+  if (m) { attrs = m[1]; cInner = m[2]; }
+  else {
+    const reSelf2 = new RegExp(`<c\\s[^>]*r="${ref}"[^>]*?\\/>`);
+    if (reSelf2.test(rdInner)) return '';
+    return null;
+  }
+  const ism = /<is><t[^>]*>([\s\S]*?)<\/t><\/is>/.exec(cInner);
+  if (ism) return ism[1];
+  if (/\bt="s"/.test(attrs)) {
+    const vm = /<v>([^<]+)<\/v>/.exec(cInner);
+    if (vm) {
+      const idx = parseInt(vm[1], 10);
+      if (!isNaN(idx) && SST && SST[idx] != null) return SST[idx];
+    }
+    return null;
+  }
+  const vm2 = /<v>([^<]+)<\/v>/.exec(cInner);
+  return vm2 ? vm2[1] : '';
 }
 
-/**
- * 在某行的各列映射格写入产品数据
- */
-function writeRowProduct(rowInner, rowNum, item, colStyles) {
-    let r = rowInner;
-    CFG.COL_MAP.forEach(cfg => {
-        const a1 = cfg.col + rowNum;
-        const ref = cfg.col + rowNum;
-        const exists = new RegExp(`<c\\s[^>]*r="${ref}"`).test(r);
-        if (!exists && colStyles && colStyles[cfg.col] != null) {
-            r = insertSelfCloseCell(r, cfg.col, rowNum, colStyles[cfg.col]);
-        }
-        const v = cfg.get(item);
-        r = writeCellInRow(r, a1, v);
-    });
-    return r;
+/** 把 templateKey 的默认数据行（通常 FIRST）克隆到新行号（空内容，样式 s 继承） */
+function cloneRowTo(rowOuter, srcRowNum, dstRowNum, colStyles, colMap) {
+  let s = rowOuter;
+  // 行 r="SRC"
+  s = s.replace(new RegExp(`(<row\\s[^>]*\\br=")${srcRowNum}("[^>]*>)`), `$1${dstRowNum}$2`);
+  // 单元格 r="XXSRC"
+  s = s.replace(new RegExp(`(<c\\s[^>]*\\br=")([A-Z]+)${srcRowNum}("[^>]*>)`, 'g'), (_, pre, col, post) => `${pre}${col}${dstRowNum}${post}`);
+  // 清空各列映射内容（保持样式）
+  const openEnd = s.indexOf('>') + 1;
+  const closeStart = s.lastIndexOf('</row>');
+  const inner = s.slice(openEnd, closeStart);
+  const cleared = clearRowByColMap(inner, dstRowNum, colStyles, colMap);
+  return s.slice(0, openEnd) + cleared + s.slice(closeStart);
 }
 
-/**
- * 克隆 R13 为新行（r=newRowNum），返回 <row ...>...</row> 整个 XML
- * 思路：把原 R13 行整段字符串中的 r="13" 替换成 r="newNum"，并把内部所有 <c r="A13"> 等 A1 引用中的数字从 13 替换为 newNum。
- * 最后**清空该行的各列映射格的内容**（保持 s 样式索引），保证克隆出的新行是同样式的空白行。
- */
-function cloneRow13To(row13Outer, newRowNum, colStyles) {
-    let s = row13Outer;
-    // 行属性 r="13"
-    s = s.replace(/(<row\s[^>]*\br=")13("[^>]*>)/, `$1${newRowNum}$2`);
-    // 每个 c 的 r="XX13"：用正则精准替换 r="(colLetters)13" → r="$1newNum"
-    s = s.replace(/(<c\s[^>]*\br=")([A-Z]+)13("[^>]*>)/g, (_, pre, col, post) => `${pre}${col}${newRowNum}${post}`);
-    // 提取 inner 清空写值格（保持样式 s）
-    const openEnd = s.indexOf('>') + 1;
-    const closeStart = s.lastIndexOf('</row>');
-    const inner = s.slice(openEnd, closeStart);
-    const cleared = clearRowForCols(inner, newRowNum, colStyles || null);
-    return s.slice(0, openEnd) + cleared + s.slice(closeStart);
+/** 按给定 colMap 清空行（或补齐缺列再清空） */
+function clearRowByColMap(rowInner, rowNum, colStyles, colMap) {
+  let r = rowInner;
+  (colMap || []).forEach(cfg => {
+    const ref = cfg.col + rowNum;
+    const exists = new RegExp(`<c\\s[^>]*r="${ref}"`).test(r);
+    if (!exists && colStyles && colStyles[cfg.col] != null) {
+      r = insertSelfCloseCell(r, cfg.col, rowNum, colStyles[cfg.col]);
+    }
+    r = writeCellInRow(r, ref, '');
+  });
+  return r;
+}
+/** 按 colMap 写入一条 item */
+function writeRowByColMap(rowInner, rowNum, item, idx, colStyles, colMap) {
+  let r = rowInner;
+  (colMap || []).forEach(cfg => {
+    const ref = cfg.col + rowNum;
+    const exists = new RegExp(`<c\\s[^>]*r="${ref}"`).test(r);
+    if (!exists && colStyles && colStyles[cfg.col] != null) {
+      r = insertSelfCloseCell(r, cfg.col, rowNum, colStyles[cfg.col]);
+    }
+    const v = cfg.get(item, idx);
+    r = writeCellInRow(r, ref, v);
+  });
+  return r;
 }
 
-/**
- * 行号批量偏移：
- * 把整个 sheet1.xml 中 1-based 行号 >= threshold 的行号都 + offset
- * 影响：
- *   - <row r="NN">       行
- *   - <c r="..NN">       单元格引用
- *   - <mergeCell ref="A1:B2" 中每个 A1 的 r 部分
- *   - <dimension ref="A1:BD54"> 结束行
- * threshold 默认 = CFG.TAX_ROW (26)，即「税金行及以下」整体偏移
- */
+/** 行号 >= threshold 的全部 A1/row/mergeCell/dimension 批量 +offset */
 function offsetAllRowNumbers(xml, threshold, offset) {
-    if (!offset) return xml;
-    const patterns = [
-        // <row r="26">
-        { re: /(<row\s[^>]*\br=")(\d+)("[^>]*>)/g, groups: [2], sep: [[1,3]] },
-        // <c r="A26">, <c r="Z27" s="..">
-        { re: /(<c\s[^>]*\br=")([A-Z]+)(\d+)("[^>]*>)/g, groups: [3], sep: [[1,4]] },
-        // <mergeCell ref="A26:M26">：groups [1..6] = 前缀,col1,row1,:,col2,row2,后缀 （实际无冒号组，re 是：(<prefix>)(C1)(R1):(C2)(R2)(<suffix>)，groups 顺序：1=prefix,2=col1,3=row1,4=col2,5=row2,6=suffix）
-        { re: /(<mergeCell\s+ref=")([A-Z]+)(\d+):([A-Z]+)(\d+)("[^>]*>)/g, groups: [3,5], sep: [[1,3], ':', [4,6]] },
-        // <dimension ref="A1:BD54"> groups: 1,2,row1,3,4,row2,suffix
-        { re: /(<dimension\s+ref=")([A-Z]+)(\d+):([A-Z]+)(\d+)("[^>]*>)/g, groups: [3,5], sep: [[1,3], ':', [4,6]] }
-    ];
-    let out = xml;
-    patterns.forEach(p => {
-        const numOffsets = p.groups;
-        out = out.replace(p.re, (...args) => {
-            const replaced = args.slice(1, -2); // 去掉 match / offset / string
-            numOffsets.forEach(gIdx1Based => {
-                const gi = gIdx1Based - 1;
-                let n = parseInt(replaced[gi], 10);
-                if (!isNaN(n) && n >= threshold) {
-                    replaced[gi] = String(n + offset);
-                }
-            });
-            if (p.sep === '') return replaced.join('');
-            // sep 格式：数组，每一项是 replaced 的下标数组 [idx1,idx2]（取 replaced[idx1]..replaced[idx2] 连续拼接），或是字符串分隔符
-            let s = '';
-            p.sep.forEach(part => {
-                if (typeof part === 'string') s += part;
-                else for (let k = part[0] - 1; k <= part[1] - 1; k++) s += replaced[k];
-            });
-            return s;
-        });
+  if (!offset) return xml;
+  // 每个 pattern 的分组数量 vs sep 对应关系必须严格对齐，否则会丢引号/右尖括号导致 XML 彻底损坏！
+  //   pattern 1：(<row r=") + (数字) + ("...>) —— 3 groups → sep 必须拼 [1..3] 全三段（之前漏写 [[1,2]] 导致 " > 全丢，Excel 打开空白）
+  //   pattern 2：(<c r=" + 字母) + (数字) + ("...>) —— 4 groups → sep [1..4] ✅
+  //   pattern 3/4：mergeCell/dimension —— 6 groups → sep [1..3]+":"+[4..6] ✅
+  const patterns = [
+    { re: /(<row\s[^>]*\br=")(\d+)("[^>]*>)/g, groups: [2], sep: [[1,3]] },
+    { re: /(<c\s[^>]*\br=")([A-Z]+)(\d+)("[^>]*>)/g, groups: [3], sep: [[1,4]] },
+    { re: /(<mergeCell\s+ref=")([A-Z]+)(\d+):([A-Z]+)(\d+)("[^>]*>)/g, groups: [3,5], sep: [[1,3], ':', [4,6]] },
+    { re: /(<dimension\s+ref=")([A-Z]+)(\d+):([A-Z]+)(\d+)("[^>]*>)/g, groups: [3,5], sep: [[1,3], ':', [4,6]] }
+  ];
+  let out = xml;
+  patterns.forEach(p => {
+    out = out.replace(p.re, (...args) => {
+      const replaced = args.slice(1, -2);
+      p.groups.forEach(gIdx1 => {
+        const gi = gIdx1 - 1;
+        let n = parseInt(replaced[gi], 10);
+        if (!isNaN(n) && n >= threshold) replaced[gi] = String(n + offset);
+      });
+      let s = '';
+      p.sep.forEach(part => {
+        if (typeof part === 'string') s += part;
+        else for (let k = part[0] - 1; k <= part[1] - 1; k++) s += replaced[k];
+      });
+      return s;
     });
-    return out;
+  });
+  return out;
 }
 
 /**
- * 顶层入口：构建合同
- * @param {object} JSZip           JSZip 构造器（小程序端 import 后传进来）
- * @param {Uint8Array} templateU8  原始 xlsx 模板字节（不经过任何解析/改写）
- * @param {Array} items            产品数组，字段与 quoteData 对齐
- * @param {object} opts            { finalPrice: 不含税总价(number), note: 备注(string) }
- * @returns {Promise<Uint8Array>}  生成的 xlsx 字节
+ * 扩容后给新产品行补充合并单元格：复制产品样例行（srcRowNum）自身的全部 mergeCell 到每个新行。
+ * 背景：cloneRowTo 只克隆 <row> 单元格 XML，<mergeCells> 里的合并声明不会自动跟随，
+ *       导致扩容出来的产品行合并区域丢失（中文 A-G/H-O/P-AF/AG-AI/AK-AP/AQ-AW；英文 D-F）。
  */
-async function buildContract(JSZip, templateU8, items, opts) {
-    if (!items || !items.length) throw new Error('items empty');
-    const N = items.length;
-    const zip = await JSZip.loadAsync(templateU8);
-    const sheetFile = zip.file('xl/worksheets/sheet1.xml');
-    if (!sheetFile) throw new Error('sheet1.xml not found in template');
-    let xml = await sheetFile.async('string');
-
-    // 预先读取共享字符串表（模板中文本多为 t=s，数字是 idx）
-    const SST = [];
-    {
-        const f = zip.file('xl/sharedStrings.xml');
-        if (f) {
-            const s = await f.async('string');
-            const siRe = /<si\b[^>]*>([\s\S]*?)<\/si>/g;
-            let m;
-            while ((m = siRe.exec(s)) !== null) {
-                const si = m[1];
-                let txt = '';
-                const tRe = /<t\b([^>]*)>([\s\S]*?)<\/t>/g;
-                let tm;
-                while ((tm = tRe.exec(si)) !== null) {
-                    txt += tm[2];
-                }
-                SST.push(txt);
-            }
-        }
+function addMergesForClonedRows(xml, srcRowNum, newRowNums) {
+  if (!newRowNums || !newRowNums.length) return xml;
+  const mcOpen = xml.indexOf('<mergeCells');
+  const mcEnd = xml.indexOf('</mergeCells>');
+  if (mcOpen < 0 || mcEnd < 0) return xml;
+  const openTagEnd = xml.indexOf('>', mcOpen) + 1;
+  const inner = xml.slice(openTagEnd, mcEnd);
+  const re = /<mergeCell\s+ref="([A-Z]+)(\d+):([A-Z]+)(\d+)"/g;
+  const add = [];
+  let m;
+  while ((m = re.exec(inner)) !== null) {
+    const c1 = m[1], r1 = parseInt(m[2], 10), c2 = m[3], r2 = parseInt(m[4], 10);
+    if (r1 === srcRowNum && r2 === srcRowNum) {
+      newRowNums.forEach(dst => { add.push(`<mergeCell ref="${c1}${dst}:${c2}${dst}"/>`); });
     }
+  }
+  if (!add.length) return xml;
+  // 更新 count 属性（部分 Excel 校验 count 与条目数一致）
+  const openTag = xml.slice(mcOpen, openTagEnd);
+  let newOpenTag = openTag;
+  const countM = /count="(\d+)"/.exec(openTag);
+  if (countM) {
+    const total = parseInt(countM[1], 10) + add.length;
+    newOpenTag = openTag.replace(/count="\d+"/, `count="${total}"`);
+  }
+  return xml.slice(0, mcOpen) + newOpenTag + xml.slice(openTagEnd, mcEnd) + add.join('') + xml.slice(mcEnd);
+}
 
-    // ---------- 1) 如果需要扩容，先把 TAX_ROW 及以后整体偏移 ----------
-    const capacity = CFG.PRODUCT_ROW_LAST_TPL - CFG.PRODUCT_ROW_FIRST + 1; // 13
-    const offset = Math.max(0, N - capacity);
-    if (offset > 0) {
-        xml = offsetAllRowNumbers(xml, CFG.TAX_ROW, offset);
+/** 扫描 FIRST..LAST 模板行，建立所需列 → s 索引表（缺失则左右近邻 fallback） */
+function buildProductColStyles(sd, cfg) {
+  const colMap = cfg.COL_MAP || [];
+  const neededCols = colMap.map(c => c.col);
+  const neededSet = new Set(neededCols);
+  const PRODUCT_COL_STYLES = {};
+  const pool = new Map();
+  const reSelfC = /<c\s[^>]*r="([A-Z]+)(\d+)"([^>]*?)\/>/g;
+  const reClosedC = /<c\s[^>]*r="([A-Z]+)(\d+)"([^>]*[^\/])>([\s\S]*?)<\/c>/g;
+  const rnFirst = cfg.PRODUCT_ROW_FIRST;
+  const rnLast = cfg.PRODUCT_ROW_LAST_TPL;
+  for (let rn = rnFirst; rn <= rnLast; rn++) {
+    const rd = sd.rows.get(rn);
+    if (!rd) continue;
+    let m;
+    while ((m = reSelfC.exec(rd.inner)) !== null) {
+      const col = m[1];
+      const attrs = `${m[1]} ${m[3]}`;
+      const sm = /\bs="(\d+)"/.exec(attrs);
+      const s = sm ? Number(sm[1]) : 0;
+      if (neededSet.has(col) && PRODUCT_COL_STYLES[col] == null) PRODUCT_COL_STYLES[col] = s;
+      if (!pool.has(col)) pool.set(col, s);
     }
-
-    // ---------- 2) 切分 sheetData ----------
-    const sd = splitSheetData(xml);
-
-    // 从原模板 R13..R25（产品区间）扫描 COL_MAP 列的样式 s 索引：构建 PRODUCT_COL_STYLES
-    // （因为 Excel 允许省略「空内容+默认样式」单元格，某列在整个产品区间可能都不存在，但合并块邻近列一定存在 —— 如 Z 合并于 W~AA，s 同 W=45）
-    const PRODUCT_COL_STYLES = {};
-    (function buildColStyles() {
-        const neededCols = CFG.COL_MAP.map(c => c.col);
-        const neededSet = new Set(neededCols);
-        const reSelfC = /<c\s[^>]*r="([A-Z]+)(\d+)"([^>]*?)\/>/g;
-        const reClosedC = /<c\s[^>]*r="([A-Z]+)(\d+)"([^>]*[^\/])>([\s\S]*?)<\/c>/g;
-        // 1) 直接存在的列：扫描 R13..R25
-        for (let rn = CFG.PRODUCT_ROW_FIRST; rn <= CFG.PRODUCT_ROW_LAST_TPL; rn++) {
-            const rd = sd.rows.get(rn);
-            if (!rd) continue;
-            const inner = rd.inner;
-            let m;
-            while ((m = reSelfC.exec(inner)) !== null) {
-                const col = m[1];
-                if (!neededSet.has(col)) continue;
-                if (PRODUCT_COL_STYLES[col] != null) continue;
-                const attrs = `${m[1]} ${m[3]}`;
-                const sm = /\bs="(\d+)"/.exec(attrs);
-                if (sm) PRODUCT_COL_STYLES[col] = Number(sm[1]);
-                else PRODUCT_COL_STYLES[col] = 0;
-            }
-            while ((m = reClosedC.exec(inner)) !== null) {
-                const col = m[1];
-                if (!neededSet.has(col)) continue;
-                if (PRODUCT_COL_STYLES[col] != null) continue;
-                const attrs = `${m[1]} ${m[3]}`;
-                const sm = /\bs="(\d+)"/.exec(attrs);
-                if (sm) PRODUCT_COL_STYLES[col] = Number(sm[1]);
-                else PRODUCT_COL_STYLES[col] = 0;
-            }
-        }
-        // 2) 仍然缺失的列：fallback 到「整个模板产品区中最近邻已知列的 s」（字母序距离最近）
-        const pool = new Map(); // colLetter -> s
-        for (let rn = CFG.PRODUCT_ROW_FIRST; rn <= CFG.PRODUCT_ROW_LAST_TPL; rn++) {
-            const rd = sd.rows.get(rn);
-            if (!rd) continue;
-            const inner = rd.inner;
-            let m;
-            while ((m = reSelfC.exec(inner)) !== null) {
-                const col = m[1];
-                if (pool.has(col)) continue;
-                const attrs = `${m[1]} ${m[3]}`;
-                const sm = /\bs="(\d+)"/.exec(attrs);
-                if (sm) pool.set(col, Number(sm[1]));
-            }
-            while ((m = reClosedC.exec(inner)) !== null) {
-                const col = m[1];
-                if (pool.has(col)) continue;
-                const attrs = `${m[1]} ${m[3]}`;
-                const sm = /\bs="(\d+)"/.exec(attrs);
-                if (sm) pool.set(col, Number(sm[1]));
-            }
-        }
-        const poolCols = Array.from(pool.keys()).sort((a,b) => colLettersToNum(a)-colLettersToNum(b));
-        neededCols.forEach(col => {
-            if (PRODUCT_COL_STYLES[col] != null) return;
-            // 找左右最近的
-            const target = colLettersToNum(col);
-            let best = null, bestDist = Infinity;
-            poolCols.forEach(pc => {
-                const d = Math.abs(colLettersToNum(pc) - target);
-                if (d < bestDist) { bestDist = d; best = pc; }
-            });
-            if (best != null) PRODUCT_COL_STYLES[col] = pool.get(best);
-            else PRODUCT_COL_STYLES[col] = 0;
-        });
-    })();
-
-    // ---------- 3) 确定扩容后的「新增行」：R26..R(13+N-1) 需要克隆 R13 的结构 ----------
-    if (offset > 0) {
-        // 先拿到原 R13 的 XML（偏移后它还在 rows.get(13)，因为 threshold=26 未改 R13）
-        const row13 = sd.rows.get(CFG.PRODUCT_ROW_FIRST);
-        if (!row13) throw new Error('R13 not found');
-        const newRowsStart = CFG.PRODUCT_ROW_LAST_TPL + 1;
-        const newRowsCount = offset;
-        const row25 = sd.rows.get(CFG.PRODUCT_ROW_LAST_TPL);
-        if (!row25) throw new Error('R25 not found');
-        const row26Start = row25.end;
-        const clones = [];
-        for (let i = 0; i < newRowsCount; i++) {
-            const newRowNum = newRowsStart + i;
-            clones.push(cloneRow13To(row13.outer, newRowNum, PRODUCT_COL_STYLES));
-        }
-        const inserted = clones.join('\n');
-        const newInner = sd.innerRaw.slice(0, row26Start) + '\n' + inserted + '\n' + sd.innerRaw.slice(row26Start);
-        xml = sd.before + newInner + sd.after;
+    while ((m = reClosedC.exec(rd.inner)) !== null) {
+      const col = m[1];
+      const attrs = `${m[1]} ${m[3]}`;
+      const sm = /\bs="(\d+)"/.exec(attrs);
+      const s = sm ? Number(sm[1]) : 0;
+      if (neededSet.has(col) && PRODUCT_COL_STYLES[col] == null) PRODUCT_COL_STYLES[col] = s;
+      if (!pool.has(col)) pool.set(col, s);
     }
-
-    // 重新 split（上面两种路径后 rows 都完整）
-    const sd2 = splitSheetData(xml);
-
-    // ---------- 4) 清空产品区：R_FIRST .. max(R_FIRST+N-1, 25) ----------
-    const R_END = Math.max(CFG.PRODUCT_ROW_FIRST + N - 1, CFG.PRODUCT_ROW_LAST_TPL);
-    const newRowOuters = new Map();
-    for (let r = CFG.PRODUCT_ROW_FIRST; r <= R_END; r++) {
-        const row = sd2.rows.get(r);
-        if (!row) continue;
-        let newInner = clearRowForCols(row.inner, r, PRODUCT_COL_STYLES);
-        const idx = r - CFG.PRODUCT_ROW_FIRST;
-        if (idx < N) {
-            newInner = writeRowProduct(newInner, r, items[idx], PRODUCT_COL_STYLES);
-        }
-        const newOuter = `<row ${row.rawAttrs}>${newInner}</row>`;
-        newRowOuters.set(r, newOuter);
-    }
-    // 替换 sheet1.xml 中的每个 row
-    let finalInner = sd2.innerRaw;
-    // 按行号从大到小替换，避免替换后字符串长度变化影响其它 outer 的 start/end
-    const rowNumsDesc = Array.from(sd2.rows.keys()).sort((a, b) => b - a);
-    rowNumsDesc.forEach(rn => {
-        if (!newRowOuters.has(rn)) return;
-        const row = sd2.rows.get(rn);
-        finalInner = finalInner.slice(0, row.start) + newRowOuters.get(rn) + finalInner.slice(row.end);
+  }
+  const poolCols = Array.from(pool.keys()).sort((a, b) => colLettersToNum(a) - colLettersToNum(b));
+  neededCols.forEach(col => {
+    if (PRODUCT_COL_STYLES[col] != null) return;
+    const target = colLettersToNum(col);
+    let best = null, bestDist = Infinity;
+    poolCols.forEach(pc => {
+      const d = Math.abs(colLettersToNum(pc) - target);
+      if (d < bestDist) { bestDist = d; best = pc; }
     });
-    let finalXml = sd2.before + finalInner + sd2.after;
+    PRODUCT_COL_STYLES[col] = best != null ? pool.get(best) : 0;
+  });
+  return PRODUCT_COL_STYLES;
+}
 
-    // ---------- 5) 写税金/合计/备注（这些行如果偏移过，已在步骤1移动） ----------
-    const pretax = Number(opts.finalPrice) || 0;
-    const tax = Math.round(pretax * 0.13 * 100) / 100;
-    const totalIncl = Math.round((pretax + tax) * 100) / 100;
-    // 关键：步骤 1 对 sheet1.xml 执行了 offsetAllRowNumbers(TAX_ROW, offset)，将 >= TAX_ROW 的行号整体 +offset。
-    // 因此写入税金/合计/备注时，需要用「偏移后的 A1」。
-    function offA1(a1) {
-        const p = parseA1(a1);
-        if (p.row >= CFG.TAX_ROW) return `${p.colStr}${p.row + offset}`;
-        return a1;
-    }
-    const C_PRETAX   = offA1(CFG.CELL_PRETAX);
-    const C_TAX      = offA1(CFG.CELL_TAX);
-    const C_TOTAL_N  = offA1(CFG.CELL_TOTAL_NUM);
-    const C_TOTAL_CN = offA1(CFG.CELL_TOTAL_CN);
-    const C_NOTE     = offA1(CFG.NOTE_CELL);
-    // 写单元格：helper 直接改写 finalXml 中某 A1 单元格（与行写入实现相同逻辑）
-    function writeGlobalCell(a1, value) {
-        const { row } = parseA1(a1);
-        const sd3 = splitSheetData(finalXml);
-        const rowData = sd3.rows.get(row);
-        if (!rowData) return;
-        const newInner = writeCellInRow(rowData.inner, a1, value);
-        const newOuter = `<row ${rowData.rawAttrs}>${newInner}</row>`;
-        // 替换
-        let inner2 = sd3.innerRaw.slice(0, rowData.start) + newOuter + sd3.innerRaw.slice(rowData.end);
-        finalXml = sd3.before + inner2 + sd3.after;
-    }
+/** 通用：扩容、写入产品 N 条 → 返回 { finalXml, offset } */
+function fillProducts(xml, cfg, items) {
+  const N = items.length;
+  const capacity = cfg.PRODUCT_ROW_LAST_TPL - cfg.PRODUCT_ROW_FIRST + 1;
+  const offset = Math.max(0, N - capacity);
+  if (offset > 0 && cfg.TAX_ROW != null) {
+    xml = offsetAllRowNumbers(xml, cfg.TAX_ROW, offset);
+  } else if (offset > 0 && cfg.TOTAL_ROW != null) {
+    xml = offsetAllRowNumbers(xml, cfg.TOTAL_ROW, offset);
+  }
+  const sd = splitSheetData(xml);
+  const COL_STYLES = buildProductColStyles(sd, cfg);
 
-    // 税金/合计 三格：原模板 R26 有 3 个大合并（A26:M26 / N26:Y26 / Z26:AK26），
-    // 里面是纯文本标签："不含税金额（元）：" / "税额（元）：" / "税率：13%"。
-    // 本模板没有单独的数字格，因此将实际数字直接追加到对应标签字符串之后。
-    function fmtMoney(n) {
-        // 千分位 + 两位小数，前面加 ¥
-        const neg = n < 0;
-        const s = Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        return (neg ? '-¥' : '¥') + s;
+  // 扩容：新增克隆行
+  if (offset > 0) {
+    const srcRowNum = cfg.PRODUCT_ROW_FIRST;
+    const srcRow = sd.rows.get(srcRowNum);
+    if (!srcRow) throw new Error('product src row R' + srcRowNum + ' not found');
+    const cloneStart = cfg.PRODUCT_ROW_LAST_TPL + 1;
+    const clones = [];
+    const newRowNums = [];
+    for (let i = 0; i < offset; i++) {
+      const dstRowNum = cloneStart + i;
+      newRowNums.push(dstRowNum);
+      clones.push(cloneRowTo(srcRow.outer, srcRowNum, dstRowNum, COL_STYLES, cfg.COL_MAP));
     }
-    // 先读原标签，保证兼容中文/英文或以后改模板
-    const readCellText = (a1) => {
-        const { row } = parseA1(a1);
-        const sdx = splitSheetData(finalXml);
-        const rd = sdx.rows.get(row);
-        if (!rd) return null;
-        const colStr = parseA1(a1).colStr;
-        const ref = colStr + row;
-        // 闭合形式
-        let re = new RegExp(`<c\\s([^>]*r="${ref}"[^>]*)>([\\s\\S]*?)<\\/c>`);
-        let m = re.exec(rd.inner);
-        let attrs = '';
-        let cInner = '';
-        if (m) { attrs = m[1]; cInner = m[2]; }
-        else {
-            // 自闭合：无内容，返回 ''
-            const re2 = new RegExp(`<c\\s[^>]*r="${ref}"[^>]*?\\/>`);
-            if (re2.exec(rd.inner)) return '';
-            return null;
-        }
-        // inlineStr 形式：<is><t>xxx</t></is>
-        const ism = /<is><t[^>]*>([\s\S]*?)<\/t><\/is>/.exec(cInner);
-        if (ism) return ism[1];
-        // t="s"（共享字符串）：<v>idx</v>
-        if (/\bt="s"/.test(attrs)) {
-            const vm = /<v>([^<]+)<\/v>/.exec(cInner);
-            if (vm) {
-                const idx = parseInt(vm[1], 10);
-                if (!isNaN(idx) && SST[idx] !== undefined) return SST[idx];
-            }
-            return null;
-        }
-        // 其他：数字 <v>xxx</v>
-        const vm2 = /<v>([^<]+)<\/v>/.exec(cInner);
-        if (vm2) return vm2[1];
-        return '';
-    };
-    // 不含税金额：写 A(TAX_ROW+offset)
-    (function writePreTax() {
-        const a1 = C_PRETAX;
-        const txt = readCellText(a1);
-        const prefix = txt ? (txt.trim().includes('：') ? txt : '不含税金额（元）：') : '不含税金额（元）：';
-        writeGlobalCell(a1, prefix + fmtMoney(pretax));
-    })();
-    // 税额：写 N(TAX_ROW+offset)
-    (function writeTax() {
-        const a1 = C_TAX;
-        const txt = readCellText(a1);
-        const prefix = txt ? (txt.trim().includes('：') ? txt : '税额（元）：') : '税额（元）：';
-        writeGlobalCell(a1, prefix + fmtMoney(tax));
-    })();
-    // 税率 - 保留模板原文，不覆盖
-    // 价税合计小写：写 Z(TOTAL_ROW+offset)（模板 R27 Z 列 = "价税合计（小写）：元"）
-    (function writeTotalNum() {
-        const a1 = C_TOTAL_N;
-        const txt = readCellText(a1);
-        let prefix = '价税合计（小写）：';
-        let suffix = ' 元';
-        if (txt) {
-            const t = txt.trim();
-            if (t.endsWith('元')) {
-                const cut = t.slice(0, t.length - 1).replace(/：$/, '').trim();
-                prefix = cut + '：';
-                suffix = ' 元';
-            } else if (t.includes('：')) {
-                prefix = t.split('：')[0] + '：';
-            } else prefix = t + '：';
-        }
-        writeGlobalCell(a1, prefix + fmtMoney(totalIncl) + suffix);
-    })();
-    // 大写：保留前缀「价税合计（大写）：」后加数字中文
-    (function readOriginalTotal() {
-        const sdCap = splitSheetData(finalXml);
-        const cellA1 = C_TOTAL_CN;
-        const { row } = parseA1(cellA1);
-        const rd = sdCap.rows.get(row);
-        if (!rd) {
-            writeGlobalCell(cellA1, '价税合计（大写）：' + toChineseMoney(totalIncl));
-            return;
-        }
-        const colStr = parseA1(cellA1).colStr;
-        const ref = colStr + row;
-        const re = new RegExp(`<c\\s[^>]*r="${ref}"[^>]*>([\\s\\S]*?)<\\/c>`);
-        const m = re.exec(rd.inner);
+    const lastRow = sd.rows.get(cfg.PRODUCT_ROW_LAST_TPL);
+    if (!lastRow) throw new Error('PRODUCT_ROW_LAST_TPL missing');
+    const newInner = sd.innerRaw.slice(0, lastRow.end) + '\n' + clones.join('\n') + '\n' + sd.innerRaw.slice(lastRow.end);
+    xml = sd.before + newInner + sd.after;
+    // 补充新产品行的合并单元格（复制样例行 srcRowNum 的合并范围到每个新行）
+    xml = addMergesForClonedRows(xml, srcRowNum, newRowNums);
+  }
+  const sd2 = splitSheetData(xml);
+
+  // 写入 N 条 + 清空模板里原有多余行
+  const R_END = Math.max(cfg.PRODUCT_ROW_FIRST + N - 1, cfg.PRODUCT_ROW_LAST_TPL);
+  const newRowOuters = new Map();
+  for (let r = cfg.PRODUCT_ROW_FIRST; r <= R_END; r++) {
+    const row = sd2.rows.get(r);
+    if (!row) continue;
+    let newInner = clearRowByColMap(row.inner, r, COL_STYLES, cfg.COL_MAP);
+    const idx = r - cfg.PRODUCT_ROW_FIRST;
+    if (idx < N) {
+      newInner = writeRowByColMap(newInner, r, items[idx], idx, COL_STYLES, cfg.COL_MAP);
+    }
+    const newOuter = `<row ${row.rawAttrs}>${newInner}</row>`;
+    newRowOuters.set(r, newOuter);
+  }
+  let finalInner = sd2.innerRaw;
+  const rowNumsDesc = Array.from(sd2.rows.keys()).sort((a, b) => b - a);
+  rowNumsDesc.forEach(rn => {
+    if (!newRowOuters.has(rn)) return;
+    const row = sd2.rows.get(rn);
+    finalInner = finalInner.slice(0, row.start) + newRowOuters.get(rn) + finalInner.slice(row.end);
+  });
+  return { finalXml: sd2.before + finalInner + sd2.after, offset };
+}
+
+/** 在整份 finalXml 中改一个 A1 单元格（全局工具） */
+function writeGlobalCell(finalXml, a1, value) {
+  const { row } = parseA1(a1);
+  const sd = splitSheetData(finalXml);
+  const rd = sd.rows.get(row);
+  if (!rd) return finalXml;
+  const newInner = writeCellInRow(rd.inner, a1, value);
+  const newOuter = `<row ${rd.rawAttrs}>${newInner}</row>`;
+  const inner2 = sd.innerRaw.slice(0, rd.start) + newOuter + sd.innerRaw.slice(rd.end);
+  return sd.before + inner2 + sd.after;
+}
+/** 在整份 finalXml 中读 A1 文本 */
+function readGlobalCell(finalXml, a1, SST) {
+  const { row } = parseA1(a1);
+  const sd = splitSheetData(finalXml);
+  const rd = sd.rows.get(row);
+  if (!rd) return null;
+  return readCellTextFromRow(rd.inner, a1, SST);
+}
+
+// ================ cn_contract 家族：税金/合计/备注 ================
+function writeCnContractBlocks(finalXml, cfg, opts, offset, SST) {
+  const taxRate = cfg.TAX_RATE != null ? cfg.TAX_RATE : 0.13;
+  const pretax = Number(opts.finalPrice) || 0;
+  const tax = Math.round(pretax * taxRate * 100) / 100;
+  const totalIncl = Math.round((pretax + tax) * 100) / 100;
+
+  function offA1(a1) {
+    if (!a1) return null;
+    const p = parseA1(a1);
+    const th = cfg.TAX_ROW != null ? cfg.TAX_ROW : (cfg.TOTAL_ROW || 1);
+    if (p.row >= th) return `${p.colStr}${p.row + offset}`;
+    return a1;
+  }
+  function fmtMoney(n) {
+    const neg = n < 0;
+    const s = Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return (neg ? '-¥' : '¥') + s;
+  }
+  // 不含税+税金合起来的格式：比如 55221.24 → "55,221.24"（没有 ¥ 符号，跟模板样例一致）
+  function fmtNum(n) {
+    const s = Math.abs(Number(n) || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return s;
+  }
+  // 小写元格式：62400 → "62,400元"（跟模板 AC14 样例一致）
+  function fmtNumYuan(n) {
+    return fmtNum(n).replace(/\.00$/, '') + '元';
+  }
+  // 简单 replaceInMergeText：读原文本，提取 prefix，加新内容（对于「XX：数字/大写」这种结构，直接 prefix + new）
+  function replaceMergeByPrefix(xml, a1, buildNew) {
+    const cell = offA1(a1);
+    if (!cell) return xml;
+    const orig = readGlobalCell(xml, cell, SST) || '';
+    const mm = /^([^\uff1a:]+[\uff1a:])\s*/.exec(orig);
+    const prefix = mm ? mm[1] : orig;
+    const newVal = buildNew(prefix, orig);
+    return writeGlobalCell(xml, cell, newVal);
+  }
+
+  let xml = finalXml;
+
+  // ——— simple6_merge 策略（chisun_nsh / zs_changsheng）：
+  //     A13=不含税 merge 文本 / V13=税额数字 / A14=大写 merge / AC14=小写 merge / O13 和 AC13 和 A15 模板文本不动
+  if (cfg._WRITE_STRATEGY === 'simple6_merge') {
+    // 1) A13：不含税金额（元）：55,221.24 → prefix + 数字（不含¥，跟样例一致）
+    xml = replaceMergeByPrefix(xml, cfg.CELL_PRETAX_MERGE, (prefix) => prefix + fmtNum(pretax));
+    // 2) V13：税额数字格 → 直接写数值
+    const taxNumCell = offA1(cfg.CELL_TAX_NUM);
+    if (taxNumCell) xml = writeGlobalCell(xml, taxNumCell, Math.round(tax * 100) / 100);
+    // 3) A14：价税合计（大写）：陆万贰仟肆佰元整 → 写大写
+    xml = replaceMergeByPrefix(xml, cfg.CELL_TOTAL_CN_MERGE, (prefix) => prefix + toChineseMoney(totalIncl));
+    // 4) AC14：价税合计（小写）：62,400元 → 写「数字元」格式（跟样例一致，小数点后两位如果是 .00 省略）
+    xml = replaceMergeByPrefix(xml, cfg.CELL_TOTAL_NUM_MERGE, (prefix) => prefix + fmtNumYuan(totalIncl));
+    return xml;
+  }
+
+  // —— 默认 / merge_text 旧策略 ——
+  if (cfg._WRITE_STRATEGY === 'merge_text' || !cfg.CELL_PRETAX) {
+    const taxA1 = offA1(cfg.CELL_TAX);
+    if (taxA1) {
+      const prefix = '税额（元）：';
+      const old = readGlobalCell(xml, taxA1, SST) || '';
+      const realPrefix = old && old.trim().includes('：') ? old.trim().split('：')[0] + '：' : prefix;
+      xml = writeGlobalCell(xml, taxA1, realPrefix + fmtMoney(tax));
+    }
+  } else {
+    const pA1 = offA1(cfg.CELL_PRETAX);
+    const tA1 = offA1(cfg.CELL_TAX);
+    if (pA1) {
+      const txt = readGlobalCell(xml, pA1, SST) || '';
+      const prefix = txt.includes('：') ? txt : '不含税金额（元）：';
+      xml = writeGlobalCell(xml, pA1, prefix + fmtMoney(pretax));
+    }
+    if (tA1) {
+      const txt = readGlobalCell(xml, tA1, SST) || '';
+      const prefix = txt.includes('：') ? txt : '税额（元）：';
+      xml = writeGlobalCell(xml, tA1, prefix + fmtMoney(tax));
+    }
+  }
+  const nA1 = offA1(cfg.CELL_TOTAL_NUM);
+  const cnA1 = offA1(cfg.CELL_TOTAL_CN);
+  if (nA1 && nA1 === cnA1) {
+    const orig = readGlobalCell(xml, nA1, SST) || '';
+    const prefix = orig.includes('：') ? (orig.split('：')[0] + '：') : '价税合计（小写）：';
+    xml = writeGlobalCell(xml, nA1, prefix + fmtMoney(totalIncl) + ' 元   （大写） ' + toChineseMoney(totalIncl));
+  } else {
+    if (nA1) {
+      const orig = readGlobalCell(xml, nA1, SST) || '';
+      let prefix = '价税合计（小写）：', suffix = ' 元';
+      if (orig) {
+        const t = orig.trim();
+        if (t.endsWith('元')) {
+          prefix = t.slice(0, t.length - 1).replace(/：$/, '').trim() + '：';
+          suffix = ' 元';
+        } else if (t.includes('：')) {
+          prefix = t.split('：')[0] + '：';
+        } else prefix = t + '：';
+      }
+      xml = writeGlobalCell(xml, nA1, prefix + fmtMoney(totalIncl) + suffix);
+    }
+    if (cnA1) {
+      const orig = readGlobalCell(xml, cnA1, SST) || '';
+      let prefix = '价税合计（大写）：';
+      if (orig && /大写/.test(orig)) {
+        const mm = orig.match(/^([^\uff1a:]+[\uff1a:])\s*/);
+        if (mm) prefix = mm[1];
+      }
+      xml = writeGlobalCell(xml, cnA1, prefix + toChineseMoney(totalIncl));
+    }
+  }
+  if (cfg.NOTE_CELL && opts.note && String(opts.note).trim()) {
+    const n = offA1(cfg.NOTE_CELL);
+    if (n) xml = writeGlobalCell(xml, n, String(opts.note).trim());
+  }
+  return xml;
+}
+
+// ================ en_pi 家族：写入 Total ================
+function writeEnPiBlocks(finalXml, cfg, opts, offset) {
+  // 最终总价默认按 opts.finalPrice（如果传了 totalAmount 就用那个），否则 items 求和
+  const items = opts.items || [];
+  let total = 0;
+  if (opts.totalAmount != null && Number(opts.totalAmount) !== 0) total = Number(opts.totalAmount);
+  else total = items.reduce((s, it) => s + (Number(it.totalPrice) || 0), 0);
+  total = Math.round(total * 100) / 100;
+
+  function offA1(a1) {
+    if (!a1) return null;
+    const p = parseA1(a1);
+    if (cfg.TOTAL_ROW && p.row >= cfg.TOTAL_ROW) return `${p.colStr}${p.row + offset}`;
+    return a1;
+  }
+  let xml = finalXml;
+  const t = offA1(cfg.CELL_TOTAL_AMOUNT);
+  if (t) xml = writeGlobalCell(xml, t, total);
+  return xml;
+}
+
+// ================ 顶层入口 buildContract（多模板版） ================
+/**
+ * @param {Function} JSZip             JSZip 构造函数
+ * @param {Array}    TEMPLATES_ARR     TEMPLATE_REGISTRY（来自 contract-templates.js）或 [{key,family,displayName,bytes,meta}]
+ * @param {string}   templateKey       chisun_v1 / chisun_nsh / zs_changsheng / pi_changqi / pi_chisun_multi / pi_chisun_vtb
+ * @param {Array}    items             产品数组
+ * @param {object}   opts              { finalPrice?:number, note?:string, totalAmount?:number }
+ * @returns {Promise<Uint8Array>}
+ */
+async function buildContract(JSZip, TEMPLATES_ARR, templateKey, items, opts) {
+  if (!items || !items.length) throw new Error('items empty');
+  if (!Array.isArray(TEMPLATES_ARR)) throw new Error('TEMPLATES_ARR required (contract-templates.js)');
+  const entry = TEMPLATES_ARR.find(t => t.key === templateKey) || TEMPLATES_ARR[0];
+  if (!entry) throw new Error('template not found: ' + templateKey);
+
+  // 1) 确定模板字节 + 合并 FAMILY_CFG[entry.key] 和 entry.meta
+  //   优先级：FAMILY_CFG > entry.meta（entry.meta 仅作兜底，FAMILY_CFG 的 CELL_*/COL_MAP 必须不被旧 meta 覆盖）
+  //   例如 entry.meta 里旧的 CELL_TOTAL_AMOUNT:"C6" 要被 FAMILY_CFG 的真实值 "I6" 覆盖
+  const tplArr = Array.isArray(entry.bytes) ? entry.bytes : (entry.bytes && entry.bytes.buffer ? Array.from(new Uint8Array(entry.bytes.buffer, entry.bytes.byteOffset, entry.bytes.byteLength)) : []);
+  const templateU8 = new Uint8Array(tplArr);
+  const baseCfg = FAMILY_CFG[entry.key] || FAMILY_CFG[entry.family] || FAMILY_CFG.chisun_v1;
+  const cfg = Object.assign({}, entry.meta || {}, baseCfg);
+  cfg.COL_MAP = baseCfg.COL_MAP || COL_MAP_CN_COMPLEX14;
+
+  const N = items.length;
+  const zip = await JSZip.loadAsync(templateU8);
+  const sf = zip.file('xl/worksheets/sheet1.xml');
+  if (!sf) throw new Error('sheet1.xml not found');
+  let xml = await sf.async('string');
+
+  // 预加载共享字符串表（读模板原值需要）
+  const SST = [];
+  {
+    const f = zip.file('xl/sharedStrings.xml');
+    if (f) {
+      const s = await f.async('string');
+      const siRe = /<si\b[^>]*>([\s\S]*?)<\/si>/g;
+      let m;
+      while ((m = siRe.exec(s)) !== null) {
         let txt = '';
-        if (m) {
-            const cInner = m[1];
-            const ism = /<is><t[^>]*>([\s\S]*?)<\/t><\/is>/.exec(cInner);
-            if (ism) txt = ism[1];
-        }
-        let prefix = '价税合计（大写）：';
-        if (txt && /大写/.test(txt)) {
-            const mm = txt.match(/^([^\uff1a:]+[\uff1a:])\s*/);
-            if (mm) prefix = mm[1];
-            else {
-                const stripped = txt.replace(/[_壹贰叁肆伍陆柒捌玖拾佰仟万亿元角分整零负]+$/g, '').trim();
-                if (stripped) prefix = stripped;
-            }
-        }
-        writeGlobalCell(cellA1, prefix + toChineseMoney(totalIncl));
-    })();
-
-    // 备注
-    if (opts.note && String(opts.note).trim()) {
-        writeGlobalCell(C_NOTE, String(opts.note).trim());
+        const tRe = /<t\b[^>]*>([\s\S]*?)<\/t>/g;
+        let tm;
+        while ((tm = tRe.exec(m[1])) !== null) txt += tm[1];
+        SST.push(txt);
+      }
     }
+  }
 
-    // ---------- 6) 替换 zip 中的 sheet1.xml，重新打包 ----------
-    zip.file('xl/worksheets/sheet1.xml', finalXml);
-    const out = await zip.generateAsync({
-        type: 'uint8array',
-        mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        compression: 'DEFLATE',
-        compressionOptions: { level: 6 }
-    });
-    return out;
+  // 2) 写入产品 N 条（共用核心扩容+克隆+写入逻辑）
+  let { finalXml, offset } = fillProducts(xml, cfg, items);
+
+  // 3) 分家族写汇总/税金/备注
+  if (cfg.family === 'cn_contract') {
+    finalXml = writeCnContractBlocks(finalXml, cfg, opts, offset, SST);
+  } else if (cfg.family === 'en_pi') {
+    const extra = Object.assign({}, opts, { items });
+    finalXml = writeEnPiBlocks(finalXml, cfg, extra, offset);
+  }
+
+  // 4) 替换 sheet1.xml 并重新打包
+  zip.file('xl/worksheets/sheet1.xml', finalXml);
+  const out = await zip.generateAsync({
+    type: 'uint8array',
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    compression: 'DEFLATE',
+    compressionOptions: { level: 6 }
+  });
+  return out;
+}
+
+// 兼容旧版单模板 buildContract(JSZip, templateU8, items, opts) 接口（保留旧合同页面不需要改）
+async function buildContractLegacy(JSZip, templateU8, items, opts) {
+  const TEMPLATES = [{
+    key: 'legacy',
+    family: 'cn_contract',
+    bytes: Array.isArray(templateU8) ? new Uint8Array(templateU8) : templateU8,
+    meta: {}
+  }];
+  return buildContract(JSZip, TEMPLATES, 'legacy', items, opts);
 }
 
 module.exports = {
-    CFG,
-    toChineseMoney,
-    parseA1,
-    buildContract,
-    // 单测用
-    _splitSheetData: splitSheetData,
-    _writeCellInRow: writeCellInRow,
-    _cloneRow13To: cloneRow13To,
-    _offsetAllRowNumbers: offsetAllRowNumbers,
-    _clearRowForCols: clearRowForCols,
-    _writeRowProduct: writeRowProduct
+  FAMILY_CFG,
+  toChineseMoney,
+  parseA1,
+  buildContract,
+  buildContractLegacy,
+  // 测试导出
+  _splitSheetData: splitSheetData,
+  _writeCellInRow: writeCellInRow,
+  _offsetAllRowNumbers: offsetAllRowNumbers,
+  _cloneRowTo: cloneRowTo,
+  _fillProducts: fillProducts
 };
