@@ -98,66 +98,45 @@ export const TEMPLATE_REGISTRY = [
     key: 'pi_changqi',
     family: 'en_pi',
     displayName: {
-      "zh-CN": "Changqi 英文 PI",
+      "zh-CN": "Changqi 英文购销合同 (PI)",
       "en-US": "Changqi Proforma Invoice"
     },
     bytes: (function(){ try { return _b64ToUint8(_SNAP_pi_changqi); } catch(e) { return _SNAP_pi_changqi; } })(),
     meta: {
       "PRODUCT_ROW_FIRST": 5,
-      "PRODUCT_ROW_LAST_TPL": 5,
-      "TOTAL_ROW": 6,
-      "CELL_TOTAL_AMOUNT": "C6",
-      "COL_A": "A",
-      "COL_MODEL": "B",
-      "COL_DESC1": "C",
-      "COL_DESC2": "D",
-      "COL_QTY": "E",
-      "COL_UNIT_PRICE": "H",
-      "COL_TOTAL_PRICE": "I"
+      "PRODUCT_ROW_LAST_TPL": 7,
+      "TOTAL_ROW": 8,
+      "CELL_TOTAL_AMOUNT": "L8"
     }
   },
   {
     key: 'pi_chisun_multi',
     family: 'en_pi',
     displayName: {
-      "zh-CN": "Chisun PI（农行RMB/USD/EUR）",
+      "zh-CN": "Chisun 英文购销合同 (农行 RMB/USD/EUR)",
       "en-US": "Chisun PI (Multi-Currency ABC)"
     },
     bytes: (function(){ try { return _b64ToUint8(_SNAP_pi_chisun_multi); } catch(e) { return _SNAP_pi_chisun_multi; } })(),
     meta: {
       "PRODUCT_ROW_FIRST": 5,
-      "PRODUCT_ROW_LAST_TPL": 5,
-      "TOTAL_ROW": 6,
-      "CELL_TOTAL_AMOUNT": "C6",
-      "COL_A": "A",
-      "COL_MODEL": "B",
-      "COL_DESC1": "C",
-      "COL_DESC2": "D",
-      "COL_QTY": "E",
-      "COL_UNIT_PRICE": "H",
-      "COL_TOTAL_PRICE": "I"
+      "PRODUCT_ROW_LAST_TPL": 7,
+      "TOTAL_ROW": 8,
+      "CELL_TOTAL_AMOUNT": "L8"
     }
   },
   {
     key: 'pi_chisun_vtb',
     family: 'en_pi',
     displayName: {
-      "zh-CN": "Chisun PI（VTB 俄罗斯卢布）",
-      "en-US": "Chisun PI (VTB Russia RUB)"
+      "zh-CN": "Chisun 英文购销合同 (VTB 俄罗斯专用)",
+      "en-US": "Chisun PI (VTB Russia RMB)"
     },
     bytes: (function(){ try { return _b64ToUint8(_SNAP_pi_chisun_vtb); } catch(e) { return _SNAP_pi_chisun_vtb; } })(),
     meta: {
       "PRODUCT_ROW_FIRST": 5,
-      "PRODUCT_ROW_LAST_TPL": 5,
-      "TOTAL_ROW": 6,
-      "CELL_TOTAL_AMOUNT": "C6",
-      "COL_A": "A",
-      "COL_MODEL": "B",
-      "COL_DESC1": "C",
-      "COL_DESC2": "D",
-      "COL_QTY": "E",
-      "COL_UNIT_PRICE": "H",
-      "COL_TOTAL_PRICE": "I"
+      "PRODUCT_ROW_LAST_TPL": 7,
+      "TOTAL_ROW": 8,
+      "CELL_TOTAL_AMOUNT": "L8"
     }
   },
 ];

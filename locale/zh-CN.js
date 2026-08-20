@@ -202,12 +202,12 @@ export default {
     templatePickerConfirm: '确认生成',    // ⚠️ 4 字上限
     templatePickerCancel: '取消',         // ⚠️ 4 字上限
     templateFamilyCn: '中文购销合同',
-    templateFamilyEn: '英文 PI / 外贸发票',
+    templateFamilyEn: '英文购销合同（PI）',
     template_chisun_nsh: '奇胜合同（农商行付款）',
     template_zs_changsheng: '长胜合同（农行付款）',
-    template_pi_changqi: 'Changqi 英文 PI',
-    template_pi_chisun_multi: 'Chisun PI（农行多币种）',
-    template_pi_chisun_vtb: 'Chisun PI（VTB 卢布）'
+    template_pi_changqi: 'Changqi 英文购销合同',
+    template_pi_chisun_multi: 'Chisun 英文购销合同（农行 RMB/USD/EUR）',
+    template_pi_chisun_vtb: 'Chisun 英文购销合同（VTB 俄罗斯专用）'
   },
   language: {
     switchLang: '切换语言',

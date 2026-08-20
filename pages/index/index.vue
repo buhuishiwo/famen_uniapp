@@ -1148,11 +1148,13 @@ export default {
                 const items = (Array.isArray(this.quoteItems) ? this.quoteItems : []).map((it) => ({
                     productType: it.productType || '',
                     productName: it.valveName || '',
+                    spec: it.spec || '',             // ← 新增：完整型号规格字符串（让 modelSpecOf 优先用，避免拼接错位）
                     model: it.spec || '',
                     bodyMaterial: it.bodyMaterial || 'WCB',
                     gateMaterial: it.gatePlate || '',
                     stemMaterial: it.rodMaterial || '',
                     yokeMaterial: it.yokeMaterial || '',
+                    gatePlateThickness: it.gatePlateThickness || '', // ← 新增：闸板厚度数字
                     quantity: it.quantity || 1,
                     unitPrice: String(it.unitPrice || '0'),
                     totalPrice: String(it.totalPrice || '0'),
@@ -1162,7 +1164,13 @@ export default {
                     maxPressure: it.maxPressure || '',
                     unitWeight: it.unitWeight || '',
                     laps: it.laps || '',
-                    torque: it.torque || ''
+                    torque: it.torque || '',
+                    sealMaterial: it.sealMaterial || '',
+                    bodyMaterialRaw: it.bodyMaterial || '',
+                    trademark: it.trademark || '',
+                    unit: it.unit || '台',
+                    productNote: it.remark || it.productNote || '',
+                    woodenBoxSize: it.woodenBoxSize || it.boxSize || ''
                 }));
                 log('步骤1 - 产品数量 N =', items.length);
 

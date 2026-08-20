@@ -52,33 +52,67 @@ const SERIES_NAME_MAP = [
 // 按前缀长度降序，保证 QWLY/QWL/QWF/QW、QCA/QCB/QC、QMDY/QMB 等长前缀优先匹配
 const SERIES_NAME_SORTED = SERIES_NAME_MAP.slice().sort((a, b) => b.prefix.length - a.prefix.length);
 
-/** 根据产品型号（productName，如 QWZ573NM-10G）前缀查找系列定义，无匹配返回 null */
+/** 根据产品型号（productName / valveName，如 QWZ573NM-10G）前缀查找系列定义，无匹配返回 null */
 function lookupSeries(it) {
-  const name = String((it && (it.productName || it.valveName)) || '');
-  for (let i = 0; i < SERIES_NAME_SORTED.length; i++) {
-    if (name.indexOf(SERIES_NAME_SORTED[i].prefix) === 0) return SERIES_NAME_SORTED[i];
+  if (!it) return null;
+  const candidates = [it.productName, it.valveName, it.model, it.spec].filter(Boolean).map(x => String(x));
+  for (let i = 0; i < candidates.length; i++) {
+    const name = candidates[i];
+    for (let j = 0; j < SERIES_NAME_SORTED.length; j++) {
+      if (name.indexOf(SERIES_NAME_SORTED[j].prefix) === 0) return SERIES_NAME_SORTED[j];
+    }
   }
   return null;
 }
-/** 中文产品名称（中文购销合同「产品名称」列） */
-function cnProductName(it) { const s = lookupSeries(it); return s ? s.cn : ''; }
+/** 中文产品名称（中文购销合同「产品名称」列）
+ *  优先级：1) 系列翻译 → 2) 小程序传的 productType（中文产品名，用户真实填入）→ 3) productName/valveName
+ */
+function cnProductName(it) {
+  if (!it) return '';
+  const s = lookupSeries(it);
+  if (s) return s.cn;
+  const fallback = [it.productType, it.productName, it.valveName]
+    .map(x => (x == null ? '' : String(x)).trim())
+    .find(x => x.length > 0);
+  return fallback || '';
+}
 /** 英文产品名称（英文 PI「Project Name」列） */
-function enProductName(it) { const s = lookupSeries(it); return s ? s.en : ''; }
+function enProductName(it) {
+  if (!it) return '';
+  const s = lookupSeries(it);
+  if (s) return s.en;
+  const fallback = [it.productType, it.productName, it.valveName]
+    .map(x => (x == null ? '' : String(x)).trim())
+    .find(x => x.length > 0);
+  return fallback || 'Valve';
+}
 
 function modelSpecOf(it) {
-  // 产品型号 = 产品名称 + DN + 型号数字。
-  // 注意：不拼 productType（如"常规品"），否则会混入 Model no. / 型号规格 列（用户要求只显示产品型号）
+  // 型号规格列：优先使用 spec 完整字符串（用户已拼好），否则用 productName/valveName + model 拼接
+  // 注意：不拼 productType（中文产品名），否则会混入 Model no. / 型号规格 列
   const clean = (s) => String(s == null ? '' : s).replace(/常规品/g, '').trim();
-  if (it.spec) {
-    const spec = clean(it.spec);
-    return spec || '';
-  }
+  const specVal = clean(it && it.spec);
+  if (specVal) return specVal;
   const parts = [];
-  const name = clean(it.productName);
-  const model = clean(it.model);
-  if (name) parts.push(name);
-  if (model) parts.push(/^DN/i.test(model) ? model : ('DN' + model));
-  return parts.join('-');
+  // 型号优先取 valveName / productName / model 中"看起来像型号前缀"的字符串
+  const valveOrName = clean((it && (it.valveName || it.productName)) || '');
+  const model = clean(it && it.model);
+  if (valveOrName && !/[\u4e00-\u9fa5]/.test(valveOrName)) parts.push(valveOrName); // 不含中文的才加入，避免中文产品名混进型号列
+  if (model) {
+    if (/^DN/i.test(model)) parts.push(model);
+    // 如果 model 本身已经是完整型号（如 QWFZ573NM-10P-DN100，包含字母+数字+'-'），直接追加
+    else if (/[A-Za-z]/.test(model)) parts.push(model);
+    else parts.push('DN' + model); // 纯数字（如 100 / 150）→ 加 DN 前缀
+  }
+  // 如果以上都为空，再兜底 spec/model 的其它拼接（防止 spec 字段之前没传导致列空）
+  if (parts.length === 0) {
+    const fallbackClean = [it.spec, it.model, it.productName, it.valveName]
+      .map(x => clean(x))
+      .find(x => x.length > 0 && !/[\u4e00-\u9fa5]/.test(x));
+    if (fallbackClean) return fallbackClean;
+  }
+  const joined = parts.join('-').replace(/-+/g, '-').replace(/^-+|-+$/g, '');
+  return joined;
 }
 
 /**
@@ -90,8 +124,8 @@ function enModelNo(it) {
   return s.replace(/^-+/, '').replace(/-+$/, '').trim();
 }
 
-// —— 中文规格组合（simple6 合同：P 列「产品描述」）——————
-// 对应截图样例 P12 = 「国内木箱材质压力密封面商标单位」
+// —— 中文规格组合（已废弃，保留兼容参考）——————
+// 对应旧截图 P12 = 「国内木箱材质压力密封面商标单位」
 // 顺序：包装（国内木箱）→ 材质 → 闸板/阀杆 → 密封面 → 压力 → 闸板厚度 → 扭矩 → 单重 → 木箱尺寸（具体数字）→ 商标 → 单位
 // 注意：如果用户传的字段里本身已经包含单位（如 gatePlateThickness="12mm"），不要再重复追加后缀
 function cnSpecDesc(it) {
@@ -122,6 +156,59 @@ function cnSpecDesc(it) {
   if (it.trademark) parts.push(`商标${it.trademark}`);
   if (it.unit) parts.push(`单位${it.unit}`);
   return parts.join('');
+}
+
+// ================ 2026-08-20 新布局：单列规格字段抽取（拆分为独立列） ================
+/** 闸板厚度：纯数字或自带单位的字符串 → 统一输出数字（单位mm由表头隐含） */
+function specGateThickness(it) {
+  if (it.gatePlateThickness == null) return '';
+  const v = String(it.gatePlateThickness).trim().replace(/mm|毫米/gi, '');
+  const n = Number(v);
+  return isNaN(n) ? (v || '') : n;
+}
+/** 最高承压（工作压力）：去除前缀单位，保留数字（单位 MWP/bar/PN 由表头隐含） */
+function specMaxPressure(it) {
+  if (it.maxPressure == null) return '';
+  const v = String(it.maxPressure).trim().replace(/PN|bar|压力|MPA|mpa|mwp|MWP/gi, '').trim();
+  const n = Number(v);
+  return isNaN(n) ? (v || '') : n;
+}
+/** 单重 KG：去除 kg/千克/g/克，保留数字（单位 KG 由表头隐含） */
+function specUnitWeight(it) {
+  if (it.unitWeight == null) return '';
+  const v = String(it.unitWeight).trim().replace(/kg|千克|g|克/gi, '').trim();
+  const n = Number(v);
+  return isNaN(n) ? (v || '') : n;
+}
+/** 圈数 Laps：纯数字 */
+function specLaps(it) {
+  if (it.laps == null) return '';
+  const n = Number(String(it.laps).trim());
+  return isNaN(n) ? (String(it.laps).trim() || '') : n;
+}
+/** 扭矩 N.M：去除单位后缀，保留数字（单位 N.M 由表头隐含） */
+function specTorque(it) {
+  if (it.torque == null) return '';
+  const v = String(it.torque).trim().replace(/N[\.·]?[Mm]|牛米|扭矩/gi, '').trim();
+  const n = Number(v);
+  return isNaN(n) ? (v || '') : n;
+}
+/** 材质（英文 texture 列）：bodyMaterial + gateMaterial 组合，如 Body:CF8/Disc:CF8M，只用密封面时则 Seat:NR */
+function specMaterialText(it) {
+  const parts = [];
+  if (it.sealMaterial) parts.push(`Seat:${it.sealMaterial}`);
+  if (it.bodyMaterial) parts.push(`Body:${it.bodyMaterial}`);
+  if (it.gateMaterial) parts.push(`Disc:${it.gateMaterial}`);
+  if (it.stemMaterial) parts.push(`Stem:${it.stemMaterial}`);
+  return parts.join('/');
+}
+/** 英文材质（单列显示时）：优先显示密封面材质 Seat:xx（和截图样例一致） */
+function specEnMaterial(it) {
+  if (it.sealMaterial) return `Seat:${it.sealMaterial}`;
+  const parts = [];
+  if (it.bodyMaterial) parts.push(`Body:${it.bodyMaterial}`);
+  if (it.gateMaterial) parts.push(`Disc:${it.gateMaterial}`);
+  return parts.join('/');
 }
 
 // —— 英文 Project Name（产品名翻译，simple7 PI 的 B 列）——————
@@ -179,65 +266,80 @@ function enSpecDesc(it) {
   return parts.join('，');
 }
 
-// ——— 家族 1B：cn_contract_simple6（chisun_nsh + zs_changsheng，与用户截图完全一致的 6 列）
-//     A=产品名称（系列中文名）；H=型号规格=spec；P=产品描述=中文规格组合；AG=数量；AJ=单价；AK=金额；AQ=备注（空）
-const COL_MAP_CN_SIMPLE6 = [
-  { col: 'A',  get: (it) => cnProductName(it) }, // 产品名称：按型号前缀匹配系列真实名称（2026-08-15 用户提供对照表）
-  { col: 'H',  get: (it) => modelSpecOf(it) },
-  { col: 'P',  get: (it) => cnSpecDesc(it) },
-  { col: 'AG', get: (it) => {
+// ——— 家族 1B：cn_contract 新 11 列拆分布局（chisun_nsh + zs_changsheng，与 2026-08-20 用户截图一致）
+//     A=产品名称  B=型号规格  C=闸板厚度  D=最高承压  E=单重KG  F=圈数  G=扭矩NM  H=数量台  I=单价  J=金额  K=备注
+const COL_MAP_CN_SPLIT11 = [
+  { col: 'A',  get: (it) => cnProductName(it) },
+  { col: 'B',  get: (it) => modelSpecOf(it) },
+  { col: 'C',  get: (it) => specGateThickness(it), isNum: true },
+  { col: 'D',  get: (it) => specMaxPressure(it), isNum: true },
+  { col: 'E',  get: (it) => specUnitWeight(it), isNum: true },
+  { col: 'F',  get: (it) => specLaps(it), isNum: true },
+  { col: 'G',  get: (it) => specTorque(it), isNum: true },
+  { col: 'H',  get: (it) => {
       const q = Number(it.quantity);
       return (isNaN(q) || q === 0) ? '' : q;
   }, isNum: true },
-  { col: 'AJ', get: (it) => {
+  { col: 'I',  get: (it) => {
       const v = Number(it.unitPrice);
       return (isNaN(v) || v === 0) ? '' : v;
   }, isNum: true },
-  { col: 'AK', get: (it) => {
+  { col: 'J',  get: (it) => {
       const t = Number(it.totalPrice);
       return (isNaN(t) || t === 0) ? '' : t;
   }, isNum: true },
-  { col: 'AQ', get: () => '' }  // 备注列：清空模板原有长文字示例
+  { col: 'K',  get: (it) => it.productNote || '' }
 ];
 
-// ——— 家族 2：en_pi_simple7（pi_changqi/pi_chisun_multi/pi_chisun_vtb 英文 PI 简单 7 列）
-//     A=No；B=Project Name（英文产品名翻译）；C=Model no（spec）；D=Item Description（英文规格组合）；G=QTY；H=Unit price；I=Total amount；J=Remark（空）
-const COL_MAP_EN_SIMPLE7 = [
+// ——— 家族 2：en_pi 新 13 列拆分布局（pi_changqi/pi_chisun_multi 英文 PI，与截图一致）
+//     A=No.  B=Project Name  C=Model no.  D=材质texture  E=Gate plate thickness
+//     F=Maximum Working Pressure(MWP)  G=Unit Weight(KG)  H=Laps  I=Torque(N.M)
+//     J=QTY  K=Unit price  L=Total amount  M=Other Requirements
+const COL_MAP_EN_SPLIT13 = [
   { col: 'A', get: (_, idx) => idx + 1, isNum: true },
   { col: 'B', get: (it) => enProjectName(it) },
-  { col: 'C', get: (it) => enModelNo(it) },  // Model no.：纯型号，无中文字符
-  { col: 'D', get: (it) => enSpecDesc(it) },
-  { col: 'G', get: (it) => {
+  { col: 'C', get: (it) => enModelNo(it) },
+  { col: 'D', get: (it) => specEnMaterial(it) },
+  { col: 'E', get: (it) => specGateThickness(it), isNum: true },
+  { col: 'F', get: (it) => specMaxPressure(it), isNum: true },
+  { col: 'G', get: (it) => specUnitWeight(it), isNum: true },
+  { col: 'H', get: (it) => specLaps(it), isNum: true },
+  { col: 'I', get: (it) => specTorque(it), isNum: true },
+  { col: 'J', get: (it) => {
       const q = Number(it.quantity);
       return (isNaN(q) || q === 0) ? '' : q;
   }, isNum: true },
-  { col: 'H', get: (it) => {
+  { col: 'K', get: (it) => {
       const v = Number(it.unitPrice);
       return (isNaN(v) || v === 0) ? '' : v;
   }, isNum: true },
-  { col: 'I', get: (it) => {
+  { col: 'L', get: (it) => {
       const t = Number(it.totalPrice);
       return (isNaN(t) || t === 0) ? '' : t;
   }, isNum: true },
-  { col: 'J', get: () => '' }  // Remark：清空
+  { col: 'M', get: () => '' }
 ];
 
-// ——— 家族 2b：en_pi 无备注列版（pi_chisun_vtb 俄罗斯卢布 PI 表头只有 7 列，无 J=Remar）
-//     A=No；B=Project Name；C=Model no；D=Item Description；G=QTY；H=Unit price；I=Total amount
-const COL_MAP_EN_VTB7 = [
+// ——— 家族 2b：en_pi 无备注列版（pi_chisun_vtb 俄罗斯卢布 PI：A~L 共12列，无M=Other Requirements）
+const COL_MAP_EN_SPLIT12_VTB = [
   { col: 'A', get: (_, idx) => idx + 1, isNum: true },
   { col: 'B', get: (it) => enProjectName(it) },
-  { col: 'C', get: (it) => enModelNo(it) },  // Model no.：纯型号，无中文字符
-  { col: 'D', get: (it) => enSpecDesc(it) },
-  { col: 'G', get: (it) => {
+  { col: 'C', get: (it) => enModelNo(it) },
+  { col: 'D', get: (it) => specEnMaterial(it) },
+  { col: 'E', get: (it) => specGateThickness(it), isNum: true },
+  { col: 'F', get: (it) => specMaxPressure(it), isNum: true },
+  { col: 'G', get: (it) => specUnitWeight(it), isNum: true },
+  { col: 'H', get: (it) => specLaps(it), isNum: true },
+  { col: 'I', get: (it) => specTorque(it), isNum: true },
+  { col: 'J', get: (it) => {
       const q = Number(it.quantity);
       return (isNaN(q) || q === 0) ? '' : q;
   }, isNum: true },
-  { col: 'H', get: (it) => {
+  { col: 'K', get: (it) => {
       const v = Number(it.unitPrice);
       return (isNaN(v) || v === 0) ? '' : v;
   }, isNum: true },
-  { col: 'I', get: (it) => {
+  { col: 'L', get: (it) => {
       const t = Number(it.totalPrice);
       return (isNaN(t) || t === 0) ? '' : t;
   }, isNum: true }
@@ -256,74 +358,76 @@ const COL_MAP_EN_VTB7 = [
  *     CELL_TOTAL_AMOUNT    C6 这样的数字格：写总金额
  */
 const FAMILY_CFG = {
-  // ——— 家族 1B：simple6 中文（chisun_nsh + zs_changsheng，R11=表头/R12=产品/R13=税金/R14=合计/R15=备注）———
+  // ——— 家族 1B：cn_contract 新 11 列拆分 + 一行式价格详情（chisun_nsh + zs_changsheng）
+  //       R11=表头 / R12~R15=4条产品样例 / R16=汇总行（与 2026-08-20 用户图二一致，模板自带公式）
+  //       A16 不含税（元） / B16 公式 =J16/1.13 自动算不含税 / C16 税额 / D16 公式 =J16-B16 自动算
+  //       E16 税率 / F16 税率数字 0.13 / G16 总数量 / H16 数量数字（写）
+  //       I16 合计 / J16 公式 =J12+J13+J14+J15 自动算价税合计
+  //       K16:Q16 合并（写人民币大写） / R16 总计小写 / S16:T16 合并（公式 =B16+D16 自动校验合计）
   chisun_nsh: {
     family: 'cn_contract',
     PRODUCT_ROW_FIRST: 12,
-    PRODUCT_ROW_LAST_TPL: 12,
-    TAX_ROW: 13,
-    TOTAL_ROW: 14,
-    // 真实探查：
-    //   A13  = 不含税金额（元）：55,221.24  (merge A..M，文本 + 数字)
-    //   O13  = 税额（元）：                  (merge O..U，文本)
-    //   V13  = [N]7178.76                   (数字格：税额)
-    //   AC13 = 税率：13%                    (merge AC..AP，文本)
-    //   A14  = 价税合计（大写）：陆万贰仟肆佰元整 (merge A..AB，大写文本)
-    //   AC14 = 价税合计（小写）：62,400元         (merge AC..AW，小写文本)
-    //   A15  = 备注：本合同约定的不含税金额...      (merge A..AW，固定条款备注，不写用户的备注)
-    // NOTE: 用户的报价单备注填到产品的「备注列 AQ12」里，但用户没说要填，所以 AQ12 留空（COL_MAP 已清空）
-    CELL_PRETAX_MERGE: 'A13',
-    CELL_TAX_TEXT_MERGE: 'O13',
-    CELL_TAX_NUM: 'V13',
-    CELL_RATE_MERGE: 'AC13',
-    CELL_TOTAL_CN_MERGE: 'A14',
-    CELL_TOTAL_NUM_MERGE: 'AC14',
+    PRODUCT_ROW_LAST_TPL: 15,
+    TAX_ROW: 16,      // 与 TOTAL_ROW 同一行（一行式汇总）
+    TOTAL_ROW: 16,
+    // 需要写的 3 个单元格（其余由模板文本/公式自动填充，不动）
+    CELL_ROW13_RATE_NUM:   'F16',   // 税率数字：TAX_RATE（默认 0.13）
+    CELL_ROW13_QTY:        'H16',   // 总数量数字：Σ quantity
+    CELL_ROW13_TOTAL_CN:   'K16',   // 人民币大写：K16:Q16 合并格左上角（覆盖原模板 IF 公式）
     TAX_RATE: 0.13,
-    COL_MAP: COL_MAP_CN_SIMPLE6,
-    _WRITE_STRATEGY: 'simple6_merge'
+    COL_MAP: COL_MAP_CN_SPLIT11,
+    _WRITE_STRATEGY: 'cn_split11_onerow'
   },
   zs_changsheng: {
     family: 'cn_contract',
     PRODUCT_ROW_FIRST: 12,
-    PRODUCT_ROW_LAST_TPL: 12,
-    TAX_ROW: 13,
-    TOTAL_ROW: 14,
-    CELL_PRETAX_MERGE: 'A13',
-    CELL_TAX_TEXT_MERGE: 'O13',
-    CELL_TAX_NUM: 'V13',
-    CELL_RATE_MERGE: 'AC13',
-    CELL_TOTAL_CN_MERGE: 'A14',
-    CELL_TOTAL_NUM_MERGE: 'AC14',
+    PRODUCT_ROW_LAST_TPL: 15,
+    TAX_ROW: 16,
+    TOTAL_ROW: 16,
+    CELL_ROW13_RATE_NUM:   'F16',
+    CELL_ROW13_QTY:        'H16',
+    CELL_ROW13_TOTAL_CN:   'K16',
     TAX_RATE: 0.13,
-    COL_MAP: COL_MAP_CN_SIMPLE6,
-    _WRITE_STRATEGY: 'simple6_merge'
+    COL_MAP: COL_MAP_CN_SPLIT11,
+    _WRITE_STRATEGY: 'cn_split11_onerow'
   },
 
-  // ——— 家族 2：simple7 英文 PI（3 套：Changqi / Chisun 多币种 / Chisun VTB 卢布）
-  //        R4=表头 / R5=产品 / R6=Total / R7=Note:
+  // ——— 家族 2：en_pi 新 13 列拆分（Changqi / Chisun 多币种 / Chisun VTB 俄罗斯）
+  //        所有新模板都是 13 列 A~M，M 列是 Other Requirements。
+  //        表头统一在 R4（A4=No.，M4=Other Requirements，L4=Total amount）
+  //        产品行首固定 R5；Changqi / Chisun_multi 容量=1（样例 1 行）；VTB 容量=3（样例 3 行）
+  //        Total 行：在容量最后一行之后下一行（Changqi/Chisun_multi→R6，VTB→R8）
+  //          内容：A<TOTAL_ROW> = Total QTY（Σ quantity）写在 A 列左上角
+  //                B<TOTAL_ROW>:C<TOTAL_ROW> 合并，D<TOTAL_ROW>:I<TOTAL_ROW> 合并，
+  //                Total amount（Σ it.totalPrice）写在 C<TOTAL_ROW>（因为 merge B6:C6，左上角是 B6 但模板将数值存在 C6，与模板一致）
+  //                M<TOTAL_ROW> = 空 / 模板原有值，不动
+  //        J4=QTY，K4=Unit price，L4=Total amount（与 COL_MAP_EN_SPLIT13 完全对齐，L 就是产品行总价列）
   pi_changqi: {
     family: 'en_pi',
     PRODUCT_ROW_FIRST: 5,
     PRODUCT_ROW_LAST_TPL: 5,
     TOTAL_ROW: 6,
-    CELL_TOTAL_AMOUNT: 'I6',  // 探查：B6="Total"，I6=[N]295460（真实写总价的数字格）
-    COL_MAP: COL_MAP_EN_SIMPLE7
+    CELL_TOTAL_AMOUNT: 'C6',
+    CELL_TOTAL_QTY: 'A6',
+    COL_MAP: COL_MAP_EN_SPLIT13
   },
   pi_chisun_multi: {
     family: 'en_pi',
     PRODUCT_ROW_FIRST: 5,
     PRODUCT_ROW_LAST_TPL: 5,
     TOTAL_ROW: 6,
-    CELL_TOTAL_AMOUNT: 'I6',  // 探查：I6=[N]295460
-    COL_MAP: COL_MAP_EN_SIMPLE7
+    CELL_TOTAL_AMOUNT: 'C6',
+    CELL_TOTAL_QTY: 'A6',
+    COL_MAP: COL_MAP_EN_SPLIT13
   },
   pi_chisun_vtb: {
     family: 'en_pi',
     PRODUCT_ROW_FIRST: 5,
-    PRODUCT_ROW_LAST_TPL: 5,
-    TOTAL_ROW: 6,
-    CELL_TOTAL_AMOUNT: 'I6',  // 探查：I6=[N]295460
-    COL_MAP: COL_MAP_EN_VTB7   // VTB 模板表头无 J=Remar 列（仅 7 列），不写 J 列
+    PRODUCT_ROW_LAST_TPL: 7,
+    TOTAL_ROW: 8,
+    CELL_TOTAL_AMOUNT: 'C8',
+    CELL_TOTAL_QTY: 'A8',
+    COL_MAP: COL_MAP_EN_SPLIT13
   }
 };
 
@@ -690,20 +794,28 @@ function buildProductColStyles(sd, cfg) {
   return PRODUCT_COL_STYLES;
 }
 
-/** 通用：扩容、写入产品 N 条 → 返回 { finalXml, offset } */
+/** 通用：扩容/缩容 + 写入产品 N 条 → 返回 { finalXml, offset, shrinkGap }
+ *   offset   = N > capacity 时的正向扩容行数（汇总行后移量）
+ *   shrinkGap= N < capacity 时的反向缩容行数（汇总行前移量）
+ *   无论哪种，产品行始终是 [PRODUCT_ROW_FIRST, PRODUCT_ROW_FIRST+N-1]，
+ *   汇总行实际号 = (TAX_ROW||TOTAL_ROW) + offset - shrinkGap
+ */
 function fillProducts(xml, cfg, items) {
   const N = items.length;
   const capacity = cfg.PRODUCT_ROW_LAST_TPL - cfg.PRODUCT_ROW_FIRST + 1;
   const offset = Math.max(0, N - capacity);
-  if (offset > 0 && cfg.TAX_ROW != null) {
-    xml = offsetAllRowNumbers(xml, cfg.TAX_ROW, offset);
-  } else if (offset > 0 && cfg.TOTAL_ROW != null) {
-    xml = offsetAllRowNumbers(xml, cfg.TOTAL_ROW, offset);
+  const shrinkGap = Math.max(0, capacity - N);
+  const shiftThreshold = cfg.TAX_ROW != null ? cfg.TAX_ROW : cfg.TOTAL_ROW;
+
+  // ① 扩容：汇总行及以后正向平移
+  if (offset > 0 && shiftThreshold != null) {
+    xml = offsetAllRowNumbers(xml, shiftThreshold, offset);
   }
-  const sd = splitSheetData(xml);
+
+  let sd = splitSheetData(xml);
   const COL_STYLES = buildProductColStyles(sd, cfg);
 
-  // 扩容：新增克隆行
+  // ② 扩容：新增克隆行（从样例首行 src=PRODUCT_ROW_FIRST 克隆）
   if (offset > 0) {
     const srcRowNum = cfg.PRODUCT_ROW_FIRST;
     const srcRow = sd.rows.get(srcRowNum);
@@ -720,15 +832,48 @@ function fillProducts(xml, cfg, items) {
     if (!lastRow) throw new Error('PRODUCT_ROW_LAST_TPL missing');
     const newInner = sd.innerRaw.slice(0, lastRow.end) + '\n' + clones.join('\n') + '\n' + sd.innerRaw.slice(lastRow.end);
     xml = sd.before + newInner + sd.after;
-    // 补充新产品行的合并单元格（复制样例行 srcRowNum 的合并范围到每个新行）
     xml = addMergesForClonedRows(xml, srcRowNum, newRowNums);
+    sd = splitSheetData(xml);
   }
+
+  // ③ 缩容（修A）：删除 [PRODUCT_ROW_FIRST+N, PRODUCT_ROW_LAST_TPL] 这 shrinkGap 行，
+  //    然后 shiftThreshold（原 TAX_ROW）及以后的所有行号、合并单元格、dimension 都 -shrinkGap
+  if (shrinkGap > 0 && shiftThreshold != null) {
+    const delFirst = cfg.PRODUCT_ROW_FIRST + N;
+    const delLast  = cfg.PRODUCT_ROW_LAST_TPL;
+    let newInner = sd.innerRaw;
+    // 倒序删除行，避免 start/end 受前一次删除影响
+    for (let r = delLast; r >= delFirst; r--) {
+      const rd = sd.rows.get(r);
+      if (!rd) continue;
+      newInner = newInner.slice(0, rd.start) + newInner.slice(rd.end);
+      // 下次 sd.rows 的坐标会偏移，其实我们只用 start/end，直接基于 newInner 再切即可：
+      // 但 rd.start 来自上一次 sd，删完后面行的 rd.start 不再正确。所以这里删一行就重新 splitSheetData 太浪费。
+      // 改用直接正则替换 <row ...r="N"...>...</row>：简单可靠
+    }
+    // 【更稳妥方案】用正则批量删除指定 r 范围的 <row>...</row>
+    if (delFirst <= delLast) {
+      const before = sd.before;
+      const inner  = sd.innerRaw;
+      const after  = sd.after;
+      // 构建匹配 range: <row ...r="delFirst" ...> 到 <row ...r="delLast" ...> 每个独立 row
+      let shrunk = inner;
+      for (let r = delFirst; r <= delLast; r++) {
+        // 同时吃掉该 row 前面的 \n
+        shrunk = shrunk.replace(new RegExp(`\\n?<row\\s[^>]*\\br="${r}"[^>]*>[\\s\\S]*?<\\/row>`, 'g'), '');
+      }
+      xml = before + shrunk + after;
+      // 行号反向平移（包括 row r= / c r= / mergeCell / dimension）
+      xml = offsetAllRowNumbers(xml, shiftThreshold - shrinkGap, -shrinkGap);
+    }
+  }
+
   const sd2 = splitSheetData(xml);
 
-  // 写入 N 条 + 清空模板里原有多余行
-  const R_END = Math.max(cfg.PRODUCT_ROW_FIRST + N - 1, cfg.PRODUCT_ROW_LAST_TPL);
+  // ④ 写入 N 条产品行（缩容后 capacity=N，扩容后 capacity=N，正好一一对应）
+  const PRODUCT_END = cfg.PRODUCT_ROW_FIRST + N - 1;
   const newRowOuters = new Map();
-  for (let r = cfg.PRODUCT_ROW_FIRST; r <= R_END; r++) {
+  for (let r = cfg.PRODUCT_ROW_FIRST; r <= PRODUCT_END; r++) {
     const row = sd2.rows.get(r);
     if (!row) continue;
     let newInner = clearRowByColMap(row.inner, r, COL_STYLES, cfg.COL_MAP);
@@ -746,7 +891,7 @@ function fillProducts(xml, cfg, items) {
     const row = sd2.rows.get(rn);
     finalInner = finalInner.slice(0, row.start) + newRowOuters.get(rn) + finalInner.slice(row.end);
   });
-  return { finalXml: sd2.before + finalInner + sd2.after, offset };
+  return { finalXml: sd2.before + finalInner + sd2.after, offset, shrinkGap };
 }
 
 /** 在整份 finalXml 中改一个 A1 单元格（全局工具） */
@@ -770,34 +915,35 @@ function readGlobalCell(finalXml, a1, SST) {
 }
 
 // ================ cn_contract 家族：税金/合计/备注 ================
-function writeCnContractBlocks(finalXml, cfg, opts, offset, SST) {
+function writeCnContractBlocks(finalXml, cfg, opts, offset, shrinkGap, SST, items) {
+  if (shrinkGap == null) shrinkGap = 0;
   const taxRate = cfg.TAX_RATE != null ? cfg.TAX_RATE : 0.13;
   const pretax = Number(opts.finalPrice) || 0;
   const tax = Math.round(pretax * taxRate * 100) / 100;
   const totalIncl = Math.round((pretax + tax) * 100) / 100;
+  // 总数量（一行式汇总 F 列用）
+  const totalQty = Array.isArray(items) ? items.reduce((s, it) => s + (Number(it.quantity) || 0), 0) : 0;
 
   function offA1(a1) {
     if (!a1) return null;
     const p = parseA1(a1);
     const th = cfg.TAX_ROW != null ? cfg.TAX_ROW : (cfg.TOTAL_ROW || 1);
-    if (p.row >= th) return `${p.colStr}${p.row + offset}`;
+    if (p.row >= th) return `${p.colStr}${p.row + offset - shrinkGap}`;
     return a1;
   }
+  function fmtNum(n) {
+    const s = Math.abs(Number(n) || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return s;
+  }
+  // 不含税+税金合起来的旧格式（保留给 simple6_merge / 旧策略）
   function fmtMoney(n) {
     const neg = n < 0;
     const s = Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     return (neg ? '-¥' : '¥') + s;
   }
-  // 不含税+税金合起来的格式：比如 55221.24 → "55,221.24"（没有 ¥ 符号，跟模板样例一致）
-  function fmtNum(n) {
-    const s = Math.abs(Number(n) || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    return s;
-  }
-  // 小写元格式：62400 → "62,400元"（跟模板 AC14 样例一致）
   function fmtNumYuan(n) {
     return fmtNum(n).replace(/\.00$/, '') + '元';
   }
-  // 简单 replaceInMergeText：读原文本，提取 prefix，加新内容（对于「XX：数字/大写」这种结构，直接 prefix + new）
   function replaceMergeByPrefix(xml, a1, buildNew) {
     const cell = offA1(a1);
     if (!cell) return xml;
@@ -810,7 +956,97 @@ function writeCnContractBlocks(finalXml, cfg, opts, offset, SST) {
 
   let xml = finalXml;
 
-  // ——— simple6_merge 策略（chisun_nsh / zs_changsheng）：
+  // ——— cn_split11_onerow 策略（2026-08-20 新布局：chisun_nsh / zs_changsheng）
+  //     模板自带公式：B16=J16/1.13 / D16=J16-B16 / J16=J12+J13+J14+J15 / S16=B16+D16（校验）
+  //     A16/C16/E16/G16/I16/R16 文本由模板保留；
+  //     B16/D16/J16/S16 公式将由下方【重写公式】步骤以 SUM(Px:Py) 方式重建（无论扩容/缩容都正确）
+  //     写 3 个单元格：F16=税率数字 / H16=总数量 / K16:Q16=人民币大写（覆盖原 K16 IF 公式）
+  if (cfg._WRITE_STRATEGY === 'cn_split11_onerow') {
+    // 【修C】大写金额 = 产品行金额合计 Σ it.totalPrice，而不是 opts.finalPrice
+    //         （与 J 列公式结果一致，避免小程序传 finalPrice 与产品行不一致导致金额错位）
+    const totalIncl = Array.isArray(items)
+      ? items.reduce((s, it) => s + (Number(it.totalPrice) || 0), 0)
+      : Number(opts.finalPrice) || 0;
+
+    // 当前实际汇总行号（已应用 offset+shrinkGap）
+    const sumRowNum = parseA1(offA1('A' + (cfg.TAX_ROW || cfg.TOTAL_ROW))).row;
+    // 产品行首尾行号（行号不变，因为 offsetAllRowNumbers 是从 TAX_ROW 开始平移的）
+    const prodFirst = cfg.PRODUCT_ROW_FIRST;
+    const prodLast  = cfg.PRODUCT_ROW_FIRST + (Array.isArray(items) ? items.length : 1) - 1;
+
+    // 【修公式】覆盖 4 个关键公式，避免模板中硬编码旧行号引用失效（缩容/扩容后特别重要）
+    //   B{sumRow} = J{sumRow}/1.13              不含税
+    //   D{sumRow} = J{sumRow}-B{sumRow}          税额
+    //   J{sumRow} = SUM(J{prodFirst}:J{prodLast})  价税合计（代替原来的 J12+J13+J14+J15 硬编码）
+    //   S{sumRow} = B{sumRow}+D{sumRow}          校验小写合计
+    const formulaMap = {
+      ['B' + sumRowNum]: `J${sumRowNum}/1.13`,
+      ['D' + sumRowNum]: `J${sumRowNum}-B${sumRowNum}`,
+      ['J' + sumRowNum]: `SUM(J${prodFirst}:J${prodLast})`,
+      ['S' + sumRowNum]: `B${sumRowNum}+D${sumRowNum}`
+    };
+    const writeFormulaCell = (a1, formula) => {
+      const { colStr, row } = parseA1(a1);
+      const ref = colStr + row;
+      const sd = splitSheetData(xml);
+      const rd = sd.rows.get(row);
+      if (!rd) return;
+      const re = new RegExp(`<c\\s([^>]*r="${ref}"[^>]*)>([\\s\\S]*?)<\\/c>`);
+      const m = re.exec(rd.inner);
+      if (!m) return; // 自闭合单元格理论上不会出现在模板 4 公式格
+      const attrs = m[1];
+      // 保留原 s=xx 样式属性，但去掉 t= （公式单元格默认 t=n，由缓存决定）
+      const keepAttrs = [];
+      const are = /([A-Za-z_:][\w\-:.]*)\s*=\s*"([^"]*)"/g;
+      let am;
+      while ((am = are.exec(attrs)) !== null) {
+        if (am[1] !== 't') keepAttrs.push(`${am[1]}="${am[2]}"`);
+      }
+      const newAttrs = keepAttrs.join(' ');
+      const newInner = `<f>${formula}</f>`;
+      const newCell = `<c ${newAttrs}>${newInner}</c>`;
+      const newRowInner = rd.inner.slice(0, m.index) + newCell + rd.inner.slice(m.index + m[0].length);
+      const newOuter = `<row ${rd.rawAttrs}>${newRowInner}</row>`;
+      const replaced = sd.innerRaw.slice(0, rd.start) + newOuter + sd.innerRaw.slice(rd.end);
+      xml = sd.before + replaced + sd.after;
+    };
+    Object.keys(formulaMap).forEach(a1 => writeFormulaCell(a1, formulaMap[a1]));
+    // 【修B双保险】再显式删除一次 B/D/J/S 公式格的旧 <v> 缓存（上面 writeFormulaCell 已经没写 <v>，这里防止其它路径残留）
+    const clearCachedV = (a1) => {
+      const { colStr, row } = parseA1(a1);
+      const ref = colStr + row;
+      const sd = splitSheetData(xml);
+      const rd = sd.rows.get(row);
+      if (!rd) return;
+      const re = new RegExp(`<c\\s([^>]*r="${ref}"[^>]*)>([\\s\\S]*?)<\\/c>`);
+      const m = re.exec(rd.inner);
+      if (!m) return;
+      const attrs = m[1], inner = m[2];
+      if (!/<f[^>]*>/.test(inner)) return;
+      const newInner = inner.replace(/<v[^>]*>[\s\S]*?<\/v>/g, '').replace(/<v[^>]*\/>/g, '');
+      if (newInner === inner) return;
+      const newCell = `<c ${attrs}>${newInner}</c>`;
+      const newRowInner = rd.inner.slice(0, m.index) + newCell + rd.inner.slice(m.index + m[0].length);
+      const newOuter = `<row ${rd.rawAttrs}>${newRowInner}</row>`;
+      const replaced = sd.innerRaw.slice(0, rd.start) + newOuter + sd.innerRaw.slice(rd.end);
+      xml = sd.before + replaced + sd.after;
+    };
+    Object.keys(formulaMap).forEach(clearCachedV);
+
+    const W = (cellKey, val) => {
+      const c = offA1(cfg[cellKey]);
+      if (c) xml = writeGlobalCell(xml, c, val);
+    };
+    // F: 税率数字（默认 0.13；与模板默认一致时也重复写一次以保证生效）
+    W('CELL_ROW13_RATE_NUM', taxRate);
+    // H: 总数量 数字
+    W('CELL_ROW13_QTY', totalQty || '');
+    // K: 人民币大写（K16:Q16 合并格左上角，覆盖原模板公式 IF(S16,S16,"")）
+    W('CELL_ROW13_TOTAL_CN', toChineseMoney(totalIncl));
+    return xml;
+  }
+
+  // ——— simple6_merge 策略（chisun_nsh / zs_changsheng 旧版保留）：
   //     A13=不含税 merge 文本 / V13=税额数字 / A14=大写 merge / AC14=小写 merge / O13 和 AC13 和 A15 模板文本不动
   if (cfg._WRITE_STRATEGY === 'simple6_merge') {
     // 1) A13：不含税金额（元）：55,221.24 → prefix + 数字（不含¥，跟样例一致）
@@ -887,23 +1123,29 @@ function writeCnContractBlocks(finalXml, cfg, opts, offset, SST) {
 }
 
 // ================ en_pi 家族：写入 Total ================
-function writeEnPiBlocks(finalXml, cfg, opts, offset) {
-  // 最终总价默认按 opts.finalPrice（如果传了 totalAmount 就用那个），否则 items 求和
+function writeEnPiBlocks(finalXml, cfg, opts, offset, shrinkGap) {
+  if (shrinkGap == null) shrinkGap = 0;
   const items = opts.items || [];
   let total = 0;
   if (opts.totalAmount != null && Number(opts.totalAmount) !== 0) total = Number(opts.totalAmount);
   else total = items.reduce((s, it) => s + (Number(it.totalPrice) || 0), 0);
   total = Math.round(total * 100) / 100;
+  const totalQty = items.reduce((s, it) => s + (Number(it.quantity) || 0), 0);
 
   function offA1(a1) {
     if (!a1) return null;
     const p = parseA1(a1);
-    if (cfg.TOTAL_ROW && p.row >= cfg.TOTAL_ROW) return `${p.colStr}${p.row + offset}`;
+    if (cfg.TOTAL_ROW && p.row >= cfg.TOTAL_ROW) return `${p.colStr}${p.row + offset - shrinkGap}`;
     return a1;
   }
   let xml = finalXml;
-  const t = offA1(cfg.CELL_TOTAL_AMOUNT);
-  if (t) xml = writeGlobalCell(xml, t, total);
+
+  // 1) Total amount：写在 C<TOTAL_ROW>（或 CELL_TOTAL_AMOUNT 配置的单元格）
+  const amountRef = offA1(cfg.CELL_TOTAL_AMOUNT);
+  if (amountRef) xml = writeGlobalCell(xml, amountRef, total);
+  // 2) Total QTY：写在 A<TOTAL_ROW>（A6 等，模板原 value 就是示例总数量）
+  const qtyRef = offA1(cfg.CELL_TOTAL_QTY);
+  if (qtyRef) xml = writeGlobalCell(xml, qtyRef, totalQty || '');
   return xml;
 }
 
@@ -929,7 +1171,7 @@ async function buildContract(JSZip, TEMPLATES_ARR, templateKey, items, opts) {
   const templateU8 = new Uint8Array(tplArr);
   const baseCfg = FAMILY_CFG[entry.key] || FAMILY_CFG[entry.family] || {};
   const cfg = Object.assign({}, entry.meta || {}, baseCfg);
-  cfg.COL_MAP = baseCfg.COL_MAP || COL_MAP_CN_SIMPLE6;
+  cfg.COL_MAP = baseCfg.COL_MAP || COL_MAP_CN_SPLIT11;
 
   const N = items.length;
   const zip = await JSZip.loadAsync(templateU8);
@@ -956,17 +1198,18 @@ async function buildContract(JSZip, TEMPLATES_ARR, templateKey, items, opts) {
   }
 
   // 2) 写入产品 N 条（共用核心扩容+克隆+写入逻辑）
-  let { finalXml, offset } = fillProducts(xml, cfg, items);
+  let { finalXml, offset, shrinkGap } = fillProducts(xml, cfg, items);
+  shrinkGap = shrinkGap || 0;
 
   // 3) 分家族写汇总/税金/备注
   if (cfg.family === 'cn_contract') {
-    finalXml = writeCnContractBlocks(finalXml, cfg, opts, offset, SST);
+    finalXml = writeCnContractBlocks(finalXml, cfg, opts, offset, shrinkGap, SST, items);
     // 2026-08-15 用户要求：中文购销合同「乙方（需方）：」字段名保留，
     // 公司名「浙江汇机自控阀门有限公司」置空，生成后由用户自行填写（A7 为两套中文模板中该字段所在单元格）
     finalXml = clearTemplateCell(finalXml, 'A7', '乙方（需方）：');
   } else if (cfg.family === 'en_pi') {
     const extra = Object.assign({}, opts, { items });
-    finalXml = writeEnPiBlocks(finalXml, cfg, extra, offset);
+    finalXml = writeEnPiBlocks(finalXml, cfg, extra, offset, shrinkGap || 0);
   }
 
   // 4) 替换 sheet1.xml 并重新打包

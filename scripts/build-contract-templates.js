@@ -132,87 +132,73 @@ function findByAny(kwGroups) {
 
 // 模板 4：Changqi 模板（英文 PI 格式家族）
 {
-  const p = findByAny([['Changqi']]);
-  if (!p) { console.warn('  ⚠️  找不到 Changqi 模板'); }
+  const p = findByAny([['Changqi模板'], ['Changqi'], ['常启']]);
+  if (!p) { console.warn('  ⚠️  找不到 Changqi 模板（期望文件：document/Changqi模板.xlsx）'); }
   else {
     console.log(`\n[pi_changqi] 使用源文件: ${p}`);
     addTemplate({
       key: 'pi_changqi',
       family: 'en_pi',
       bytes: bytesOf(p),
-      displayName: { 'zh-CN': 'Changqi 英文 PI', 'en-US': 'Changqi Proforma Invoice' },
+      displayName: { 'zh-CN': 'Changqi 英文购销合同 (PI)', 'en-US': 'Changqi Proforma Invoice' },
       meta: {
-        // 探查：R4 = 标题行（A/B/C/D/E(数量QTY)/.../H(单价)/I(总价)）
-        // R5 = 样例行（1条）
-        // R6 = Total 合计行
+        // 生成后以 FAMILY_CFG.pi_changqi 为准，此处仅做兜底占位；build 完会用 dump-template-rows 脚本重新核对
         PRODUCT_ROW_FIRST: 5,
-        PRODUCT_ROW_LAST_TPL: 5,
-        TOTAL_ROW: 6,
-        CELL_TOTAL_AMOUNT: 'C6',
-        // 没有税金，直接合计
-        COL_A: 'A',        // Item No.
-        COL_MODEL: 'B',    // 型号
-        COL_DESC1: 'C',
-        COL_DESC2: 'D',
-        COL_QTY: 'E',      // E4=QTY
-        COL_UNIT_PRICE: 'H',
-        COL_TOTAL_PRICE: 'I',
+        PRODUCT_ROW_LAST_TPL: 7,
+        TOTAL_ROW: 8,
+        CELL_TOTAL_AMOUNT: 'L8'
       }
     });
   }
 }
 
-// 模板 5：ChisunIMPORT+农行人民币美元欧元付款
+// 模板 5：ChisunIMPORT 农行 人民币/美元/欧元 多币种
 {
-  const p = findByAny([['ChisunIMPORT+', '农行']]);
-  if (!p) { console.warn('  ⚠️  找不到 ChisunIMPORT+农行 模板'); }
+  const p = findByAny([
+    ['ChisunIMPORT', '农行', '美元'],       // 最新文件名：ChisunIMPORT 模板-农行人民币美元欧元付款.xlsx（含空格）
+    ['ChisunIMPORT', '人民币美元欧元'],
+    ['ChisunIMPORT+', '农行'],              // 旧文件名兼容
+    ['ChisunIMPORT', '多币种']
+  ]);
+  if (!p) { console.warn('  ⚠️  找不到 ChisunIMPORT 多币种模板（期望文件：document/ChisunIMPORT 模板-农行人民币美元欧元付款.xlsx）'); }
   else {
     console.log(`\n[pi_chisun_multi] 使用源文件: ${p}`);
     addTemplate({
       key: 'pi_chisun_multi',
       family: 'en_pi',
       bytes: bytesOf(p),
-      displayName: { 'zh-CN': 'Chisun PI（农行RMB/USD/EUR）', 'en-US': 'Chisun PI (Multi-Currency ABC)' },
+      displayName: { 'zh-CN': 'Chisun 英文购销合同 (农行 RMB/USD/EUR)', 'en-US': 'Chisun PI (Multi-Currency ABC)' },
       meta: {
         PRODUCT_ROW_FIRST: 5,
-        PRODUCT_ROW_LAST_TPL: 5,
-        TOTAL_ROW: 6,
-        CELL_TOTAL_AMOUNT: 'C6',
-        COL_A: 'A',
-        COL_MODEL: 'B',
-        COL_DESC1: 'C',
-        COL_DESC2: 'D',
-        COL_QTY: 'E',
-        COL_UNIT_PRICE: 'H',
-        COL_TOTAL_PRICE: 'I',
+        PRODUCT_ROW_LAST_TPL: 7,
+        TOTAL_ROW: 8,
+        CELL_TOTAL_AMOUNT: 'L8'
       }
     });
   }
 }
 
-// 模板 6：ChisunIMPORT VTB RUB 俄罗斯专用
+// 模板 6：ChisunIMPORT VTB 俄罗斯专用
 {
-  const p = findByAny([['ChisunIMPORT', 'VTB']]);
-  if (!p) { console.warn('  ⚠️  找不到 ChisunIMPORT VTB 模板'); }
+  const p = findByAny([
+    ['ChisunIMPORT', 'VTB', '俄罗斯'],      // 最新文件名：ChisunIMPORT模板-VTB人民币付款（俄罗斯专用).xlsx
+    ['ChisunIMPORT', 'VTB'],
+    ['ChisunIMPORT', '卢布'],
+    ['ChisunIMPORT', 'VTB', '人民币']
+  ]);
+  if (!p) { console.warn('  ⚠️  找不到 ChisunIMPORT VTB 模板（期望文件：document/ChisunIMPORT模板-VTB人民币付款（俄罗斯专用).xlsx）'); }
   else {
     console.log(`\n[pi_chisun_vtb] 使用源文件: ${p}`);
     addTemplate({
       key: 'pi_chisun_vtb',
       family: 'en_pi',
       bytes: bytesOf(p),
-      displayName: { 'zh-CN': 'Chisun PI（VTB 俄罗斯卢布）', 'en-US': 'Chisun PI (VTB Russia RUB)' },
+      displayName: { 'zh-CN': 'Chisun 英文购销合同 (VTB 俄罗斯专用)', 'en-US': 'Chisun PI (VTB Russia RMB)' },
       meta: {
         PRODUCT_ROW_FIRST: 5,
-        PRODUCT_ROW_LAST_TPL: 5,
-        TOTAL_ROW: 6,
-        CELL_TOTAL_AMOUNT: 'C6',
-        COL_A: 'A',
-        COL_MODEL: 'B',
-        COL_DESC1: 'C',
-        COL_DESC2: 'D',
-        COL_QTY: 'E',
-        COL_UNIT_PRICE: 'H',
-        COL_TOTAL_PRICE: 'I',
+        PRODUCT_ROW_LAST_TPL: 7,
+        TOTAL_ROW: 8,
+        CELL_TOTAL_AMOUNT: 'L8'
       }
     });
   }

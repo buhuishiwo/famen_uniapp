@@ -1,0 +1,11 @@
+import fs from 'fs';
+import path from 'path';
+import JSZip from 'jszip';
+const ROOT = 'd:/Code/famen_uniapp/famen_uniapp';
+const xlsx = fs.readFileSync(path.join(ROOT, 'document/浙江长胜阀门模板-农行.xlsx'));
+const z = await JSZip.loadAsync(xlsx);
+const sheet = await z.file('xl/worksheets/sheet1.xml').async('string');
+const row14 = sheet.match(/<row[^>]*r="14"[^>]*>([\s\S]*?)<\/row>/);
+console.log('TPL R14 inner:\n' + row14[1] + '\n');
+const row15 = sheet.match(/<row[^>]*r="15"[^>]*>([\s\S]*?)<\/row>/);
+console.log('TPL R15 inner:\n' + row15[1]);

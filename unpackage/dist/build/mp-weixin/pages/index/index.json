@@ -1,7 +1,0 @@
-{
-  "usingComponents": {
-    "language-switch": "/components/language-switch/language-switch",
-    "uni-icons": "/node-modules/@dcloudio/uni-ui/lib/uni-icons/uni-icons",
-    "navigation-bar": "/components/navigation-bar/navigation-bar"
-  }
-}
