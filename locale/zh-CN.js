@@ -203,7 +203,6 @@ export default {
     templatePickerCancel: '取消',         // ⚠️ 4 字上限
     templateFamilyCn: '中文购销合同',
     templateFamilyEn: '英文 PI / 外贸发票',
-    template_chisun_v1: '奇胜标准合同（奇胜商标版）',
     template_chisun_nsh: '奇胜合同（农商行付款）',
     template_zs_changsheng: '长胜合同（农行付款）',
     template_pi_changqi: 'Changqi 英文 PI',

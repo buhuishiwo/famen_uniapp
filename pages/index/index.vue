@@ -180,6 +180,10 @@
                     <text class="btn-icon">📋</text>
                     <text>{{ $t('index.generateQuote') }}</text>
                 </button>
+                <button class="btn btn-contract" v-if="quoteItems.length > 0" @tap="generateContract">
+                    <text class="btn-icon">📄</text>
+                    <text>{{ $t('quotation.generateContractExcel') }}</text>
+                </button>
             </view>
 
             <!-- 报价列表 -->
@@ -260,12 +264,90 @@
                 <text class="toast-text">{{ toastText }}</text>
             </view>
         </view>
+
+        <!-- ===== 购销合同模板选择弹窗（迁移自报价详情页） ===== -->
+        <view class="tpl-picker-mask" v-if="showTemplatePicker" @tap="onTemplatePickerCancel">
+            <view class="tpl-picker-sheet" @tap.stop>
+                <view class="tpl-picker-header">
+                    <text class="tpl-picker-title">{{ $t('quotation.templatePickerTitle') }}</text>
+                    <text class="tpl-picker-desc">{{ $t('quotation.templatePickerDesc') }}</text>
+                </view>
+
+                <!-- 微信小程序中：普通 view + overflow:auto 比 <scroll-view> 在 flex 布局下更稳定 -->
+                <view class="tpl-picker-body">
+                    <!-- 家族 1：中文购销合同 -->
+                    <view class="tpl-family-group" v-if="_cnTemplates.length > 0">
+                        <view class="tpl-family-tag">
+                            <text class="tpl-family-tag-text">{{ $t('quotation.templateFamilyCn') }}</text>
+                        </view>
+                        <view class="tpl-list">
+                            <view class="tpl-item"
+                                  v-for="tpl in _cnTemplates"
+                                  :key="tpl.key"
+                                  :class="{ 'tpl-item-selected': selectedTemplateKey === tpl.key }"
+                                  @tap="onSelectTemplate(tpl.key)">
+                                <view class="tpl-item-radio">
+                                    <view class="tpl-radio-outer">
+                                        <view class="tpl-radio-inner" v-if="selectedTemplateKey === tpl.key"></view>
+                                    </view>
+                                </view>
+                                <view class="tpl-item-body">
+                                    <text class="tpl-item-name">{{ _tplDisplayNameMap[tpl.key] }}</text>
+                                </view>
+                                <view class="tpl-item-check" v-if="selectedTemplateKey === tpl.key">
+                                    <text class="tpl-check-icon">✓</text>
+                                </view>
+                            </view>
+                        </view>
+                    </view>
+
+                    <!-- 家族 2：英文 PI / 外贸发票 -->
+                    <view class="tpl-family-group" v-if="_enTemplates.length > 0">
+                        <view class="tpl-family-tag tpl-family-tag-en">
+                            <text class="tpl-family-tag-text">{{ $t('quotation.templateFamilyEn') }}</text>
+                        </view>
+                        <view class="tpl-list">
+                            <view class="tpl-item"
+                                  v-for="tpl in _enTemplates"
+                                  :key="tpl.key"
+                                  :class="{ 'tpl-item-selected': selectedTemplateKey === tpl.key }"
+                                  @tap="onSelectTemplate(tpl.key)">
+                                <view class="tpl-item-radio">
+                                    <view class="tpl-radio-outer">
+                                        <view class="tpl-radio-inner" v-if="selectedTemplateKey === tpl.key"></view>
+                                    </view>
+                                </view>
+                                <view class="tpl-item-body">
+                                    <text class="tpl-item-name">{{ _tplDisplayNameMap[tpl.key] }}</text>
+                                </view>
+                                <view class="tpl-item-check" v-if="selectedTemplateKey === tpl.key">
+                                    <text class="tpl-check-icon">✓</text>
+                                </view>
+                            </view>
+                        </view>
+                    </view>
+                </view>
+
+                <view class="tpl-picker-footer">
+                    <button class="tpl-btn tpl-btn-cancel" @tap="onTemplatePickerCancel">
+                        {{ $t('quotation.templatePickerCancel') }}
+                    </button>
+                    <button class="tpl-btn tpl-btn-confirm" @tap="onTemplatePickerConfirm">
+                        {{ $t('quotation.templatePickerConfirm') }}
+                    </button>
+                </view>
+            </view>
+        </view>
     </view>
 </template>
 
 <script>
 import navigationBar from '@/components/navigation-bar/navigation-bar';
 import { priceApi } from '@/utils/cloud-api';
+// 购销合同导出：JSZip + 模板注册表（轻量显示元数据 / 构建字节懒加载分离，避免 setData 过大）
+import JSZip from '@/utils/jszip.min.js';
+import { TEMPLATE_META_DISPLAY, getTemplateRegistryForBuild } from '@/utils/contract-templates.js';
+import { buildContract } from '@/utils/contract-xlsx-builder.js';
 
 export default {
     components: {
@@ -329,7 +411,52 @@ export default {
             toastType: 'success',
             totalPreviewPrice: '0.00',
             confirmedPrice: '0.00',
+            // ===== 购销合同模板选择 =====
+            // 模板选择弹窗显示状态
+            showTemplatePicker: false,
+            // 用户当前选中的模板 key（默认：中文购销合同家族第一个）
+            selectedTemplateKey: (TEMPLATE_META_DISPLAY && TEMPLATE_META_DISPLAY[0]) ? TEMPLATE_META_DISPLAY[0].key : ''
+            // ❌ 注意：TEMPLATE_META_DISPLAY 仅含轻量元数据；含 bytes 的注册表
+            //   只能在生成时调用 getTemplateRegistryForBuild()，绝不可放入 data 响应式链路
         };
+    },
+    computed: {
+        // ===== 购销合同模板选择辅助 computed =====
+        /**
+         * 模板显示元数据：返回 TEMPLATE_META_DISPLAY（仅 key/family/displayName，约 0.8KB）
+         *   【绝对不能包含 bytes/meta 字段】—— 否则会被序列化进 setData，触发 14MB+ 性能告警
+         */
+        _TPL_LIST() {
+            return TEMPLATE_META_DISPLAY || [];
+        },
+        _cnTemplates() {
+            return this._TPL_LIST.filter(t => t.family === 'cn_contract');
+        },
+        _enTemplates() {
+            return this._TPL_LIST.filter(t => t.family === 'en_pi');
+        },
+        /** 按模板 registry displayName + locale 兜底组合后的显示名（取当前 locale） */
+        _tplDisplayNameMap() {
+            const isEn = (this.$locale && this.$locale() && this.$locale().locale === 'en-US') ||
+                (this.$i18n && this.$i18n.locale === 'en-US');
+            const localeKey = isEn ? 'en-US' : 'zh-CN';
+            const map = {};
+            (this._TPL_LIST || []).forEach(t => {
+                let name = '';
+                if (t.displayName && typeof t.displayName === 'object') {
+                    name = t.displayName[localeKey] || t.displayName['zh-CN'] || t.key;
+                } else {
+                    name = String(t.displayName || t.key);
+                }
+                // 优先用 locale 文件里的文案（可由运营后续统一调整）
+                try {
+                    const i18nName = this.$t('quotation.template_' + t.key);
+                    if (i18nName && !/^template_/.test(i18nName)) name = i18nName;
+                } catch (_) {}
+                map[t.key] = name;
+            });
+            return map;
+        }
     },
     created() {
         this.initI18nData();
@@ -965,6 +1092,322 @@ export default {
             uni.navigateTo({
                 url: '/pages/quotation/quotation?data=' + encodeURIComponent(JSON.stringify(this.quoteItems))
             });
+        },
+        // ===== 购销合同导出（迁移自报价详情页，与「生成报价表」同级） =====
+        onSelectTemplate(key) {
+            this.selectedTemplateKey = key;
+        },
+        onTemplatePickerCancel() {
+            this.showTemplatePicker = false;
+        },
+        onTemplatePickerConfirm() {
+            // 用户确认模板后，关闭弹窗并开始生成
+            const key = this.selectedTemplateKey || (this._TPL_LIST && this._TPL_LIST[0] && this._TPL_LIST[0].key);
+            this.showTemplatePicker = false;
+            this._doGenerateContract(key);
+        },
+
+        /**
+         * 生成购销合同 xlsx 文档（多模板版入口）
+         *  - 第一步：校验产品非空 → 弹出「选择合同模板」弹窗
+         *  - 第二步：用户选择并确认后，调用 _doGenerateContract(templateKey) 按选定模板生成
+         */
+        generateContract() {
+            const that = this;
+            const items = Array.isArray(this.quoteItems) ? this.quoteItems : [];
+            if (items.length === 0) {
+                uni.showModal({
+                    title: that.$t('quotation.contractGenerateFail'),
+                    content: '请先添加产品再生成合同',
+                    showCancel: false
+                });
+                return;
+            }
+            // ===== 打开模板选择弹窗 =====
+            // 注意：这里只能用 TEMPLATE_META_DISPLAY（不含 bytes），
+            //   绝不能调用 getTemplateRegistryForBuild()，否则提前触发大 Uint8Array 构造
+            console.log('[TemplatePicker] TEMPLATE_META_DISPLAY 总数 =', (TEMPLATE_META_DISPLAY || []).length);
+            const cn = (TEMPLATE_META_DISPLAY || []).filter(function(t){return t.family === 'cn_contract'});
+            const en = (TEMPLATE_META_DISPLAY || []).filter(function(t){return t.family === 'en_pi'});
+            console.log('[TemplatePicker] cn_contract 家族 =', cn.length, '个 | en_pi 家族 =', en.length, '个');
+            this.showTemplatePicker = true;
+        },
+
+        /**
+         * 实际生成合同（调用多模板 buildContract）—— 由模板选择弹窗确认按钮触发
+         * @param {string} templateKey 选中的模板 key
+         */
+        async _doGenerateContract(templateKey) {
+            this.showLoading = true;
+            this.loadingText = this.$t('quotation.contractGenerating');
+            const that = this;
+            const DEBUG = true;
+            const log = (msg, val) => { if (DEBUG) console.log('[generateContract][' + templateKey + '] ' + msg, val === undefined ? '' : val); };
+            try {
+                // ===== 数据适配：index 页 quoteItems → buildContract 期望的 quoteData 格式 =====
+                const items = (Array.isArray(this.quoteItems) ? this.quoteItems : []).map((it) => ({
+                    productType: it.productType || '',
+                    productName: it.valveName || '',
+                    model: it.spec || '',
+                    bodyMaterial: it.bodyMaterial || 'WCB',
+                    gateMaterial: it.gatePlate || '',
+                    stemMaterial: it.rodMaterial || '',
+                    yokeMaterial: it.yokeMaterial || '',
+                    quantity: it.quantity || 1,
+                    unitPrice: String(it.unitPrice || '0'),
+                    totalPrice: String(it.totalPrice || '0'),
+                    brandingFee: it.brandingFee || 0,
+                    hasBranding: it.hasBranding || false,
+                    productSeries: it.productSeries || '',
+                    maxPressure: it.maxPressure || '',
+                    unitWeight: it.unitWeight || '',
+                    laps: it.laps || '',
+                    torque: it.torque || ''
+                }));
+                log('步骤1 - 产品数量 N =', items.length);
+
+                log('步骤2 - 调用多模板 buildContract (JSZip + XML 文本替换)  templateKey =', templateKey);
+                // ===== 关键：仅此处调用 getTemplateRegistryForBuild()，获取含 bytes+meta 的完整注册表 =====
+                //   返回的 BUILD_REGISTRY 是 method 内局部变量，完全不进入 Vue data/computed/template，
+                //   因此不会触发任何 setData 序列化（性能隔离点）
+                const BUILD_REGISTRY = getTemplateRegistryForBuild();
+                log('步骤2.1 - getTemplateRegistryForBuild() 懒加载完成，模板数 =',
+                    Array.isArray(BUILD_REGISTRY) ? BUILD_REGISTRY.length : 'FAIL');
+                const outU8Raw = await buildContract(JSZip, BUILD_REGISTRY, templateKey, items, {
+                    finalPrice: Number(that.totalPrice) || 0,
+                    note: '',
+                    items: items  // en_pi 家族 items 求和兜底
+                });
+                // 【类型安全】剥离包装 + 转干净 Uint8Array，后续转 ArrayBuffer 写文件
+                const outU8 = new Uint8Array(
+                    ArrayBuffer.isView(outU8Raw)
+                        ? new Uint8Array(outU8Raw.buffer, outU8Raw.byteOffset, outU8Raw.byteLength)
+                        : (Array.isArray(outU8Raw) ? outU8Raw : [])
+                );
+                log('步骤3 - buildContract 成功，输出字节数 =', outU8.length);
+                // ZIP 魔数自检（50 4b 03 04 必须存在，否则 Excel 打开会是空白/损坏）
+                const zip4Hex = outU8.length >= 4
+                    ? [outU8[0],outU8[1],outU8[2],outU8[3]].map(function(b){return b.toString(16).padStart(2,'0')}).join(' ')
+                    : 'EMPTY';
+                log('步骤3.1 - ZIP 魔数前4字节 hex =', zip4Hex,
+                    zip4Hex === '50 4b 03 04' ? '（✅ 合法 xlsx）' : '（❌ 损坏，Excel 会空白！）');
+
+                // 文件名：区分家族（中文合同 vs PI），并带上模板短名
+                const displayEntry = (TEMPLATE_META_DISPLAY || []).find(function(t){return t.key === templateKey})
+                                    || TEMPLATE_META_DISPLAY[0]
+                                    || {};
+                const isEnPI = (displayEntry.family === 'en_pi');
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                // 2026-08-15 文档命名规则：言简意赅，仅「合同类型-日期」，不使用毫秒时间戳
+                const fname = isEnPI
+                    ? `PI-${yyyy}${mm}${dd}.xlsx`
+                    : `购销合同-${yyyy}${mm}${dd}.xlsx`;
+
+                if (typeof wx !== 'undefined' && wx.getFileSystemManager) {
+                    const fsm = wx.getFileSystemManager();
+                    const targetPath = `${wx.env.USER_DATA_PATH}/${fname}`;
+                    log('步骤4 - fsm.writeFile 写入 USER_DATA_PATH →', targetPath);
+                    // 【关键修复】传纯 ArrayBuffer（不会被 Vue 代理），encoding 不传（仅字符串需要）
+                    const rawBin = outU8.buffer.slice(outU8.byteOffset, outU8.byteOffset + outU8.byteLength);
+                    log('  writeFile data instanceof ArrayBuffer?', rawBin instanceof ArrayBuffer, '  byteLength =', rawBin.byteLength);
+                    const writeOnce = (binArg) => new Promise((resolve, reject) => {
+                        fsm.writeFile({
+                            filePath: targetPath,
+                            data: binArg,
+                            success: () => resolve(true),
+                            fail: (err) => reject(err)
+                        });
+                    });
+                    let writeOk = false;
+                    try {
+                        writeOk = await writeOnce(rawBin);
+                    } catch (e1) {
+                        console.warn('[fsm.writeFile] 方案1(ArrayBuffer)失败，降级方案2(Buffer.from):', e1 && e1.errMsg);
+                        try {
+                            const hasGlobalBuffer = (typeof Buffer !== 'undefined') && Buffer.from;
+                            if (!hasGlobalBuffer) throw new Error('Buffer.from not available');
+                            const bytesCopy = new Uint8Array(
+                                rawBin instanceof ArrayBuffer ? rawBin : outU8.buffer.slice(outU8.byteOffset, outU8.byteOffset + outU8.byteLength)
+                            );
+                            const buf = Buffer.from(bytesCopy);
+                            log('  Buffer.from 成功  buf.length =', buf.length, '  is Buffer?', (typeof Buffer !== 'undefined' && Buffer.isBuffer && Buffer.isBuffer(buf)));
+                            writeOk = await writeOnce(buf);
+                        } catch (e2) {
+                            console.error('[fsm.writeFile] 方案2也失败:', e2);
+                            throw e2;
+                        }
+                    }
+                    log('步骤4 - writeFile 成功?', writeOk);
+
+                    // === 诊断：xlsx(ZIP) 魔数前 4 字节 50 4B 03 04 ===
+                    try {
+                        const headerAB = await new Promise((resolve, reject) => {
+                            fsm.readFile({
+                                filePath: targetPath,
+                                position: 0,
+                                length: 4,
+                                success: (res) => resolve(res.data),
+                                fail: (err) => reject(err)
+                            });
+                        });
+                        let hex = '';
+                        const hv = new Uint8Array(headerAB instanceof ArrayBuffer ? headerAB : (headerAB && headerAB.buffer ? headerAB.buffer : headerAB));
+                        for (let i = 0; i < Math.min(4, hv.length); i++) hex += ('0' + hv[i].toString(16)).slice(-2) + ' ';
+                        log('✅ 自检：写入文件前 4 字节 hex = [' + hex.trim() + ']   (期望 50 4b 03 04 即 PK ZIP 魔数)');
+                        if (hv.length < 4 || hv[0] !== 0x50 || hv[1] !== 0x4B || hv[2] !== 0x03 || hv[3] !== 0x04) {
+                            console.error('[文件损坏] 写入文件不是合法 ZIP/xlsx！header = [' + hex.trim() + ']');
+                        } else {
+                            log('✅ 文件完整性检查通过：写入的 xlsx 是合法 ZIP 格式');
+                            try {
+                                const statRes = await new Promise((resolve) => {
+                                    fsm.stat({
+                                        path: targetPath,
+                                        success: (r) => resolve(r),
+                                        fail: () => resolve(null)
+                                    });
+                                });
+                                if (statRes && statRes.stats) {
+                                    log('  文件大小 stat.size =', statRes.stats.size, ' 期望 ~', outU8.length);
+                                }
+                            } catch (_) {}
+                        }
+                    } catch (h) {
+                        console.warn('[header 自检] 读取失败（非致命）:', h && h.errMsg);
+                    }
+
+                    // --- 尝试 fsm.saveFile 持久化（尽力而为，permission denied 属于正常）---
+                    let savedPath = targetPath;
+                    let saveFileOk = false;
+                    try {
+                        if (fsm && typeof fsm.saveFile === 'function') {
+                            log('步骤5 - 尝试 fsm.saveFile 持久化(尽力而为)...');
+                            const sf = await new Promise((resolve) => {
+                                fsm.saveFile({
+                                    tempFilePath: targetPath,
+                                    success: (res) => resolve({ ok: true, savedFilePath: res.savedFilePath }),
+                                    fail: (err) => resolve({ ok: false, err })
+                                });
+                            });
+                            if (sf.ok) {
+                                savedPath = sf.savedFilePath;
+                                saveFileOk = true;
+                                log('  saveFile 持久化成功 savedFilePath =', savedPath);
+                            } else {
+                                log('  saveFile 未成功(预期内，继续用临时路径):', sf.err && sf.err.errMsg);
+                            }
+                        }
+                    } catch (e) {
+                        log('[fsm.saveFile] 持久化异常(预期内)，继续使用临时路径:', e && e.message);
+                    }
+
+                    that.showLoading = false;
+
+                    // --- 弹出成功指引：打开预览 / 直接分享 ---
+                    // 【重要！】confirmText / cancelText 不能超过 4 个汉字！
+                    const tipDesc = that.$t('quotation.contractFileNameLabel')
+                        + ': ' + fname + '\n\n'
+                        + that.$t('quotation.contractExportedDesc');
+
+                    log('步骤6 - uni.showModal 弹出生成成功框（用户选 打开预览 / 直接分享）');
+                    uni.showModal({
+                        title: that.$t('quotation.contractExported') + (saveFileOk ? ' ✓' : ''),
+                        content: tipDesc,
+                        confirmText: that.$t('quotation.contractOpenPreview'),
+                        cancelText: that.$t('quotation.contractShareDirectly'),
+                        confirmColor: '#0d1526',
+                        cancelColor: '#475569',
+                        success: (mres) => {
+                            let finalized = false;
+                            const finalize = () => { finalized = true; };
+
+                            if (mres.confirm) {
+                                log('用户点击确认 → uni.openDocument(filePath =', savedPath, ', fileType=xlsx, showMenu=true)');
+                                uni.openDocument({
+                                    filePath: savedPath,
+                                    fileType: 'xlsx',
+                                    showMenu: true,
+                                    success: () => {
+                                        log('✅ uni.openDocument success 回调 —— 已拉起微信内置文档预览/WPS');
+                                        finalize();
+                                    },
+                                    fail: (err) => {
+                                        if (finalized) return;
+                                        finalize();
+                                        console.error('❌ uni.openDocument fail:', err);
+                                        try {
+                                            wx.shareFileMessage({
+                                                filePath: savedPath,
+                                                fileName: fname,
+                                                fail: (sfe) => {
+                                                    console.error('❌ wx.shareFileMessage fail:', sfe);
+                                                    that.showToast(that.$t('quotation.contractSaved'), 'success');
+                                                },
+                                                success: () => {
+                                                    log('✅ wx.shareFileMessage success 回调（降级成功）');
+                                                }
+                                            });
+                                        } catch (e) {
+                                            console.error('wx.shareFileMessage exception:', e);
+                                            that.showToast(that.$t('quotation.contractSaved'), 'success');
+                                        }
+                                    }
+                                });
+                            } else {
+                                if (finalized) return;
+                                finalize();
+                                log('用户点击取消 → wx.shareFileMessage(filePath =', savedPath, ', fileName =', fname, ')');
+                                try {
+                                    wx.shareFileMessage({
+                                        filePath: savedPath,
+                                        fileName: fname,
+                                        success: () => {
+                                            log('✅ wx.shareFileMessage success 回调 —— 已弹出分享面板');
+                                        },
+                                        fail: (e2) => {
+                                            console.error('❌ wx.shareFileMessage fail:', e2);
+                                            console.warn('→ 降级到 uni.openDocument...');
+                                            try {
+                                                uni.openDocument({
+                                                    filePath: savedPath,
+                                                    fileType: 'xlsx',
+                                                    showMenu: true,
+                                                    success: () => {
+                                                        log('✅ uni.openDocument success（降级成功）');
+                                                    },
+                                                    fail: (e3) => {
+                                                        console.error('❌ uni.openDocument fail (降级也失败):', e3);
+                                                        that.showToast(that.$t('quotation.contractSaved'), 'success');
+                                                    }
+                                                });
+                                            } catch (e3) {
+                                                console.error('uni.openDocument exception:', e3);
+                                                that.showToast(that.$t('quotation.contractSaved'), 'success');
+                                            }
+                                        }
+                                    });
+                                } catch (e) {
+                                    console.error('wx.shareFileMessage exception:', e);
+                                    that.showToast(that.$t('quotation.contractSaved'), 'success');
+                                }
+                            }
+                        },
+                        fail: (merr) => {
+                            console.error('uni.showModal fail:', merr);
+                            that.showToast(that.$t('quotation.contractGenerated'), 'success');
+                        }
+                    });
+                } else {
+                    that.showLoading = false;
+                    that.showToast(that.$t('quotation.contractGenerated'), 'success');
+                }
+            } catch (err) {
+                console.error('[generateContract] 生成失败:', err);
+                that.showLoading = false;
+                that.showToast(that.$t('quotation.contractGenerateFail'), 'error');
+            }
         }
     }
 };
@@ -1324,6 +1767,12 @@ page {
     border: 1.5rpx solid #d8dde8;
     box-shadow: 0 2rpx 8rpx rgba(13, 21, 38, 0.06);
 }
+.btn-contract {
+    background: linear-gradient(135deg, #0d1526 0%, #1e293b 100%);
+    color: #c8aa6e;
+    border: 1.5rpx solid #c8aa6e;
+    box-shadow: 0 6rpx 24rpx rgba(13, 21, 38, 0.2);
+}
 
 /* ---- 报价列表 ---- */
 .quote-list {
@@ -1635,5 +2084,207 @@ page {
     font-weight: 600;
     letter-spacing: 2rpx;
     text-align: center;
+}
+
+/* ===== 购销合同模板选择弹窗 ===== */
+.tpl-picker-mask {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(13, 21, 38, 0.55);
+    z-index: 10001;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+}
+
+.tpl-picker-sheet {
+    width: 100%;
+    max-width: 750rpx;
+    background-color: #f8fafc;
+    border-radius: 32rpx 32rpx 0 0;
+    display: flex;
+    flex-direction: column;
+    height: 88vh;
+    max-height: 88vh;
+    overflow: hidden;
+    box-shadow: 0 -12rpx 48rpx rgba(13, 21, 38, 0.22);
+}
+
+.tpl-picker-header {
+    padding: 36rpx 36rpx 24rpx;
+    background-color: #ffffff;
+    border-bottom: 1rpx solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+.tpl-picker-title {
+    display: block;
+    font-size: 34rpx;
+    font-weight: 800;
+    color: #0d1526;
+    letter-spacing: 2rpx;
+    margin-bottom: 10rpx;
+}
+
+.tpl-picker-desc {
+    display: block;
+    font-size: 24rpx;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+.tpl-picker-body {
+    flex: 1;
+    height: 0;
+    min-height: 0;
+    padding: 24rpx 24rpx 8rpx;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+.tpl-family-group {
+    margin-bottom: 24rpx;
+}
+
+.tpl-family-tag {
+    display: inline-block;
+    padding: 8rpx 20rpx;
+    background: linear-gradient(135deg, #0d1526 0%, #1e293b 100%);
+    border-radius: 8rpx 8rpx 0 0;
+    margin-left: 4rpx;
+}
+
+.tpl-family-tag-en {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+}
+
+.tpl-family-tag-text {
+    font-size: 22rpx;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 2rpx;
+}
+
+.tpl-list {
+    background-color: #ffffff;
+    border-radius: 16rpx;
+    padding: 12rpx 8rpx;
+    border: 1rpx solid #e2e8f0;
+    overflow: hidden;
+}
+
+.tpl-item {
+    display: flex;
+    align-items: center;
+    padding: 24rpx 20rpx;
+    border-radius: 12rpx;
+    margin-bottom: 4rpx;
+    transition: all 0.15s ease;
+    position: relative;
+}
+
+.tpl-item:last-child {
+    margin-bottom: 0;
+}
+
+.tpl-item:active {
+    background-color: #f1f5f9;
+}
+
+.tpl-item-selected {
+    background: linear-gradient(135deg, rgba(13, 21, 38, 0.05) 0%, rgba(200, 170, 110, 0.10) 100%);
+    border: 1rpx solid #c8aa6e;
+}
+
+.tpl-item-radio {
+    flex-shrink: 0;
+    margin-right: 20rpx;
+}
+
+.tpl-radio-outer {
+    width: 40rpx;
+    height: 40rpx;
+    border-radius: 50%;
+    border: 3rpx solid #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    transition: all 0.15s ease;
+}
+
+.tpl-item-selected .tpl-radio-outer {
+    border-color: #c8aa6e;
+}
+
+.tpl-radio-inner {
+    width: 20rpx;
+    height: 20rpx;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0d1526 0%, #c8aa6e 100%);
+}
+
+.tpl-item-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.tpl-item-name {
+    display: block;
+    font-size: 28rpx;
+    font-weight: 600;
+    color: #0d1526;
+    line-height: 1.4;
+    word-break: break-all;
+}
+
+.tpl-item-check {
+    flex-shrink: 0;
+    margin-left: 12rpx;
+    width: 44rpx;
+    height: 44rpx;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0d1526 0%, #c8aa6e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4rpx 12rpx rgba(13, 21, 38, 0.2);
+}
+
+.tpl-check-icon {
+    font-size: 26rpx;
+    color: #ffffff;
+    font-weight: 800;
+}
+
+.tpl-picker-footer {
+    padding: 20rpx 24rpx calc(24rpx + env(safe-area-inset-bottom));
+    background-color: #ffffff;
+    border-top: 1rpx solid #e2e8f0;
+    display: flex;
+    gap: 20rpx;
+}
+
+.tpl-btn {
+    flex: 1;
+    height: 88rpx;
+    border-radius: 14rpx;
+    font-size: 28rpx;
+    font-weight: 600;
+    letter-spacing: 2rpx;
+}
+
+.tpl-btn-cancel {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.tpl-btn-confirm {
+    background: linear-gradient(135deg, #0d1526 0%, #1e293b 100%);
+    color: #ffffff;
 }
 </style>

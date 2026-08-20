@@ -1,27 +1,18 @@
 #!/usr/bin/env node
 /* eslint-disable */
 /**
- * 6 套合同模板 E2E 自测（独立版本，不依赖 contract-templates.js 的 ESM export）
+ * 5 套合同模板 E2E 自测（独立版本，不依赖 contract-templates.js 的 ESM export）
  *   - 直接 require utils/tpl_*.json 作为模板字节
  *   - 每个模板写入 3 条产品（quoteData 模拟数据）
  *   - 验证：ZIP 头（50 4b 03 04）/ 体积合理 / JSZip 重打开成功 / 产品内容写入
- *   - 把生成的 6 份 xlsx 写到 /tmp/contract_e2e_<key>.xlsx，方便用 Excel 打开肉眼确认
+ *   - 把生成的 5 份 xlsx 写到 /tmp/contract_e2e_<key>.xlsx，方便用 Excel 打开肉眼确认
  */
 const fs = require('fs');
 const path = require('path');
 const JSZip = require('jszip');
 
-// ===== 手动复刻 contract-templates.js 里 6 个模板的元信息（不含 bytes，bytes 下面单独 require JSON）=====
+// ===== 手动复刻 contract-templates.js 里 5 个模板的元信息（不含 bytes，bytes 下面单独 require JSON）=====
 const TPL_META = [
-  {
-    key: 'chisun_v1',
-    family: 'cn_contract',
-    displayName: '奇胜标准合同（奇胜商标版）',
-    jsonName: 'tpl_chisun_v1.json',
-    meta: { PRODUCT_ROW_FIRST: 13, PRODUCT_ROW_LAST_TPL: 25, TAX_ROW: 26, TOTAL_ROW: 27,
-      CELL_PRETAX: 'A26', CELL_TAX: 'N26', CELL_RATE_LABEL: 'Z26',
-      CELL_TOTAL_NUM: 'Z27', CELL_TOTAL_CN: 'A27', NOTE_CELL: 'F40', TAX_RATE: 0.13 }
-  },
   {
     key: 'chisun_nsh',
     family: 'cn_contract',
@@ -63,18 +54,18 @@ const TPL_META = [
   }
 ];
 
-// 加载模板 JSON 字节
+// 加载模板 JSON 字节（2026-08-15 起 tpl_*.json 为 base64 字符串，主包瘦身）
 const UTILS_DIR = path.join(__dirname, '..', 'utils');
 const TEMPLATE_REGISTRY = TPL_META.map(m => {
   const jsonPath = path.join(UTILS_DIR, m.jsonName);
-  let arr = [];
+  let bytes = null;
   try {
-    arr = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+    const b64 = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+    bytes = new Uint8Array(Buffer.from(b64, 'base64'));
   } catch (e) {
     console.error('❌ 无法加载模板字节:', jsonPath, '\n', String(e));
     process.exit(1);
   }
-  const bytes = new Uint8Array(arr);
   return Object.assign({}, m, { bytes });
 });
 
@@ -94,24 +85,20 @@ function makeItems(count) {
     const t = q * price;
     total += t;
     items.push({
-      // 真实 quoteData 格式：productType=常规品（中文）、无 spec 字段、model=规格尺寸数字
+      // 真实 quoteData 格式（2026-08-15 用户样例核对版）：
+      //   productName = 产品型号（valve_models.name，如 QWZ573NM-10G），无中文字符
+      //   model = 规格尺寸数字；productType = 常规品；无 spec 字段
       productType: '常规品',
-      productName: names[i],
+      productName: models[i],          // 型号！不是中文产品名
       model: 100 + i * 50,
-      bodyMaterial: materials[i],
-      gateMaterial: materials[i],
-      stemMaterial: '2Cr13',
-      sealMaterial: 'EPDM+PTFE',
-      trademark: 'CHISUN',
-      unit: '台',
+      bodyMaterial: 'GGG40',           // 用户样例：Body:GGG40
+      gateMaterial: 'SS304',           // Disc:SS304
+      stemMaterial: '2Cr13',           // Stem:2Cr13
+      maxPressure: '16.00',            // Working Pressure 16.00bar
+      unitWeight: '23.00kg',           // N.W.:23.00kg
       quantity: q,
       unitPrice: price,
-      totalPrice: t,
-      maxPressure: '1.0',
-      unitWeight: (12 + i * 4) + 'kg',
-      woodenBoxSize: (60 + i * 10) + '*40*30',
-      gatePlateThickness: (12 + i * 3) + 'mm',
-      torque: (200 + i * 80) + 'N·m'
+      totalPrice: t
     });
   }
   return { items, finalPrice: total };
@@ -171,6 +158,22 @@ function fail(name, info) { console.log('  ❌', name, info || ''); FAIL++; proc
           if (inlineStrCount >= 2) ok('产品内容已写入（inlineStr 写入段 ' + inlineStrCount + ' 处）');
           else fail('产品内容可能没写入', '<is><t> 片段仅 ' + inlineStrCount + ' 处');
         }
+
+        // 5) 产品名称列已填入系列真实名称（2026-08-15 用户要求）
+        //    models = QBZ673X-10P/QWZ573NM-10G/QCAZ543X-16RL → QB/QW/QCA
+        const seriesExpect = {
+          cn_contract: ['单向薄阀座可更换型刀闸阀', '双向自密封刀闸阀', '双向密封穿透式刀闸阀'],
+          en_pi: ['Single-Direction Knife Gate Valve with Replaceable Thin Seat',
+                  'Bi-Directional Self-Sealing Knife Gate Valve',
+                  'Bi-Directional Sealing Through-Conduit Knife Gate Valve']
+        };
+        const expectList = seriesExpect[entry.family] || [];
+        const nameFound = expectList.filter(n => s.includes(n)).length;
+        if (nameFound === expectList.length && expectList.length > 0) {
+          ok('产品名称列已填入系列名称（' + nameFound + '/' + expectList.length + ' 命中）');
+        } else {
+          fail('产品名称列未正确填入', '期望 ' + expectList.length + ' 项，命中 ' + nameFound + ' 项');
+        }
         // 4) 保存预览文件
         const outPath = `/tmp/contract_e2e_${entry.key}.xlsx`;
         const rawBin = Buffer.from(outU8.buffer.slice(outU8.byteOffset, outU8.byteOffset + outU8.byteLength));
@@ -188,7 +191,7 @@ function fail(name, info) { console.log('  ❌', name, info || ''); FAIL++; proc
   console.log('\n=========== E2E 汇总 ===========');
   console.log('通过项:', PASS, '  失败项:', FAIL);
   if (FAIL === 0) {
-    console.log('\n🎉 6 套合同模板全部通过！请在 Excel 中打开以下文件肉眼确认：');
+    console.log('\n🎉 5 套合同模板全部通过！请在 Excel 中打开以下文件肉眼确认：');
     TEMPLATE_REGISTRY.forEach(t => console.log('   open /tmp/contract_e2e_' + t.key + '.xlsx'));
   } else {
     console.log('\n⚠️  有 ' + FAIL + ' 项失败，请检查上方日志。');

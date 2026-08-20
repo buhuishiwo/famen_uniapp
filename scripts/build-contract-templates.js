@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /* eslint-disable */
 /**
- * 6 个模板 → 生成 6 个 utils/tpl_<key>.json（Uint8Array 字节快照）
+ * 5 个模板 → 生成 5 个 utils/tpl_<key>.json（Uint8Array 字节快照）
  * 同时生成 utils/contract-templates.js：
- *   1) 引入 6 个快照 JSON
+ *   1) 引入 5 个快照 JSON
  *   2) 导出 TEMPLATE_REGISTRY（含 displayName / 字节 / CFG 结构）
  */
 const fs = require('fs');
@@ -37,8 +37,11 @@ function bytesOf(p) {
 function snapshotNameFor(key) { return `tpl_${key}.json`; }
 function writeSnapshot(key, u8arr) {
   const p = path.join(UTILS, snapshotNameFor(key));
-  fs.writeFileSync(p, JSON.stringify(Array.from(u8arr)));
-  console.log(`  ✅ 写快照 ${snapshotNameFor(key)}  (${u8arr.length} bytes -> ${Math.round(fs.statSync(p).size/1024)}KB JSON)`);
+  // 2026-08-15 改为 base64 存储：数字数组 JSON 在打包后膨胀约 3.5 倍（6 模板共 2.2MB），
+  // base64 仅 1.33 倍，主包体积从 2.67MB 降到 ~1.3MB，规避微信 2MB 主包上限。
+  const b64 = Buffer.from(u8arr).toString('base64');
+  fs.writeFileSync(p, JSON.stringify(b64));
+  console.log(`  ✅ 写快照 ${snapshotNameFor(key)}  (${u8arr.length} bytes -> ${Math.round(fs.statSync(p).size/1024)}KB base64 JSON)`);
   return { key, bytes: u8arr, path: p };
 }
 
@@ -48,7 +51,7 @@ function addTemplate(entry) {
   writeSnapshot(entry.key, entry.bytes);
 }
 
-// ================ 6 个模板配置（按识别顺序，找不到就用候选匹配） ================
+// ================ 5 个模板配置（按识别顺序，找不到就用候选匹配） ================
 function findByKeywords(kws) {
   return candidates.find(p => {
     const name = path.basename(p);
@@ -63,50 +66,6 @@ function findByAny(kwGroups) {
   return null;
 }
 
-// 模板 1：QCAZ543X 原版合同（根目录找不到就用原来的 contract_template.json 兜底）
-{
-  const p = findByAny([['QCAZ543X']]);
-  let u8;
-  if (p) {
-    u8 = bytesOf(p);
-    console.log(`\n[chisun_v1] 使用源文件: ${p}`);
-  } else {
-    const legacy = JSON.parse(fs.readFileSync(path.join(UTILS, 'contract_template.json'), 'utf8'));
-    u8 = new Uint8Array(legacy);
-    console.log(`\n[chisun_v1] 使用 contract_template.json 兜底 (${u8.length} bytes)`);
-  }
-  addTemplate({
-    key: 'chisun_v1',
-    family: 'cn_contract',
-    bytes: u8,
-    displayName: { 'zh-CN': '奇胜标准合同（奇胜商标版）', 'en-US': 'Chisun Standard (Logo Ver.)' },
-    meta: {
-      // 原模板 CFG（沿用 contract-xlsx-builder 当前常量）
-      PRODUCT_ROW_FIRST: 13,
-      PRODUCT_ROW_LAST_TPL: 25,
-      TAX_ROW: 26,
-      TOTAL_CN_ROW: 27,
-      PRETAX_ROW: 26,                 // 与 TAX_ROW 同属一行
-      CELL_PRETAX: 'H26',
-      CELL_TAX: 'O26',
-      CELL_TOTAL_CN: 'A27',
-      NOTE_CELL: 'F40',
-      TAX_RATE: 0.13,
-      // 产品列映射（A1 坐标，来自原模板）：
-      COL_MODEL: 'A',
-      COL_SPEC: 'H',
-      COL_MATERIAL: 'P',
-      COL_PRESSURE: 'S',
-      COL_SEAL: 'V',
-      COL_TRADEMARK: 'Y',
-      COL_UNIT: 'Z',
-      COL_QTY: 'AA',
-      COL_UNIT_PRICE: 'AC',
-      COL_TOTAL_PRICE: 'AD'
-    }
-  });
-}
-
 // 模板 2：奇胜阀门模板-农商行.xlsx
 {
   const p = findByAny([['奇胜', '农商行']]);
@@ -119,28 +78,21 @@ function findByAny(kwGroups) {
       bytes: bytesOf(p),
       displayName: { 'zh-CN': '奇胜合同（农商行付款）', 'en-US': 'Chisun - Rural Bank' },
       meta: {
-        // 按探查结果：表头 R11，样例 R12，税额 R13，价税合计 R14，然后 R15-R21 是空白行（7 行产品容量？）
-        // 但为了安全，把产品区域定义为 R12-R12 一行样例+下面 9 行空白共 10 条；超过 10 条扩容，税金行 TAX_ROW 从 R13 起偏移
-        // 等等：R11=标题、R12=样例、R13=税额、R14=价税合计；样例只有一行！说明产品区容量是 1 行，超过就要扩容
+        // 与 contract-xlsx-builder.js 的 FAMILY_CFG.cn_simple6 对齐（运行时以 FAMILY_CFG 为准，此处仅兜底）
         PRODUCT_ROW_FIRST: 12,
         PRODUCT_ROW_LAST_TPL: 12,
         TAX_ROW: 13,
-        TOTAL_CN_ROW: 14,
-        PRETAX_ROW: 14,
-        CELL_PRETAX: '',  // A14 里是"价税合计（小写）：62,400元"，没有单独的不含税，需要用写入模式 2（直接写入 税额 到 O13）
-        CELL_TAX: 'O13',
-        CELL_TOTAL_CN: 'B14',
-        NOTE_CELL: 'AL12', // AL11 的下一行（R12 备注列，来自 模板1 探查中 R12 AL12=备注内容）
+        TOTAL_ROW: 14,
+        CELL_PRETAX_MERGE: 'A13',
+        CELL_TAX_TEXT_MERGE: 'O13',
+        CELL_TAX_NUM: 'V13',
+        CELL_RATE_MERGE: 'AC13',
+        CELL_TOTAL_CN_MERGE: 'A14',
+        CELL_TOTAL_NUM_MERGE: 'AC14',
         TAX_RATE: 0.13,
-        // 探查：R11 B=型号规格 I=产品描述 Q=数量 AH=单价 AK=总价 AL=备注（R12 写着 甲乙双方...）
-        // 产品描述列是 H-O(合)；这里为了简化先把 型号→B，描述→I，数量→Q，单价→AH，总价→AK
-        COL_MODEL: 'B',
-        COL_DESC: 'I',
-        COL_QTY: 'Q',
-        COL_UNIT_PRICE: 'AH',
-        COL_TOTAL_PRICE: 'AK',
-        // 其余列缺失，留空
-        // NOTE: 因为这个模板没有 P/S/V/Y/Z 材质/压力/密封面/商标/单位 的独立列，就把这些拼到 COL_DESC 单元格里（原模板 R12 I列="材质压力密封面商标单位"）
+        _WRITE_STRATEGY: 'simple6_merge',
+        COL_A: 'A', COL_SPEC: 'H', COL_DESC: 'P', COL_QTY: 'AG',
+        COL_UNIT_PRICE: 'AJ', COL_TOTAL_PRICE: 'AK', COL_NOTE: 'AQ'
       }
     });
   }
@@ -158,19 +110,21 @@ function findByAny(kwGroups) {
       bytes: bytesOf(p),
       displayName: { 'zh-CN': '长胜合同（农行付款）', 'en-US': 'ChangSheng - ABC Bank' },
       meta: {
+        // 与 contract-xlsx-builder.js 的 FAMILY_CFG.cn_simple6 对齐（运行时以 FAMILY_CFG 为准，此处仅兜底）
         PRODUCT_ROW_FIRST: 12,
         PRODUCT_ROW_LAST_TPL: 12,
         TAX_ROW: 13,
-        TOTAL_CN_ROW: 14,
-        CELL_TAX: 'O13',
-        CELL_TOTAL_CN: 'B14',
-        NOTE_CELL: 'AL12',
+        TOTAL_ROW: 14,
+        CELL_PRETAX_MERGE: 'A13',
+        CELL_TAX_TEXT_MERGE: 'O13',
+        CELL_TAX_NUM: 'V13',
+        CELL_RATE_MERGE: 'AC13',
+        CELL_TOTAL_CN_MERGE: 'A14',
+        CELL_TOTAL_NUM_MERGE: 'AC14',
         TAX_RATE: 0.13,
-        COL_MODEL: 'B',
-        COL_DESC: 'I',
-        COL_QTY: 'Q',
-        COL_UNIT_PRICE: 'AH',
-        COL_TOTAL_PRICE: 'AK',
+        _WRITE_STRATEGY: 'simple6_merge',
+        COL_A: 'A', COL_SPEC: 'H', COL_DESC: 'P', COL_QTY: 'AG',
+        COL_UNIT_PRICE: 'AJ', COL_TOTAL_PRICE: 'AK', COL_NOTE: 'AQ'
       }
     });
   }
@@ -273,7 +227,32 @@ for (const r of registry) {
   out.push(`import _SNAP_${r.key} from './${snapshotNameFor(r.key)}';`);
 }
 out.push(``);
-
+out.push(`// ——— 手写 base64 解码（tpl_*.json 为 base64 字符串，主包瘦身用）———`);
+out.push(`//   兼容小程序运行时（不依赖 Node Buffer）；与 Buffer.from(b64,'base64') 结果一致（含 padding 修正）`);
+out.push(`const _B64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';`);
+out.push(`const _B64_LOOKUP = (function () {`);
+out.push(`  const m = {};`);
+out.push(`  for (let i = 0; i < _B64_CHARS.length; i++) m[_B64_CHARS.charAt(i)] = i;`);
+out.push(`  return m;`);
+out.push(`})();`);
+out.push(`function _b64ToUint8(b64) {`);
+out.push(`  if (typeof b64 !== 'string') return b64; // 兼容旧版数字数组快照`);
+out.push(`  const pad = b64.endsWith('==') ? 2 : (b64.endsWith('=') ? 1 : 0);`);
+out.push(`  const byteLength = Math.floor((b64.length * 3) / 4) - pad;`);
+out.push(`  const out = new Uint8Array(byteLength);`);
+out.push(`  let p = 0, buffer = 0, bits = 0;`);
+out.push(`  for (let i = 0; i < b64.length; i++) {`);
+out.push(`    const c = b64.charAt(i);`);
+out.push(`    if (c === '=') break;`);
+out.push(`    const v = _B64_LOOKUP[c];`);
+out.push(`    if (v === undefined) continue;`);
+out.push(`    buffer = (buffer << 6) | v;`);
+out.push(`    bits += 6;`);
+out.push(`    if (bits >= 8) { bits -= 8; out[p++] = (buffer >> bits) & 0xff; }`);
+out.push(`  }`);
+out.push(`  return out;`);
+out.push(`}`);
+out.push(``);
 out.push(`export const TEMPLATE_REGISTRY = [`);
 for (const r of registry) {
   const metaJson = JSON.stringify(r.meta, null, 2).replace(/\n/g, '\n    ');
@@ -282,7 +261,7 @@ for (const r of registry) {
   out.push(`    key: '${r.key}',`);
   out.push(`    family: '${r.family}',`);
   out.push(`    displayName: ${displayJson},`);
-  out.push(`    bytes: (function(){ try { return new Uint8Array(_SNAP_${r.key}); } catch(e) { return _SNAP_${r.key}; } })(),`);
+  out.push(`    bytes: (function(){ try { return _b64ToUint8(_SNAP_${r.key}); } catch(e) { return _SNAP_${r.key}; } })(),`);
   out.push(`    meta: ${metaJson}`);
   out.push(`  },`);
 }
@@ -290,6 +269,24 @@ out.push(`];`);
 out.push(``);
 out.push(`export function getTemplateByKey(key) {`);
 out.push(`  return TEMPLATE_REGISTRY.find(t => t.key === key) || TEMPLATE_REGISTRY[0];`);
+out.push(`}`);
+out.push(``);
+out.push(`// ================ 两条链路性能隔离（避免 setData 14MB 告警） ================`);
+out.push(`// TEMPLATE_META_DISPLAY：仅 key/family/displayName（约 0.8KB），供模板列表渲染，绝不能含 bytes/meta`);
+out.push(`export const TEMPLATE_META_DISPLAY = TEMPLATE_REGISTRY.map(function (t) {`);
+out.push(`  return { key: t.key, family: t.family, displayName: t.displayName };`);
+out.push(`});`);
+out.push(``);
+out.push(`// getTemplateRegistryForBuild()：生成时懒调用，返回含 bytes+meta 的完整注册表。`);
+out.push(`//   返回值只存在调用处的局部变量，不进入 Vue data/computed/template，因此不会触发 setData 序列化`);
+out.push(`let _buildCache = null;`);
+out.push(`export function getTemplateRegistryForBuild() {`);
+out.push(`  if (!_buildCache) {`);
+out.push(`    _buildCache = TEMPLATE_REGISTRY.map(function (t) {`);
+out.push(`      return { key: t.key, family: t.family, displayName: t.displayName, bytes: t.bytes, meta: t.meta };`);
+out.push(`    });`);
+out.push(`  }`);
+out.push(`  return _buildCache;`);
 out.push(`}`);
 out.push(``);
 out.push(`export default TEMPLATE_REGISTRY;`);

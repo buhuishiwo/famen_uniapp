@@ -203,7 +203,6 @@ export default {
     templatePickerCancel: 'Cancel',
     templateFamilyCn: 'Chinese Purchase Contract',
     templateFamilyEn: 'English PI / Commercial Invoice',
-    template_chisun_v1: 'Chisun Standard (With Logo)',
     template_chisun_nsh: 'Chisun - Rural Bank',
     template_zs_changsheng: 'ChangSheng - ABC Bank',
     template_pi_changqi: 'Changqi Proforma Invoice',

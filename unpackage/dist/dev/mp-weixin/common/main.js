@@ -26,7 +26,7 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 wx.__webpack_require_UNI_MP_PLUGIN__ = __webpack_require__;
 var LanguageSwitch = function LanguageSwitch() {
   Promise.all(/*! require.ensure | components/language-switch/language-switch */[__webpack_require__.e("common/vendor"), __webpack_require__.e("components/language-switch/language-switch")]).then((function () {
-    return resolve(__webpack_require__(/*! @/components/language-switch/language-switch.vue */ 99));
+    return resolve(__webpack_require__(/*! @/components/language-switch/language-switch.vue */ 98));
   }).bind(null, __webpack_require__)).catch(__webpack_require__.oe);
 };
 _vue.default.use(_index.default);

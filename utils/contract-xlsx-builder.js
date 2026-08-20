@@ -19,6 +19,52 @@
 //   sealMaterial, trademark, unit, quantity, unitPrice, maxPressure, unitWeight,
 //   woodenBoxSize, torque, laps, bevelGearCouplingModel, moq, brandingFee,
 //   gatePlateThickness, productNote, spec (型号规格完整字符串), totalPrice
+// ================ 产品系列 → 产品名称对照表（2026-08-15 用户提供） ================
+// 型号前缀（最长优先匹配）→ 中文名称 / 英文翻译名称
+// 说明：QU 与 QUP、QC 与 QCA、QW/QWL/QWF 名称相同；QWLY 与 QCG、QMC 与 QMG 为不同系列但名称唯一
+const SERIES_NAME_MAP = [
+  { prefix: 'QMDY', cn: '全封闭双向侧密封耐磨刀闸阀', en: 'Fully Enclosed Bi-Directional Side-Sealing Wear-Resistant Knife Gate Valve' },
+  { prefix: 'QMB',  cn: '可更换式 U 型橡胶双向密封刀闸阀', en: 'Bi-Directional Knife Gate Valve with Replaceable U-Shape Rubber Seal' },
+  { prefix: 'QMC',  cn: '分体式双向无凹槽中压刀闸阀', en: 'Split-Type Bi-Directional Medium Pressure Knife Gate Valve without Recess' },
+  { prefix: 'QMG',  cn: '分体式双向带 U 型调节型密封刀闸阀', en: 'Split-Type Bi-Directional Knife Gate Valve with U-Shape Adjustable Seal' },
+  { prefix: 'QYA',  cn: '单向暗杆板式全封闭刀闸阀', en: 'Single-Direction Non-Rising Stem Plate Fully Enclosed Knife Gate Valve' },
+  { prefix: 'QVY',  cn: '单向带中填料全封闭中压刀闸阀', en: 'Single-Direction Fully Enclosed Medium Pressure Knife Gate Valve with Middle Gland' },
+  { prefix: 'QUP',  cn: '整体式双向无凹槽刀闸阀', en: 'One-Piece Bi-Directional Knife Gate Valve without Recess' },
+  { prefix: 'QWLY', cn: '全封闭高压双向耐磨刀闸阀', en: 'Fully Enclosed High Pressure Bi-Directional Wear-Resistant Knife Gate Valve' },
+  { prefix: 'QCB',  cn: '重型双向密封穿透式刀闸阀', en: 'Heavy-Duty Bi-Directional Sealing Through-Conduit Knife Gate Valve' },
+  { prefix: 'QCA',  cn: '双向密封穿透式刀闸阀', en: 'Bi-Directional Sealing Through-Conduit Knife Gate Valve' },
+  { prefix: 'QCG',  cn: '全封闭高压双向耐磨刀闸阀', en: 'Fully Enclosed High Pressure Bi-Directional Wear-Resistant Knife Gate Valve' },
+  { prefix: 'QWL',  cn: '双向自密封刀闸阀', en: 'Bi-Directional Self-Sealing Knife Gate Valve' },
+  { prefix: 'QWF',  cn: '双向自密封刀闸阀', en: 'Bi-Directional Self-Sealing Knife Gate Valve' },
+  { prefix: 'QWY',  cn: '双向密封刀闸阀', en: 'Bi-Directional Sealing Knife Gate Valve' },
+  { prefix: 'QP',   cn: '可更换式PU内衬件双向密封耐磨刀闸阀', en: 'Bi-Directional Wear-Resistant Knife Gate Valve with Replaceable PU Liner' },
+  { prefix: 'QJ',   cn: '分体式双向密封无凹槽内腔全衬胶刀闸阀', en: 'Split-Type Bi-Directional Fully Rubber-Lined Knife Gate Valve without Recess' },
+  { prefix: 'QS',   cn: '整体式双向无凹槽耐磨刀闸阀', en: 'One-Piece Bi-Directional Wear-Resistant Knife Gate Valve without Recess' },
+  { prefix: 'QW',   cn: '双向自密封刀闸阀', en: 'Bi-Directional Self-Sealing Knife Gate Valve' },
+  { prefix: 'QV',   cn: '单向厚阀座可更换型刀闸阀', en: 'Single-Direction Knife Gate Valve with Replaceable Thick Seat' },
+  { prefix: 'QU',   cn: '整体式双向无凹槽刀闸阀', en: 'One-Piece Bi-Directional Knife Gate Valve without Recess' },
+  { prefix: 'QD',   cn: '单向排渣专用刀闸阀', en: 'Single-Direction Slag Discharge Knife Gate Valve' },
+  { prefix: 'QH',   cn: '单向全封闭方闸门', en: 'Single-Direction Fully Enclosed Square Gate' },
+  { prefix: 'QY',   cn: '单向无中填料全封闭中压力刀闸阀', en: 'Single-Direction Fully Enclosed Medium Pressure Knife Gate Valve without Middle Gland' },
+  { prefix: 'QC',   cn: '双向密封穿透式刀闸阀', en: 'Bi-Directional Sealing Through-Conduit Knife Gate Valve' },
+  { prefix: 'QB',   cn: '单向薄阀座可更换型刀闸阀', en: 'Single-Direction Knife Gate Valve with Replaceable Thin Seat' }
+];
+// 按前缀长度降序，保证 QWLY/QWL/QWF/QW、QCA/QCB/QC、QMDY/QMB 等长前缀优先匹配
+const SERIES_NAME_SORTED = SERIES_NAME_MAP.slice().sort((a, b) => b.prefix.length - a.prefix.length);
+
+/** 根据产品型号（productName，如 QWZ573NM-10G）前缀查找系列定义，无匹配返回 null */
+function lookupSeries(it) {
+  const name = String((it && (it.productName || it.valveName)) || '');
+  for (let i = 0; i < SERIES_NAME_SORTED.length; i++) {
+    if (name.indexOf(SERIES_NAME_SORTED[i].prefix) === 0) return SERIES_NAME_SORTED[i];
+  }
+  return null;
+}
+/** 中文产品名称（中文购销合同「产品名称」列） */
+function cnProductName(it) { const s = lookupSeries(it); return s ? s.cn : ''; }
+/** 英文产品名称（英文 PI「Project Name」列） */
+function enProductName(it) { const s = lookupSeries(it); return s ? s.en : ''; }
+
 function modelSpecOf(it) {
   // 产品型号 = 产品名称 + DN + 型号数字。
   // 注意：不拼 productType（如"常规品"），否则会混入 Model no. / 型号规格 列（用户要求只显示产品型号）
@@ -33,6 +79,15 @@ function modelSpecOf(it) {
   if (name) parts.push(name);
   if (model) parts.push(/^DN/i.test(model) ? model : ('DN' + model));
   return parts.join('-');
+}
+
+/**
+ * 英文 Model no. 列专用：只显示产品型号，剔除一切中文字符。
+ * 中文产品名（如"气动软密封蝶阀"）由 productName 参与拼接，必须移除，仅保留型号数字（DN+model）。
+ */
+function enModelNo(it) {
+  const s = modelSpecOf(it).replace(/[\u4e00-\u9fa5]/g, '');
+  return s.replace(/^-+/, '').replace(/-+$/, '').trim();
 }
 
 // —— 中文规格组合（simple6 合同：P 列「产品描述」）——————
@@ -70,7 +125,11 @@ function cnSpecDesc(it) {
 }
 
 // —— 英文 Project Name（产品名翻译，simple7 PI 的 B 列）——————
+// 优先取系列对照表的英文名称（2026-08-15 用户要求：英文需翻译后再填入产品名称）；
+// 无系列匹配时回退到逐词替换翻译逻辑
 function enProjectName(it) {
+  const s = lookupSeries(it);
+  if (s) return s.en;
   const base = it.productName || it.productType || 'Valve';
   return String(base)
     .replace(/双向/g, 'Bi-directional ')
@@ -120,35 +179,10 @@ function enSpecDesc(it) {
   return parts.join('，');
 }
 
-// ——— 家族 1A：cn_contract_complex14（chisun_v1 = 原 14 列复杂格式：品名/型号/规格/材质/闸板厚度/单位/起订量/两档单价/最高承压/单重/圈数/扭矩/木箱尺寸/伞齿轮型号）
-const COL_MAP_CN_COMPLEX14 = [
-  { col: 'A',  get: (it) => modelSpecOf(it) },
-  { col: 'H',  get: (it) => it.productName || '' },
-  { col: 'P',  get: (it) => (it.model ? 'DN' + it.model : '') },
-  { col: 'S',  get: (it) => it.bodyMaterial || '' },
-  { col: 'W',  get: (it) => it.gatePlateThickness || '' },
-  { col: 'Z',  get: (it) => it.unit || '台' },
-  { col: 'AB', get: (it) => it.moq || '' },
-  { col: 'AC', get: (it) => {
-      const v = Number(it.unitPrice);
-      return (isNaN(v) || v === 0) ? '' : v;
-  }, isNum: true },
-  { col: 'AD', get: (it) => {
-      const t = Number(it.totalPrice);
-      return (isNaN(t) || t === 0) ? '' : t;
-  }, isNum: true },
-  { col: 'AE', get: (it) => it.maxPressure || '' },
-  { col: 'AF', get: (it) => it.unitWeight || '' },
-  { col: 'AG', get: (it) => it.laps || '' },
-  { col: 'AH', get: (it) => it.torque || '' },
-  { col: 'AI', get: (it) => it.woodenBoxSize || '' },
-  { col: 'AJ', get: (it) => it.bevelGearCouplingModel || '' }
-];
-
 // ——— 家族 1B：cn_contract_simple6（chisun_nsh + zs_changsheng，与用户截图完全一致的 6 列）
-//     A=产品名称（空）；H=型号规格=spec；P=产品描述=中文规格组合；AG=数量；AJ=单价；AK=金额；AQ=备注（空）
+//     A=产品名称（系列中文名）；H=型号规格=spec；P=产品描述=中文规格组合；AG=数量；AJ=单价；AK=金额；AQ=备注（空）
 const COL_MAP_CN_SIMPLE6 = [
-  { col: 'A',  get: () => '' }, // 产品名称：空着
+  { col: 'A',  get: (it) => cnProductName(it) }, // 产品名称：按型号前缀匹配系列真实名称（2026-08-15 用户提供对照表）
   { col: 'H',  get: (it) => modelSpecOf(it) },
   { col: 'P',  get: (it) => cnSpecDesc(it) },
   { col: 'AG', get: (it) => {
@@ -171,7 +205,7 @@ const COL_MAP_CN_SIMPLE6 = [
 const COL_MAP_EN_SIMPLE7 = [
   { col: 'A', get: (_, idx) => idx + 1, isNum: true },
   { col: 'B', get: (it) => enProjectName(it) },
-  { col: 'C', get: (it) => modelSpecOf(it) },
+  { col: 'C', get: (it) => enModelNo(it) },  // Model no.：纯型号，无中文字符
   { col: 'D', get: (it) => enSpecDesc(it) },
   { col: 'G', get: (it) => {
       const q = Number(it.quantity);
@@ -188,6 +222,27 @@ const COL_MAP_EN_SIMPLE7 = [
   { col: 'J', get: () => '' }  // Remark：清空
 ];
 
+// ——— 家族 2b：en_pi 无备注列版（pi_chisun_vtb 俄罗斯卢布 PI 表头只有 7 列，无 J=Remar）
+//     A=No；B=Project Name；C=Model no；D=Item Description；G=QTY；H=Unit price；I=Total amount
+const COL_MAP_EN_VTB7 = [
+  { col: 'A', get: (_, idx) => idx + 1, isNum: true },
+  { col: 'B', get: (it) => enProjectName(it) },
+  { col: 'C', get: (it) => enModelNo(it) },  // Model no.：纯型号，无中文字符
+  { col: 'D', get: (it) => enSpecDesc(it) },
+  { col: 'G', get: (it) => {
+      const q = Number(it.quantity);
+      return (isNaN(q) || q === 0) ? '' : q;
+  }, isNum: true },
+  { col: 'H', get: (it) => {
+      const v = Number(it.unitPrice);
+      return (isNaN(v) || v === 0) ? '' : v;
+  }, isNum: true },
+  { col: 'I', get: (it) => {
+      const t = Number(it.totalPrice);
+      return (isNaN(t) || t === 0) ? '' : t;
+  }, isNum: true }
+];
+
 /**
  * 各模板 CFG（覆盖默认值）：
  *   PRODUCT_ROW_FIRST      第一条数据样例行（1-based）
@@ -201,23 +256,6 @@ const COL_MAP_EN_SIMPLE7 = [
  *     CELL_TOTAL_AMOUNT    C6 这样的数字格：写总金额
  */
 const FAMILY_CFG = {
-  // ——— 家族 1A：原 14 列复杂（chisun_v1 = QCAZ543X-10P+CHISUN商标价格1.xlsx）———
-  chisun_v1: {
-    family: 'cn_contract',
-    PRODUCT_ROW_FIRST: 13,
-    PRODUCT_ROW_LAST_TPL: 25,
-    TAX_ROW: 26,
-    TOTAL_ROW: 27,
-    CELL_PRETAX: 'A26',
-    CELL_TAX: 'N26',
-    CELL_RATE_LABEL: 'Z26',
-    CELL_TOTAL_NUM: 'Z27',
-    CELL_TOTAL_CN: 'A27',
-    NOTE_CELL: 'F40',
-    TAX_RATE: 0.13,
-    COL_MAP: COL_MAP_CN_COMPLEX14
-  },
-
   // ——— 家族 1B：simple6 中文（chisun_nsh + zs_changsheng，R11=表头/R12=产品/R13=税金/R14=合计/R15=备注）———
   chisun_nsh: {
     family: 'cn_contract',
@@ -285,7 +323,7 @@ const FAMILY_CFG = {
     PRODUCT_ROW_LAST_TPL: 5,
     TOTAL_ROW: 6,
     CELL_TOTAL_AMOUNT: 'I6',  // 探查：I6=[N]295460
-    COL_MAP: COL_MAP_EN_SIMPLE7
+    COL_MAP: COL_MAP_EN_VTB7   // VTB 模板表头无 J=Remar 列（仅 7 列），不写 J 列
   }
 };
 
@@ -434,6 +472,17 @@ function writeCellInRow(rowInner, cellA1, value) {
   }
   const newCell = `<c ${newAttrs}>${newInner}</c>`;
   return rowInner.slice(0, start) + newCell + rowInner.slice(end);
+}
+
+/** 设置模板中某个固定单元格的内容（默认置空，保留样式），用于「生成后由用户自行填写」的字段 */
+function clearTemplateCell(xml, a1, value) {
+  const { colStr, row } = parseA1(a1);
+  const ref = colStr + row;
+  const rowRe = new RegExp(`(<row\\s[^>]*r="${row}"[^>]*>)([\\s\\S]*?)(<\\/row>)`);
+  const m = rowRe.exec(xml);
+  if (!m || !new RegExp(`r="${ref}"`).test(m[2])) return xml;
+  const newInner = writeCellInRow(m[2], a1, value === undefined ? '' : value);
+  return xml.slice(0, m.index) + m[1] + newInner + m[3] + xml.slice(m.index + m[0].length);
 }
 
 /** 在 rowInner 中按字母序插入自闭合空单元格（用于某列整个产品区模板不存在时补 s 样式占位） */
@@ -862,7 +911,7 @@ function writeEnPiBlocks(finalXml, cfg, opts, offset) {
 /**
  * @param {Function} JSZip             JSZip 构造函数
  * @param {Array}    TEMPLATES_ARR     TEMPLATE_REGISTRY（来自 contract-templates.js）或 [{key,family,displayName,bytes,meta}]
- * @param {string}   templateKey       chisun_v1 / chisun_nsh / zs_changsheng / pi_changqi / pi_chisun_multi / pi_chisun_vtb
+ * @param {string}   templateKey       chisun_nsh / zs_changsheng / pi_changqi / pi_chisun_multi / pi_chisun_vtb
  * @param {Array}    items             产品数组
  * @param {object}   opts              { finalPrice?:number, note?:string, totalAmount?:number }
  * @returns {Promise<Uint8Array>}
@@ -878,9 +927,9 @@ async function buildContract(JSZip, TEMPLATES_ARR, templateKey, items, opts) {
   //   例如 entry.meta 里旧的 CELL_TOTAL_AMOUNT:"C6" 要被 FAMILY_CFG 的真实值 "I6" 覆盖
   const tplArr = Array.isArray(entry.bytes) ? entry.bytes : (entry.bytes && entry.bytes.buffer ? Array.from(new Uint8Array(entry.bytes.buffer, entry.bytes.byteOffset, entry.bytes.byteLength)) : []);
   const templateU8 = new Uint8Array(tplArr);
-  const baseCfg = FAMILY_CFG[entry.key] || FAMILY_CFG[entry.family] || FAMILY_CFG.chisun_v1;
+  const baseCfg = FAMILY_CFG[entry.key] || FAMILY_CFG[entry.family] || {};
   const cfg = Object.assign({}, entry.meta || {}, baseCfg);
-  cfg.COL_MAP = baseCfg.COL_MAP || COL_MAP_CN_COMPLEX14;
+  cfg.COL_MAP = baseCfg.COL_MAP || COL_MAP_CN_SIMPLE6;
 
   const N = items.length;
   const zip = await JSZip.loadAsync(templateU8);
@@ -912,6 +961,9 @@ async function buildContract(JSZip, TEMPLATES_ARR, templateKey, items, opts) {
   // 3) 分家族写汇总/税金/备注
   if (cfg.family === 'cn_contract') {
     finalXml = writeCnContractBlocks(finalXml, cfg, opts, offset, SST);
+    // 2026-08-15 用户要求：中文购销合同「乙方（需方）：」字段名保留，
+    // 公司名「浙江汇机自控阀门有限公司」置空，生成后由用户自行填写（A7 为两套中文模板中该字段所在单元格）
+    finalXml = clearTemplateCell(finalXml, 'A7', '乙方（需方）：');
   } else if (cfg.family === 'en_pi') {
     const extra = Object.assign({}, opts, { items });
     finalXml = writeEnPiBlocks(finalXml, cfg, extra, offset);

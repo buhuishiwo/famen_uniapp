@@ -101,7 +101,7 @@ var components
 try {
   components = {
     languageSwitch: function () {
-      return Promise.all(/*! import() | components/language-switch/language-switch */[__webpack_require__.e("common/vendor"), __webpack_require__.e("components/language-switch/language-switch")]).then(__webpack_require__.bind(null, /*! @/components/language-switch/language-switch.vue */ 99))
+      return Promise.all(/*! import() | components/language-switch/language-switch */[__webpack_require__.e("common/vendor"), __webpack_require__.e("components/language-switch/language-switch")]).then(__webpack_require__.bind(null, /*! @/components/language-switch/language-switch.vue */ 98))
     },
   }
 } catch (e) {
@@ -229,7 +229,7 @@ var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/r
 var _cloudApi = __webpack_require__(/*! @/utils/cloud-api */ 61);
 var navigationBar = function navigationBar() {
   __webpack_require__.e(/*! require.ensure | components/navigation-bar/navigation-bar */ "components/navigation-bar/navigation-bar").then((function () {
-    return resolve(__webpack_require__(/*! @/components/navigation-bar/navigation-bar */ 106));
+    return resolve(__webpack_require__(/*! @/components/navigation-bar/navigation-bar */ 105));
   }).bind(null, __webpack_require__)).catch(__webpack_require__.oe);
 };
 var _default = {

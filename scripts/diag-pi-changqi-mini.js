@@ -20,8 +20,8 @@ const TPL_META = [
 ];
 const TEMPLATE_REGISTRY = TPL_META.map(m => {
   const jsonPath = path.join(UTILS_DIR, m.jsonName);
-  const arr = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-  return Object.assign({}, m, { bytes: new Uint8Array(arr) });
+  const b64 = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+  return Object.assign({}, m, { bytes: new Uint8Array(Buffer.from(b64, 'base64')) });
 });
 
 const items = [

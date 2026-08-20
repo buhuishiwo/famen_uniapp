@@ -33,8 +33,8 @@ const KEYS = [
     const tplJson = path.join(__dirname, '..', 'utils', 'tpl_' + k.key + '.json');
     let orig = null;
     try {
-      const arr = JSON.parse(fs.readFileSync(tplJson, 'utf8'));
-      orig = await getMergeCells(new Uint8Array(arr));
+      const b64 = JSON.parse(fs.readFileSync(tplJson, 'utf8'));
+      orig = await getMergeCells(new Uint8Array(Buffer.from(b64, 'base64')));
     } catch (e) { console.log('  原始模板加载失败: ' + e.message); }
     // 生成文件
     const gen = fs.existsSync(k.src) ? await getMergeCells(fs.readFileSync(k.src)) : null;
