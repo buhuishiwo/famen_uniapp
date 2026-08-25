@@ -88,29 +88,105 @@ function enProductName(it) {
 }
 
 function modelSpecOf(it) {
-  // 型号规格列：优先使用 spec 完整字符串（用户已拼好），否则用 productName/valveName + model 拼接
-  // 注意：不拼 productType（中文产品名），否则会混入 Model no. / 型号规格 列
+  // 型号规格列 = 完整型号字符串（如 QBZ73X-10C-DN80）= 型号前缀(valveName) + DN + 规格(spec/model)
+  //
+  // quoteItems 真实字段约定：
+  //   it.valveName / productName = 型号前缀（完整型号前缀，不含 DN，如 QBZ73X-10C）
+  //   it.spec = 规格（可能是纯数字 80、DN80、或者完整型号 QWFZ573NM-10P-DN80）
+  //   it.model = 规格口径或阀门型号（兜底，多来源支持）
+  //
+  // 核心逻辑：
+  //   1) 若 spec/model 中任意一个是"完整型号"（包含字母 + '-' + DN/数字 或已有前缀 QW/QB/...）→ 直接用该完整型号
+  //   2) 否则 spec 仅为口径（DNxx / 纯数字 / PNxx）→ 从 valveName/productName/model 中取型号前缀
+  //      与"DN<口径数字>"拼接 → 前缀 + '-' + DNxx
   const clean = (s) => String(s == null ? '' : s).replace(/常规品/g, '').trim();
-  const specVal = clean(it && it.spec);
-  if (specVal) return specVal;
-  const parts = [];
-  // 型号优先取 valveName / productName / model 中"看起来像型号前缀"的字符串
-  const valveOrName = clean((it && (it.valveName || it.productName)) || '');
-  const model = clean(it && it.model);
-  if (valveOrName && !/[\u4e00-\u9fa5]/.test(valveOrName)) parts.push(valveOrName); // 不含中文的才加入，避免中文产品名混进型号列
-  if (model) {
-    if (/^DN/i.test(model)) parts.push(model);
-    // 如果 model 本身已经是完整型号（如 QWFZ573NM-10P-DN100，包含字母+数字+'-'），直接追加
-    else if (/[A-Za-z]/.test(model)) parts.push(model);
-    else parts.push('DN' + model); // 纯数字（如 100 / 150）→ 加 DN 前缀
+  const specVal  = clean(it && it.spec);
+  const modelVal = clean(it && it.model);
+  const prefixVal = clean((it && (it.valveName || it.productName)) || '');
+
+  // 判断是否已经是"完整型号"（完整 = 有[型号前缀字符]+[-]+[数字/字母] + 还自带 DNxxx 或至少是 QWxxx-xxx-DNxxx 三部分）
+  //   ✅ 完整：QWFZ573NM-10P-DN100, QBZ73X-10C-DN80
+  //   ❌ 不完整（只是前缀或口径）：QBZ73X-10C（只前缀）、80（纯数字）、DN80（纯口径）
+  const RE_PREFIX_CHARS = /[A-Za-z]{1,6}[\dA-Za-z]*[\-][\dA-Za-z]/;   // QBZ73X-10 这类模式
+  const RE_HAS_DN = /(?:^|[\-_\s])DN\d+/i;
+  const RE_PN_ONLY = /^PN[\d\.]+\s*$/i; // 如果 spec 只是 PNxx，那肯定不是规格口径的 DN
+  function looksFull(s) {
+    if (!s) return false;
+    if (/^\d+$/.test(s)) return false;
+    if (/^DN\d+$/i.test(s)) return false;
+    if (RE_PN_ONLY.test(s)) return false;
+    // 必须有 前缀字符（QBZ73X-10 这种）并且还包含 DN<数字> 才叫完整型号（不缺口径）
+    const hasPrefix = RE_PREFIX_CHARS.test(s);
+    const hasDn = /DN\d+/i.test(s);
+    if (hasPrefix && hasDn) return true;
+    // 或者至少包含字母和'-'和DN三要素才视为完整
+    if (hasDn && /[A-Za-z]/.test(s) && /[\-]/.test(s) && s.replace(/DN\d+/i, '').length >= 2) return true;
+    return false;
   }
-  // 如果以上都为空，再兜底 spec/model 的其它拼接（防止 spec 字段之前没传导致列空）
-  if (parts.length === 0) {
-    const fallbackClean = [it.spec, it.model, it.productName, it.valveName]
-      .map(x => clean(x))
-      .find(x => x.length > 0 && !/[\u4e00-\u9fa5]/.test(x));
-    if (fallbackClean) return fallbackClean;
+  // 从字符串中抽取口径数字（DNxxx 部分），如果是 80 返回 DN80
+  function extractDn(s) {
+    if (!s) return '';
+    // 直接 DNxx
+    const m1 = s.match(/DN\s*(\d+)/i);
+    if (m1) return 'DN' + m1[1];
+    // 纯数字
+    if (/^\d+$/.test(s)) return 'DN' + s;
+    // 包含 DN 片段则保留
+    const m2 = s.match(/DN\d+/i);
+    if (m2) return m2[0].toUpperCase();
+    return '';
   }
+  // 型号前缀：从 valveName / productName / 它完整型号里提取非 DN 前缀部分
+  //   比如 prefixVal = "QBZ73X-10C" 就是正确前缀
+  //   比如 prefixVal = "QWFZ573NM-10P-DN100"（完整型号），要截掉末尾 DN
+  function extractPrefix(s) {
+    if (!s) return '';
+    let r = s;
+    // 截去末尾 -DNxxx / DNxxx
+    r = r.replace(/[\-_]?DN\d+\s*$/i, '').replace(/\s+$/, '');
+    // 去掉中文（中文一般都是产品名，不是型号前缀字符）
+    r = r.replace(/[\u4e00-\u9fa5]/g, '').trim();
+    // 如果结果只是"常规品"等空值，返回空
+    if (/^(常规品|regular|REGULAR)$/.test(r)) return '';
+    return r;
+  }
+
+  // 1) spec 本身就是完整型号 → 优先用 spec
+  if (looksFull(specVal)) return specVal;
+  // 2) model 本身就是完整型号 → 用 model
+  if (looksFull(modelVal)) return modelVal;
+  // 3) 前缀（valveName/productName）完整型号
+  if (looksFull(prefixVal)) {
+    // 如果 prefix 里已经含 DN 信息，就直接返回
+    if (RE_HAS_DN.test(prefixVal)) return prefixVal;
+  }
+
+  // 口径（DNxxx）：优先从 spec 取，其次从 model 取
+  const dn = extractDn(specVal) || extractDn(modelVal) || extractDn(prefixVal);
+
+  // 型号前缀：优先从 valveName/productName 取，其次在 spec/model 中寻找包含 QW/QB/QMD/... 前缀的部分
+  let prefix = extractPrefix(prefixVal);
+  if (!prefix && looksFull(specVal.replace(/DN\d+/i, ''))) prefix = extractPrefix(specVal);
+  if (!prefix && looksFull(modelVal.replace(/DN\d+/i, ''))) prefix = extractPrefix(modelVal);
+
+  // 如果 prefix 和 dn 都有，拼接为 <prefix>-<DN>（保证中间只有一个 '-'）
+  if (prefix && dn) {
+    const left = prefix.replace(/[\-_]+$/g, '');
+    return `${left}-${dn}`;
+  }
+  // 只有 prefix 就只返回 prefix
+  if (prefix) return prefix;
+  // 只有 DN 就只返回 DN
+  if (dn) return dn;
+
+  // 4) 以上都落空：兜底返回 spec/model/prefixVal 中"看起来不是中文产品名"的第一条
+  const fallbackClean = [specVal, modelVal, prefixVal]
+    .map(x => clean(x))
+    .find(x => x.length > 0 && !/[\u4e00-\u9fa5]/.test(x));
+  if (fallbackClean) return fallbackClean;
+
+  // 最后兜底：把所有能拼的字符串（去除中文产品名）用 '-' 连
+  const parts = [prefix, dn].filter(Boolean);
   const joined = parts.join('-').replace(/-+/g, '-').replace(/^-+|-+$/g, '');
   return joined;
 }

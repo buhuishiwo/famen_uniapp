@@ -1148,13 +1148,14 @@ export default {
                 const items = (Array.isArray(this.quoteItems) ? this.quoteItems : []).map((it) => ({
                     productType: it.productType || '',
                     productName: it.valveName || '',
-                    spec: it.spec || '',             // ← 新增：完整型号规格字符串（让 modelSpecOf 优先用，避免拼接错位）
-                    model: it.spec || '',
+                    valveName: it.valveName || '',         // ← 保留下游 modelSpecOf 识别
+                    spec: it.spec || '',                   // ← 口径：可能是 100/80/DN80
+                    model: it.valveName || '',             // ← 型号前缀（如 QBZ73X-10C），便于 modelSpecOf 兜底
                     bodyMaterial: it.bodyMaterial || 'WCB',
                     gateMaterial: it.gatePlate || '',
                     stemMaterial: it.rodMaterial || '',
                     yokeMaterial: it.yokeMaterial || '',
-                    gatePlateThickness: it.gatePlateThickness || '', // ← 新增：闸板厚度数字
+                    gatePlateThickness: it.gatePlateThickness || '',
                     quantity: it.quantity || 1,
                     unitPrice: String(it.unitPrice || '0'),
                     totalPrice: String(it.totalPrice || '0'),
@@ -1200,19 +1201,25 @@ export default {
                 log('步骤3.1 - ZIP 魔数前4字节 hex =', zip4Hex,
                     zip4Hex === '50 4b 03 04' ? '（✅ 合法 xlsx）' : '（❌ 损坏，Excel 会空白！）');
 
-                // 文件名：区分家族（中文合同 vs PI），并带上模板短名
-                const displayEntry = (TEMPLATE_META_DISPLAY || []).find(function(t){return t.key === templateKey})
-                                    || TEMPLATE_META_DISPLAY[0]
-                                    || {};
-                const isEnPI = (displayEntry.family === 'en_pi');
+                // 文件名：按模板类型独立前缀 + 日期（YYYYMMDD），格式：<前缀>-YYYYMMDD.xlsx
+                //   奇胜合同（农商行付款）     → 奇胜-YYYYMMDD.xlsx
+                //   长胜合同（农行付款）       → 长胜-YYYYMMDD.xlsx
+                //   Changqi 英文购销合同       → Changqi-YYYYMMDD.xlsx
+                //   Chisun 英文多币种农行      → ChisunMulti-YYYYMMDD.xlsx
+                //   Chisun 英文VTB俄罗斯专用   → ChisunVTB-YYYYMMDD.xlsx
+                const FILE_NAME_PREFIX = {
+                    chisun_nsh:       '奇胜',
+                    zs_changsheng:    '长胜',
+                    pi_changqi:       'Changqi',
+                    pi_chisun_multi:  'ChisunMulti',
+                    pi_chisun_vtb:    'ChisunVTB'
+                };
+                const prefix = FILE_NAME_PREFIX[templateKey] || '合同';
                 const today = new Date();
                 const yyyy = today.getFullYear();
                 const mm = String(today.getMonth() + 1).padStart(2, '0');
                 const dd = String(today.getDate()).padStart(2, '0');
-                // 2026-08-15 文档命名规则：言简意赅，仅「合同类型-日期」，不使用毫秒时间戳
-                const fname = isEnPI
-                    ? `PI-${yyyy}${mm}${dd}.xlsx`
-                    : `购销合同-${yyyy}${mm}${dd}.xlsx`;
+                const fname = `${prefix}-${yyyy}${mm}${dd}.xlsx`;
 
                 if (typeof wx !== 'undefined' && wx.getFileSystemManager) {
                     const fsm = wx.getFileSystemManager();

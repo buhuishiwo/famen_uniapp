@@ -1345,7 +1345,7 @@ var _default = {
     _doGenerateContract: function _doGenerateContract(templateKey) {
       var _this11 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee6() {
-        var that, DEBUG, log, items, BUILD_REGISTRY, outU8Raw, outU8, zip4Hex, displayEntry, isEnPI, today, yyyy, mm, dd, fname, fsm, targetPath, rawBin, writeOnce, writeOk, hasGlobalBuffer, bytesCopy, buf, headerAB, hex, hv, i, statRes, savedPath, saveFileOk, sf, tipDesc;
+        var that, DEBUG, log, items, BUILD_REGISTRY, outU8Raw, outU8, zip4Hex, FILE_NAME_PREFIX, prefix, today, yyyy, mm, dd, fname, fsm, targetPath, rawBin, writeOnce, writeOk, hasGlobalBuffer, bytesCopy, buf, headerAB, hex, hv, i, statRes, savedPath, saveFileOk, sf, tipDesc;
         return _regenerator.default.wrap(function _callee6$(_context6) {
           while (1) {
             switch (_context6.prev = _context6.next) {
@@ -1363,15 +1363,17 @@ var _default = {
                   return {
                     productType: it.productType || '',
                     productName: it.valveName || '',
+                    valveName: it.valveName || '',
+                    // ← 保留下游 modelSpecOf 识别
                     spec: it.spec || '',
-                    // ← 新增：完整型号规格字符串（让 modelSpecOf 优先用，避免拼接错位）
-                    model: it.spec || '',
+                    // ← 口径：可能是 100/80/DN80
+                    model: it.valveName || '',
+                    // ← 型号前缀（如 QBZ73X-10C），便于 modelSpecOf 兜底
                     bodyMaterial: it.bodyMaterial || 'WCB',
                     gateMaterial: it.gatePlate || '',
                     stemMaterial: it.rodMaterial || '',
                     yokeMaterial: it.yokeMaterial || '',
                     gatePlateThickness: it.gatePlateThickness || '',
-                    // ← 新增：闸板厚度数字
                     quantity: it.quantity || 1,
                     unitPrice: String(it.unitPrice || '0'),
                     totalPrice: String(it.totalPrice || '0'),
@@ -1414,16 +1416,25 @@ var _default = {
                 }).join(' ') : 'EMPTY';
                 log('步骤3.1 - ZIP 魔数前4字节 hex =', zip4Hex, zip4Hex === '50 4b 03 04' ? '（✅ 合法 xlsx）' : '（❌ 损坏，Excel 会空白！）');
 
-                // 文件名：区分家族（中文合同 vs PI），并带上模板短名
-                displayEntry = (_contractTemplates.TEMPLATE_META_DISPLAY || []).find(function (t) {
-                  return t.key === templateKey;
-                }) || _contractTemplates.TEMPLATE_META_DISPLAY[0] || {};
-                isEnPI = displayEntry.family === 'en_pi';
+                // 文件名：按模板类型独立前缀 + 日期（YYYYMMDD），格式：<前缀>-YYYYMMDD.xlsx
+                //   奇胜合同（农商行付款）     → 奇胜-YYYYMMDD.xlsx
+                //   长胜合同（农行付款）       → 长胜-YYYYMMDD.xlsx
+                //   Changqi 英文购销合同       → Changqi-YYYYMMDD.xlsx
+                //   Chisun 英文多币种农行      → ChisunMulti-YYYYMMDD.xlsx
+                //   Chisun 英文VTB俄罗斯专用   → ChisunVTB-YYYYMMDD.xlsx
+                FILE_NAME_PREFIX = {
+                  chisun_nsh: '奇胜',
+                  zs_changsheng: '长胜',
+                  pi_changqi: 'Changqi',
+                  pi_chisun_multi: 'ChisunMulti',
+                  pi_chisun_vtb: 'ChisunVTB'
+                };
+                prefix = FILE_NAME_PREFIX[templateKey] || '合同';
                 today = new Date();
                 yyyy = today.getFullYear();
                 mm = String(today.getMonth() + 1).padStart(2, '0');
-                dd = String(today.getDate()).padStart(2, '0'); // 2026-08-15 文档命名规则：言简意赅，仅「合同类型-日期」，不使用毫秒时间戳
-                fname = isEnPI ? "PI-".concat(yyyy).concat(mm).concat(dd, ".xlsx") : "\u8D2D\u9500\u5408\u540C-".concat(yyyy).concat(mm).concat(dd, ".xlsx");
+                dd = String(today.getDate()).padStart(2, '0');
+                fname = "".concat(prefix, "-").concat(yyyy).concat(mm).concat(dd, ".xlsx");
                 if (!(typeof wx !== 'undefined' && wx.getFileSystemManager)) {
                   _context6.next = 106;
                   break;
